@@ -40,7 +40,7 @@ Energy query module:
     - The `data` mound needs to be of type `Deployment`
     - The associated file should be the CSV file containing the energy usage data
         - The orchestrator does not accept CSV files (a bug?), so the file must be renamed, for example, to `data.wasm_csv`
-        - Example data file is at [energy-query/data/data.csv](energy-query/data/data.wasm_csv)
+        - Example data file is at [energy-query/data/data.csv](energy-query/data/data.csv)
         - More information on the data file syntax at the energy query module [readme](energy-query/README.md)
         - At the moment, if a different energy data is required, a separate module with the new data must be created.
 - Create a deployment manifest for the module with `Deployment manifest creation`
@@ -56,3 +56,6 @@ Energy query module:
         - For example, using the default data CSV, query with parameters `1719226800` and `5400` should give the result `1.25` (kWh).
     - The data CSV is read by the module when the first query is made, and thus getting the result for that might take a little longer than any later queries.
     - At the moment, the module handles the time in whole minutes.
+    - In case of an error, the return value will be 0.0, as in no energy consumed.
+        - The supervisor output (not the logs sent to the orchestrator) might show the reason for the error.
+        - The same zero output will also happen if there are no events in the CSV data matching the query interval.
