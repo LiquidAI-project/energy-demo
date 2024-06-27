@@ -1,11 +1,13 @@
-use std::{error::Error, sync::Mutex, time::{Duration, SystemTime}};
+use std::{env, convert::identity, error::Error, sync::Mutex, time::{Duration, SystemTime}};
 use chrono::{prelude::{DateTime, Datelike}, TimeDelta, TimeZone, Utc, Weekday};
 use csv::{ReaderBuilder, StringRecord};
+
+const FILE_PATH_ENV: &str = "CSV_DATA_PATH";
+const DEFAULT_FILE_PATH: &str = "data";
 
 const NOT_SET: &str = "*";
 const EMPTY_STRING: &str = "";
 const COLUMN_SEPARATOR: &str = ";";
-const FILE_PATH: &str = "data/data.csv";
 
 const YEAR_COLUMN: &str = "year";
 const MONTH_COLUMN: &str = "month";
@@ -116,9 +118,12 @@ fn get_row_value<'a>(row: &'a StringRecord, headers: &'a StringRecord, column_na
 }
 
 fn read_usage_data() -> Result<Vec<EnergyUsageData>, Box<dyn Error>> {
+    let binding = env::var(FILE_PATH_ENV).map_or_else(|_| DEFAULT_FILE_PATH.to_string(), identity);
+    let file_path: &str = binding.as_str();
+
     let mut csv_reader = ReaderBuilder::new()
         .delimiter(COLUMN_SEPARATOR.as_bytes()[0])
-        .from_path(FILE_PATH)?;
+        .from_path(file_path)?;
 
     let mut energy_data = Vec::new();
     let headers = csv_reader.headers()?.clone();
