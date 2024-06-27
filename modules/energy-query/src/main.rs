@@ -1,5 +1,5 @@
 use std::{error::Error, sync::Mutex, time::{Duration, SystemTime}};
-use chrono::{prelude::{DateTime, Datelike}, Timelike, Utc, Weekday};
+use chrono::{prelude::{DateTime, Datelike}, TimeZone, Utc, Weekday};
 use csv::{ReaderBuilder, StringRecord};
 
 const NOT_SET: &str = "*";
@@ -30,8 +30,8 @@ struct EnergyUsageData {
     year: Option<i32>,
     month: Option<u32>,
     day: Option<u32>,
-    hour: Option<u32>,
-    minute: Option<u32>,
+    hour: u32,
+    minute: u32,
     week_day: Option<chrono::Weekday>,
     energy_consumption: f64,
     duration: u32,
@@ -47,21 +47,6 @@ fn days_in_month(year: i32, month: u32) -> u32 {
         4 | 6 | 9 | 11 => 30,
         2 => if is_leap_year(year) { 29 } else { 28 },
         _ => panic!("Invalid month: {}" , month),
-    }
-}
-
-fn get_next_week_day(week_day: Weekday, count: u32) -> Weekday {
-    match count {
-        0 => week_day,
-        _ => match week_day {
-            Weekday::Mon => get_next_week_day(Weekday::Tue, count - 1),
-            Weekday::Tue => get_next_week_day(Weekday::Wed, count - 1),
-            Weekday::Wed => get_next_week_day(Weekday::Thu, count - 1),
-            Weekday::Thu => get_next_week_day(Weekday::Fri, count - 1),
-            Weekday::Fri => get_next_week_day(Weekday::Sat, count - 1),
-            Weekday::Sat => get_next_week_day(Weekday::Sun, count - 1),
-            Weekday::Sun => get_next_week_day(Weekday::Mon, count - 1),
-        }
     }
 }
 
@@ -93,8 +78,8 @@ fn create_usage_data(
     let year: Option<i32> = get_parsed_value(year)?;
     let month: Option<u32> = get_parsed_value(month)?;
     let day: Option<u32> = get_parsed_value(day)?;
-    let hour: Option<u32> = get_parsed_value(hour)?;
-    let minute: Option<u32> = get_parsed_value(minute)?;
+    let hour: u32 = hour.parse::<u32>()?;
+    let minute: u32 = minute.parse::<u32>()?;
     let week_day = match week_day.to_lowercase().as_str() {
         "mon" | "1" => Some(Weekday::Mon),
         "tue" | "2" => Some(Weekday::Tue),
@@ -164,87 +149,105 @@ fn update_energy_data() -> () {
     println!("Energy data updated: {:?}", energy_data_lock.data);
 }
 
+fn are_overlapping_intervals(start1: &DateTime<Utc>, end1: &DateTime<Utc>, start2: &DateTime<Utc>, end2: &DateTime<Utc>) -> bool {
+    start1 < end2 && end1 > start2
+}
+
+fn is_relevant_data(start: &DateTime<Utc>, end: &DateTime<Utc>, energy_data: &EnergyUsageData) -> bool {
+    if
+        energy_data.year.is_some() &&
+        energy_data.month.is_some() &&
+        energy_data.day.is_some()
+    {
+        // the week day is not checked if exact date is given
+        let data_start = Utc.with_ymd_and_hms(
+            energy_data.year.unwrap(), energy_data.month.unwrap(), energy_data.day.unwrap(),
+            energy_data.hour, energy_data.minute, 0
+        ).unwrap();
+        let data_end = data_start + Duration::from_secs((energy_data.duration * 60) as u64);
+        return are_overlapping_intervals(start, end, &data_start, &data_end);
+    }
+
+    // any energy data entry that would continue to the next day based on the duration is cut off at the end of the day
+    let years: Vec<i32> = (start.year()..=end.year())
+        .filter(|year| energy_data.year.is_none() || energy_data.year.unwrap() == *year)
+        .collect();
+    let months: Vec<u32> = (
+            match end.year() - start.year() {
+                n if n == 0 => (start.month()..=end.month()).collect::<Vec<_>>(),
+                n if n == 1 => (start.month()..=12).chain(1..=end.month()).collect(),
+                _ => (1..=12).collect(),
+            }
+        )
+        .iter()
+        .map(|month| *month)
+        .filter(|month| energy_data.month.is_none() || energy_data.month.unwrap() == *month)
+        .collect();
+    let days: Vec<u32> = (
+            match months.len() {
+                n if n == 1 => (start.day()..=end.day()).collect::<Vec<_>>(),
+                n if n == 2 => (start.day()..=days_in_month(start.year(), start.month())).chain(1..=end.day()).collect(),
+                _ => (1..=31).collect(),
+            }
+        )
+        .iter()
+        .map(|day| *day)
+        .filter(|day| energy_data.day.is_none() || energy_data.day.unwrap() == *day)
+        .collect();
+    let week_days: Vec<Weekday> = (
+            match days.len() {
+            n if n == 1 => vec![start.weekday()],
+            n if n == 2 => vec![start.weekday(), end.weekday()],
+            n if n > 3 && n <= 6 => get_next_week_days(start.weekday(), n as u32),
+            _ => vec![Weekday::Mon, Weekday::Tue, Weekday::Wed, Weekday::Thu, Weekday::Fri, Weekday::Sat, Weekday::Sun],
+        }
+        )
+        .iter()
+        .map(|week_day| *week_day)
+        .filter(|week_day| energy_data.week_day.is_none() || energy_data.week_day.unwrap() == *week_day)
+        .collect();
+
+    if years.is_empty() || months.is_empty() || days.is_empty() || week_days.is_empty() {
+        return false;
+    }
+
+    let datetimes: Vec<DateTime<Utc>> = years
+        .iter()
+        .flat_map(|year| {
+            months
+                .iter()
+                .flat_map(|month| {
+                    days
+                        .iter()
+                        .flat_map(|day| {
+                            Utc.with_ymd_and_hms(
+                                *year, *month, *day,
+                                energy_data.hour, energy_data.minute, 0
+                            ).earliest()
+                        })
+                })
+        })
+        .filter(|datetime| week_days.contains(&datetime.weekday()))
+        .collect();
+
+    println!("Datetimes: {:?}", datetimes);
+    for datetime in datetimes {
+        let data_end = datetime + Duration::from_secs((energy_data.duration * 60) as u64);
+        if are_overlapping_intervals(start, end, &datetime, &data_end) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 fn get_relevant_data(start: &DateTime<Utc>, end: &DateTime<Utc>) -> Vec<EnergyUsageData> {
-    // overly complicated way to get all dates between start and end mostly produced by copilot
-    // let dates: Vec<(i32, u32, u32)> = (start.year()..=end.year())
-    //     .flat_map(|year| {
-    //         let start_month = if year == start.year() { start.month() } else { 1 };
-    //         let end_month = if year == end.year() { end.month() } else { 12 };
-    //         (start_month..=end_month)
-    //             .flat_map(|month| {
-    //                 let start_day = if year == start.year() && month == start.month() { start.day() } else { 1 };
-    //                 let end_day = if year == end.year() && month == end.month() { end.day() } else { days_in_month(year, month) };
-    //                 (start_day..=end_day)
-    //                     .map(|day| (year, month, day))
-    //                     .collect::<Vec<(i32, u32, u32)>>()
-    //             })
-    //             .collect::<Vec<(i32, u32, u32)>>()
-    //     })
-    //     .collect();
-
-    let years: Vec<i32> = (start.year()..=end.year()).collect();
-    let months: Vec<u32> = match end.year() - start.year() {
-        n if n == 0 => (start.month()..=end.month()).collect(),
-        n if n == 1 => (start.month()..=12).chain(1..=end.month()).collect(),
-        _ => (1..=12).collect(),
-    };
-    let days: Vec<u32> = match months.len() {
-        n if n == 1 => (start.day()..=end.day()).collect(),
-        n if n == 2 => (start.day()..=days_in_month(start.year(), start.month())).chain(1..=end.day()).collect(),
-        _ => (1..=31).collect(),
-    };
-    let hours: Vec<u32> = match days.len() {
-        n if n == 1 => (start.hour()..=end.hour()).collect(),
-        n if n == 2 => (start.hour()..=23).chain(0..=end.hour()).collect(),
-        _ => (0..=23).collect(),
-    };
-    let minutes: Vec<u32> = match hours.len() {
-        n if n == 1 => (start.minute()..=end.minute()).collect(),
-        n if n == 2 => (start.minute()..=59).chain(0..=end.minute()).collect(),
-        _ => (0..=59).collect(),
-    };
-    let week_days: Vec<Weekday> = match days.len() {
-        n if n == 1 => vec![start.weekday()],
-        n if n == 2 => vec![start.weekday(), end.weekday()],
-        n if n == 3 => get_next_week_days(start.weekday(), n as u32),
-        _ => vec![Weekday::Mon, Weekday::Tue, Weekday::Wed, Weekday::Thu, Weekday::Fri, Weekday::Sat, Weekday::Sun],
-    };
-
     ENERGY_DATA
         .lock()
         .unwrap()
         .data
         .iter()
-        .filter(|data| {
-            let year_check = match data.year {
-                Some(year) => years.contains(&year),
-                None => true
-            };
-            let month_check = match data.month {
-                Some(month) => months.contains(&month),
-                None => true
-            };
-            let day_check = match data.day {
-                Some(day) => days.contains(&day),
-                None => true
-            };
-            let hour_check = match data.hour {
-                Some(hour) => hours.contains(&hour),
-                None => true
-            };
-            let minute_check = match data.minute {
-                Some(minute) => minutes.contains(&minute),
-                None => true
-            };
-            let week_day_check = match data.week_day {
-                Some(week_day) => week_days.contains(&week_day),
-                None => true
-            };
-
-            // TODO: duration is not checked yet (i.e., should find the data that overlaps with the given time interval)
-            // TODO: a simpler way to do this is certainly possible
-            year_check && month_check && day_check && hour_check && minute_check && week_day_check
-        })
+        .filter(|data| is_relevant_data(start, end, data))
         .map(|data| data.clone())
         .collect()
 }
@@ -263,13 +266,14 @@ fn get_consumed_energy(start: &DateTime<Utc>, end: &DateTime<Utc>) -> f64 {
     println!("End date: {:?}", end);
     println!("Relevant data: {:?}", relevant_data);
 
-    1.1
-    // let datetime = DateTime::<Utc>::from(SystemTime::UNIX_EPOCH + Duration::from_secs(start_time));
-    // let seconds = datetime.second();
-    // let week_day = datetime.weekday();
-    // println!("Start time: {:?}", datetime);
-    // println!("Time interval: {} seconds", time_interval);
-    // println!("Week day: {}", week_day);
+    // TODO: fix the very naive implementation of energy consumption calculation
+    match relevant_data
+        .iter()
+        .map(|data| data.energy_consumption)
+        .reduce(|energy1, energy2| energy1 + energy2) {
+            Some(energy) => energy,
+            None => 0.0,
+        }
 }
 
 #[no_mangle]
