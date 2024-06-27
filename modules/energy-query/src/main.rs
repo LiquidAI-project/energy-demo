@@ -15,7 +15,7 @@ const DAY_COLUMN: &str = "day";
 const HOUR_COLUMN: &str = "hour";
 const MINUTE_COLUMN: &str = "minute";
 const WEEK_DAY_COLUMN: &str = "day_of_week";
-const ENERGY_CONSUMPTION_COLUMN: &str = "energy_usage";
+const POWER_USAGE_COLUMN: &str = "power_usage";
 const DURATION_COLUMN: &str = "duration_in_minutes";
 
 static ENERGY_DATA: Mutex<EnergyData> = Mutex::new(EnergyData{loaded: false, data: Vec::new()});
@@ -33,7 +33,7 @@ struct EnergyUsageData {
     hour: u32,  // the start hour of the event (in UTC)
     minute: u32,  // the start minute of the event (in UTC)
     week_day: Option<chrono::Weekday>,
-    energy_consumption: f64,  // the energy consumption during the event in kWh
+    power_usage: f64,  // the energy consumption during the event in kWh
     duration: u32,  // duration of the event in minutes
 }
 
@@ -73,7 +73,7 @@ fn get_parsed_value<T>(value: &str) -> Result<Option<T>, Box<dyn Error>> where T
 
 fn create_usage_data(
     year: &str, month: &str, day: &str, hour: &str, minute: &str,
-    week_day: &str, energy_consumption: &str, duration: &str
+    week_day: &str, power_usage: &str, duration: &str
 ) -> Result<EnergyUsageData, Box<dyn Error>>{
     let year: Option<i32> = get_parsed_value(year)?;
     let month: Option<u32> = get_parsed_value(month)?;
@@ -91,7 +91,7 @@ fn create_usage_data(
         NOT_SET | EMPTY_STRING => None,
         _ => return Err(format!("Invalid week day: {}", week_day).into())
     };
-    let energy_consumption: f64 = energy_consumption.parse::<f64>()?;
+    let power_usage: f64 = power_usage.parse::<f64>()?;
     let duration: u32 = duration.parse::<u32>()?;
 
     Ok(EnergyUsageData {
@@ -101,7 +101,7 @@ fn create_usage_data(
         hour,
         minute,
         week_day,
-        energy_consumption,
+        power_usage,
         duration,
     })
 }
@@ -136,7 +136,7 @@ fn read_usage_data() -> Result<Vec<EnergyUsageData>, Box<dyn Error>> {
             get_row_value(&record, &headers, HOUR_COLUMN),
             get_row_value(&record, &headers, MINUTE_COLUMN),
             get_row_value(&record, &headers, WEEK_DAY_COLUMN),
-            get_row_value(&record, &headers, ENERGY_CONSUMPTION_COLUMN),
+            get_row_value(&record, &headers, POWER_USAGE_COLUMN),
             get_row_value(&record, &headers, DURATION_COLUMN),
         )?;
         energy_data.push(data);
@@ -180,7 +180,7 @@ fn get_energy(start: &DateTime<Utc>, end: &DateTime<Utc>, energy_data: &EnergyUs
         let data_end = data_start + Duration::from_secs((energy_data.duration * 60) as u64);
         return calculate_energy(
             overlapping_minutes(start, end, &data_start, &data_end),
-            energy_data.energy_consumption
+            energy_data.power_usage
         );
     }
 
@@ -259,7 +259,7 @@ fn get_energy(start: &DateTime<Utc>, end: &DateTime<Utc>, energy_data: &EnergyUs
         let data_end = datetime + Duration::from_secs((energy_data.duration * 60) as u64);
         energy += calculate_energy(
             overlapping_minutes(start, end, &datetime, &data_end),
-            energy_data.energy_consumption
+            energy_data.power_usage
         );
     }
 
