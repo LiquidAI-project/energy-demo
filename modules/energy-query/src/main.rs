@@ -1,5 +1,5 @@
 use std::{error::Error, sync::Mutex, time::{Duration, SystemTime}};
-use chrono::{prelude::{DateTime, Datelike}, TimeZone, Utc, Weekday};
+use chrono::{prelude::{DateTime, Datelike}, TimeDelta, TimeZone, Utc, Weekday};
 use csv::{ReaderBuilder, StringRecord};
 
 const NOT_SET: &str = "*";
@@ -24,17 +24,15 @@ struct EnergyData {
     data: Vec<EnergyUsageData>,
 }
 
-#[derive(Debug)]
-#[derive(Clone)]
 struct EnergyUsageData {
     year: Option<i32>,
     month: Option<u32>,
     day: Option<u32>,
-    hour: u32,
-    minute: u32,
+    hour: u32,  // the start hour of the event (in UTC)
+    minute: u32,  // the start minute of the event (in UTC)
     week_day: Option<chrono::Weekday>,
-    energy_consumption: f64,
-    duration: u32,
+    energy_consumption: f64,  // the energy consumption during the event in kWh
+    duration: u32,  // duration of the event in minutes
 }
 
 fn is_leap_year(year: i32) -> bool {
@@ -146,14 +144,23 @@ fn update_energy_data() -> () {
     let mut energy_data_lock = ENERGY_DATA.lock().unwrap();
     energy_data_lock.data = energy_data;
     energy_data_lock.loaded = true;
-    println!("Energy data updated: {:?}", energy_data_lock.data);
+    println!("Energy data updated.");
 }
 
-fn are_overlapping_intervals(start1: &DateTime<Utc>, end1: &DateTime<Utc>, start2: &DateTime<Utc>, end2: &DateTime<Utc>) -> bool {
-    start1 < end2 && end1 > start2
+fn overlapping_minutes(start1: &DateTime<Utc>, end1: &DateTime<Utc>, start2: &DateTime<Utc>, end2: &DateTime<Utc>) -> u32 {
+    let start = if start1 > start2 { start1 } else { start2 };
+    let end = if end1 < end2 { end1 } else { end2 };
+    match *end - *start {
+        duration if duration <= TimeDelta::zero() => 0,
+        duration => duration.num_minutes() as u32,
+    }
 }
 
-fn is_relevant_data(start: &DateTime<Utc>, end: &DateTime<Utc>, energy_data: &EnergyUsageData) -> bool {
+fn calculate_energy(minutes: u32, energy_consumption: f64) -> f64 {
+    (minutes as f64 / 60.0) * energy_consumption
+}
+
+fn get_energy(start: &DateTime<Utc>, end: &DateTime<Utc>, energy_data: &EnergyUsageData) -> f64 {
     if
         energy_data.year.is_some() &&
         energy_data.month.is_some() &&
@@ -165,13 +172,21 @@ fn is_relevant_data(start: &DateTime<Utc>, end: &DateTime<Utc>, energy_data: &En
             energy_data.hour, energy_data.minute, 0
         ).unwrap();
         let data_end = data_start + Duration::from_secs((energy_data.duration * 60) as u64);
-        return are_overlapping_intervals(start, end, &data_start, &data_end);
+        return calculate_energy(
+            overlapping_minutes(start, end, &data_start, &data_end),
+            energy_data.energy_consumption
+        );
     }
 
     // any energy data entry that would continue to the next day based on the duration is cut off at the end of the day
+
     let years: Vec<i32> = (start.year()..=end.year())
         .filter(|year| energy_data.year.is_none() || energy_data.year.unwrap() == *year)
         .collect();
+    if years.is_empty() {
+        return 0.0;
+    }
+
     let months: Vec<u32> = (
             match end.year() - start.year() {
                 n if n == 0 => (start.month()..=end.month()).collect::<Vec<_>>(),
@@ -183,6 +198,10 @@ fn is_relevant_data(start: &DateTime<Utc>, end: &DateTime<Utc>, energy_data: &En
         .map(|month| *month)
         .filter(|month| energy_data.month.is_none() || energy_data.month.unwrap() == *month)
         .collect();
+    if months.is_empty() {
+        return 0.0;
+    }
+
     let days: Vec<u32> = (
             match months.len() {
                 n if n == 1 => (start.day()..=end.day()).collect::<Vec<_>>(),
@@ -194,6 +213,10 @@ fn is_relevant_data(start: &DateTime<Utc>, end: &DateTime<Utc>, energy_data: &En
         .map(|day| *day)
         .filter(|day| energy_data.day.is_none() || energy_data.day.unwrap() == *day)
         .collect();
+    if days.is_empty() {
+        return 0.0;
+    }
+
     let week_days: Vec<Weekday> = (
             match days.len() {
             n if n == 1 => vec![start.weekday()],
@@ -206,50 +229,35 @@ fn is_relevant_data(start: &DateTime<Utc>, end: &DateTime<Utc>, energy_data: &En
         .map(|week_day| *week_day)
         .filter(|week_day| energy_data.week_day.is_none() || energy_data.week_day.unwrap() == *week_day)
         .collect();
-
-    if years.is_empty() || months.is_empty() || days.is_empty() || week_days.is_empty() {
-        return false;
+    if week_days.is_empty() {
+        return 0.0;
     }
 
     let datetimes: Vec<DateTime<Utc>> = years
         .iter()
-        .flat_map(|year| {
-            months
+        .flat_map(|year| months
+            .iter()
+            .flat_map(|month| days
                 .iter()
-                .flat_map(|month| {
-                    days
-                        .iter()
-                        .flat_map(|day| {
-                            Utc.with_ymd_and_hms(
-                                *year, *month, *day,
-                                energy_data.hour, energy_data.minute, 0
-                            ).earliest()
-                        })
-                })
-        })
+                .flat_map(|day| Utc
+                    .with_ymd_and_hms(*year, *month, *day, energy_data.hour, energy_data.minute, 0)
+                    .earliest()
+                )
+            )
+        )
         .filter(|datetime| week_days.contains(&datetime.weekday()))
         .collect();
 
-    println!("Datetimes: {:?}", datetimes);
+    let mut energy: f64 = 0.0;
     for datetime in datetimes {
         let data_end = datetime + Duration::from_secs((energy_data.duration * 60) as u64);
-        if are_overlapping_intervals(start, end, &datetime, &data_end) {
-            return true;
-        }
+        energy += calculate_energy(
+            overlapping_minutes(start, end, &datetime, &data_end),
+            energy_data.energy_consumption
+        );
     }
 
-    return false;
-}
-
-fn get_relevant_data(start: &DateTime<Utc>, end: &DateTime<Utc>) -> Vec<EnergyUsageData> {
-    ENERGY_DATA
-        .lock()
-        .unwrap()
-        .data
-        .iter()
-        .filter(|data| is_relevant_data(start, end, data))
-        .map(|data| data.clone())
-        .collect()
+    energy
 }
 
 fn get_consumed_energy(start: &DateTime<Utc>, end: &DateTime<Utc>) -> f64 {
@@ -261,19 +269,13 @@ fn get_consumed_energy(start: &DateTime<Utc>, end: &DateTime<Utc>) -> f64 {
         return 0.0;
     }
 
-    let relevant_data = get_relevant_data(start, end);
-    println!("Start date: {:?}", start);
-    println!("End date: {:?}", end);
-    println!("Relevant data: {:?}", relevant_data);
-
-    // TODO: fix the very naive implementation of energy consumption calculation
-    match relevant_data
+    ENERGY_DATA
+        .lock()
+        .unwrap()
+        .data
         .iter()
-        .map(|data| data.energy_consumption)
-        .reduce(|energy1, energy2| energy1 + energy2) {
-            Some(energy) => energy,
-            None => 0.0,
-        }
+        .map(|data| get_energy(start, end, data))
+        .sum()
 }
 
 #[no_mangle]
@@ -283,6 +285,17 @@ pub fn consumed_energy(start_time: u64, time_interval: u64) -> f64 {
     get_consumed_energy(&start, &end)
 }
 
+fn print_query(start_time: u64, time_interval: u64, result: f64) {
+    let start = DateTime::<Utc>::from(SystemTime::UNIX_EPOCH + Duration::from_secs(start_time));
+    let end = start + Duration::from_secs(time_interval);
+    println!("==========================================================");
+    println!("Energy query input parameters: {:?}, {:?}", start_time, time_interval);
+    println!("Time interval: {:?} - {:?}", start, end);
+    println!("Energy consumed: {}", result);
+    println!("==========================================================");
+}
+
 fn main() {
-    println!("Energy consumed: {}", consumed_energy(1719226800, 108000));
+    print_query(1719226800, 108000, consumed_energy(1719226800, 108000));
+    print_query(1719226800, 5400, consumed_energy(1719226800, 5400));
 }
