@@ -139,12 +139,13 @@ fn read_usage_data() -> Result<Vec<EnergyUsageData>, Box<dyn Error>> {
     Ok(energy_data)
 }
 
-fn update_energy_data() -> () {
-    let energy_data: Vec<EnergyUsageData> = read_usage_data().unwrap();
-    let mut energy_data_lock = ENERGY_DATA.lock().unwrap();
+fn update_energy_data() -> Result<(), Box<dyn Error>> {
+    let energy_data: Vec<EnergyUsageData> = read_usage_data()?;
+    let mut energy_data_lock = ENERGY_DATA.lock()?;
     energy_data_lock.data = energy_data;
     energy_data_lock.loaded = true;
     println!("Energy data updated.");
+    Ok(())
 }
 
 fn overlapping_minutes(start1: &DateTime<Utc>, end1: &DateTime<Utc>, start2: &DateTime<Utc>, end2: &DateTime<Utc>) -> u32 {
@@ -260,29 +261,40 @@ fn get_energy(start: &DateTime<Utc>, end: &DateTime<Utc>, energy_data: &EnergyUs
     energy
 }
 
-fn get_consumed_energy(start: &DateTime<Utc>, end: &DateTime<Utc>) -> f64 {
-    if !ENERGY_DATA.lock().unwrap().loaded {
-        update_energy_data();
+fn get_consumed_energy(start: &DateTime<Utc>, end: &DateTime<Utc>) -> Result<f64, Box<dyn Error>> {
+    if !ENERGY_DATA.lock()?.loaded {
+        let _ = update_energy_data()?;
     }
 
     if end <= start {
-        return 0.0;
+        return Ok(0.0);
     }
 
-    ENERGY_DATA
-        .lock()
-        .unwrap()
+    let energy = ENERGY_DATA
+        .lock()?
         .data
         .iter()
         .map(|data| get_energy(start, end, data))
-        .sum()
+        .sum();
+
+    Ok(energy)
+}
+
+fn consumed_energy_internal(start_time: u64, time_interval: u64) -> Result<f64, Box<dyn Error>> {
+    let start = DateTime::<Utc>::from(SystemTime::UNIX_EPOCH + Duration::from_secs(start_time));
+    let end = start + Duration::from_secs(time_interval);
+    get_consumed_energy(&start, &end)
 }
 
 #[no_mangle]
 pub fn consumed_energy(start_time: u64, time_interval: u64) -> f64 {
-    let start = DateTime::<Utc>::from(SystemTime::UNIX_EPOCH + Duration::from_secs(start_time));
-    let end = start + Duration::from_secs(time_interval);
-    get_consumed_energy(&start, &end)
+    match consumed_energy_internal(start_time, time_interval) {
+        Ok(result) => result,
+        Err(error) => {
+            println!("Error: {:?}", error);
+            0.0
+        }
+    }
 }
 
 fn print_query(start_time: u64, time_interval: u64, result: f64) {
