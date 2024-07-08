@@ -1,0 +1,6 @@
+[submodule "run-demo/wasmiot-orchestrator"]
+	path = run-demo/wasmiot-orchestrator
+	url = git@github.com:LiquidAI-project/wasmiot-orchestrator.git
+[submodule "run-demo/wasmiot-supervisor"]
+	path = run-demo/wasmiot-supervisor
+	url = git@github.com:LiquidAI-project/wasmiot-supervisor.git
