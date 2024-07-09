@@ -103,6 +103,18 @@ services:
     devices:
       - /dev/video0:/dev/video0
 
+  frontend:
+    container_name: frontend
+    image: node:latest
+    working_dir: /usr/src/app
+    ports:
+      - 5173:5173
+    volumes:
+      - ./frontend:/usr/src/app
+      - /usr/src/app/node_modules
+    command: sh -c "npm install && npm start"
+    depends_on:
+      - orchestrator
 
 volumes:
   mongo-config:
