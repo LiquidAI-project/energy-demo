@@ -1,125 +1,61 @@
 import {
   Box,
-  Button,
   Grid,
   Typography,
-  Checkbox,
-  FormControlLabel,
-  FormGroup,
 } from "@mui/material";
-import { ThemeProvider, createTheme } from "@mui/material/styles";
-import { useState, useEffect } from "react";
+import { useEffect, useRef } from "react";
 import backgroundImage from "./../assets/yard.png";
 import roadImage from "./../assets/road.png";
 import cabinImage from "./../assets/cabin.png";
 import houseImage from "./../assets/house.png";
-
-const theme = createTheme({
-  palette: {
-    water: {
-      main: "#8BD4E2",
-      light: "#a7dee7",
-      dark: "#0eafc9",
-      contrastText: "#000000",
-    },
-    black: {
-      main: "#000000",
-    },
-  },
-  typography: {
-    button: {
-      textTransform: "none",
-      fontWeight: "bolder",
-    },
-  },
-});
-
-import { List, ListItemButton, ListItemText, Collapse } from "@mui/material";
-import { ExpandLess, ExpandMore } from "@mui/icons-material";
-
-function useSessionStorageState(key, defaultValue) {
-  // Initialize state with value from sessionStorage or the provided default value
-  const [state, setState] = useState(() => {
-    const savedState = window.sessionStorage.getItem(key);
-    if (savedState) {
-      return JSON.parse(savedState);
-    } else {
-      return defaultValue;
-    }
-  });
-
-  const resetState = () => {
-    setState(defaultValue);
-    window.sessionStorage.setItem(key, JSON.stringify(defaultValue));
-  };
-
-  // Use useEffect to update sessionStorage when state changes
-  useEffect(() => {
-    window.sessionStorage.setItem(key, JSON.stringify(state));
-  }, [key, state]);
-
-  return [state, setState, resetState];
-}
+import Freezer from "./visual_components/Freezer";
+import Orchestrator from "./../assets/orchestrator.png";
 
 const Demo = () => {
-  const [open, setOpen] = useState(false);
 
-  const handleReset = () => {
-    // Reset all visibility to default
-    setShowHeatPump(true);
-    setShowElectricBoard(true);
-    setShowElectricCar1(true);
-  };
-  const handleClear = () => {
-    // clearing all components
-    setShowHeatPump(false);
-    setShowElectricBoard(false);
-    setShowElectricCar1(false);
-  };
+  const orchestratorRef = useRef(null);
+  const freezerRef = useRef(null);
 
-  const handleClick = () => {
-    setOpen(!open);
-  };
+  useEffect(() => {
 
-  // values from visual component visibility
-  const [showHeatPump, setShowHeatPump] = useSessionStorageState(
-    "showHeatPump",
-    true
-  );
-  const [showElectricBoard, setShowElectricBoard] = useSessionStorageState(
-    "showElectricBoard",
-    true
-  );
-  const [showElectricCar1, setShowElectricCar1] = useSessionStorageState(
-    "showElectricCar1",
-    true
-  );
+    // This logic will draw a line between the orchestrator and the freezer
+    // TODO: Refactor this logic as a common function to draw other lines too
+    const connectOrchestratorToFreezer = () => {
+      if (orchestratorRef.current && freezerRef.current) {
+        const orchestrator = orchestratorRef.current.getBoundingClientRect();
+        const freezer = freezerRef.current.getBoundingClientRect();
 
-  let totalConsumption = [];
-  let totalProduction = [];
-  let netConsumption = [];
+        const x1 = orchestrator.left + orchestrator.width / 2;
+        const y1 = orchestrator.top + orchestrator.height / 2;
+        const x2 = freezer.left + freezer.width / 2;
+        const y2 = freezer.top + freezer.height / 2;
 
-  for (let i = 0; i <= 23; i++) {
-    totalConsumption.push({ hour: i, value: 0 });
-  }
+        const length = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+        const angle = Math.atan2(y2 - y1, x2 - x1) * (180 / Math.PI);
 
-  for (let i = 0; i <= 23; i++) {
-    totalProduction.push({ hour: i, value: 0 });
-  }
+        const lineStyle = {
+          position: 'absolute',
+          top: `${y1}px`,
+          left: `${x1}px`,
+          width: `${length}px`,
+          transform: `rotate(${angle}deg)`,
+          transformOrigin: '0 0',
+          borderTop: '2px dashed red',
+          zIndex: 1,
+        };
 
-  for (let i = 0; i <= 23; i++) {
-    netConsumption.push({ startHour: i, value: 0 });
-  }
+        const lineElement = document.getElementById('orchestrator-freezer-line');
+        Object.assign(lineElement.style, lineStyle);
+      }
+    };
 
-  netConsumption.forEach((h) => {
-    const hourConsumption = totalConsumption.find(
-      (obj) => obj.hour === h.startHour
-    );
-    const hourProduction = totalProduction.find(
-      (obj) => obj.hour === h.startHour
-    );
-    h.value = (hourConsumption.value - hourProduction.value).toFixed(2);
-  });
+    connectOrchestratorToFreezer();
+    window.addEventListener('resize', connectOrchestratorToFreezer);
+
+    return () => {
+      window.removeEventListener('resize', connectOrchestratorToFreezer);
+    };
+  }, []);
 
   return (
     <div>
@@ -147,6 +83,9 @@ const Demo = () => {
           columns={5}
           style={{ paddingRight: "3vh", paddingLeft: "3vh" }}
         >
+          <div
+            id="orchestrator-freezer-line"
+          />
           <Grid item xs={12} sm={3} minWidth={"77vh"}>
             <Box>
               <div
@@ -223,137 +162,65 @@ const Demo = () => {
                       height: "55%",
                     }}
                   />
+                  <div>
+                    {/*Energy components inside the house*/}
+                    <Freezer ref={freezerRef} />
+                  </div>
                 </div>
               </div>
             </Box>
           </Grid>
           <Grid item xs={2} style={{ position: "relative", marginTop: "15px" }}>
             <Grid container spacing={1.5} columns={1}>
-              <Grid item xs={1} paddingBottom="50px">
-                <Box>
-                  <List
-                    sx={{ width: "94.5%", bgcolor: "background.paper" }}
-                    style={{
-                      position: "absolute",
-                      zIndex: 1000,
-                      border: "1px solid #DCDCDC",
-                      borderRadius: "5px",
-                      boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.2)",
-                      paddingBottom: "0px",
-                      paddingTop: "0px",
-                    }}
-                  >
-                    <ListItemButton
-                      onClick={handleClick}
-                      sx={{ width: "100%" }}
+              <Grid item xs={1} minWidth="50vh">
+                <Box
+                  style={{
+                    padding: "1vh",
+                    border: "1px solid #DCDCDC",
+                    borderRadius: "5px",
+                    boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.1)",
+                  }}
+                  height="auto"
+                  overflow="hidden"
+                >
+                  <Box>
+                    <div
+                      style={{
+                        position: "relative",
+                        marginTop: "15px",
+                        paddingBottom: "83%",
+                        width: "100%",
+                        height: 0,
+                      }}
                     >
-                      <ListItemText
-                        primary={
-                          <Typography style={{ fontWeight: "bolder" }}>
-                            Manage components
-                          </Typography>
-                        }
-                      />
-                      {open ? <ExpandLess /> : <ExpandMore />}
-                    </ListItemButton>
-                    <Collapse in={open} timeout="auto" unmountOnExit>
-                      <List component="div">
-                        <Grid container spacing={2}>
-                          <Grid
-                            sx={{ marginLeft: "40px", marginRight: "35px" }}
-                          >
-                            <FormGroup>
-                              <FormControlLabel
-                                control={
-                                  <Checkbox
-                                    checked={showHeatPump}
-                                    onChange={() =>
-                                      setShowHeatPump(!showHeatPump)
-                                    }
-                                    id="heatPumpCheckbox"
-                                    sx={{
-                                      "&.Mui-checked": {
-                                        color: theme.palette.water.main,
-                                      },
-                                    }}
-                                  />
-                                }
-                                label="Device 1"
-                              />
-                              <FormControlLabel
-                                control={
-                                  <Checkbox
-                                    checked={showElectricBoard}
-                                    onChange={() =>
-                                      setShowElectricBoard(!showElectricBoard)
-                                    }
-                                    id="electricBoardCheckbox"
-                                    sx={{
-                                      "&.Mui-checked": {
-                                        color: theme.palette.water.main,
-                                      },
-                                    }}
-                                  />
-                                }
-                                label="Device 2"
-                              />
-                            </FormGroup>
-                          </Grid>
-                          <Grid
-                            sx={{ marginLeft: "40px", marginRight: "35px" }}
-                          >
-                            <FormGroup>
-                              <FormControlLabel
-                                control={
-                                  <Checkbox
-                                    checked={showElectricCar1}
-                                    onChange={() =>
-                                      setShowElectricCar1(!showElectricCar1)
-                                    }
-                                    id="electricCar1Checkbox"
-                                    sx={{
-                                      "&.Mui-checked": {
-                                        color: theme.palette.water.main,
-                                      },
-                                    }}
-                                  />
-                                }
-                                label="Device 3"
-                              />
-                            </FormGroup>
-                          </Grid>
-                        </Grid>
-                        <ThemeProvider theme={theme}>
-                          <Button
-                            style={{
-                              marginLeft: "15px ",
-                              marginBottom: "5px",
-                            }}
-                            onClick={handleReset}
-                            variant="contained"
-                            color="water"
-                            id="selectAll"
-                          >
-                            Select all
-                          </Button>
-                        </ThemeProvider>
-                        <ThemeProvider theme={theme}>
-                          <Button
-                            style={{
-                              marginLeft: "15px ",
-                              marginBottom: "5px",
-                            }}
-                            onClick={handleClear}
-                            variant="contained"
-                            color="water"
-                            id="clearAll"
-                          >
-                            Clear all
-                          </Button>
-                        </ThemeProvider>
-                      </List>
-                    </Collapse>
-                  </List>
+                      <div
+                        className="overlay-content"
+                        style={{
+                          position: "absolute",
+                          top: 0,
+                          left: 0,
+                          width: "100%",
+                          height: "100%",
+                          display: "flex",
+                          flexDirection: "column",
+                          justifyContent: "space-between",
+                        }}
+                      >
+                        <img
+                          src={Orchestrator}
+                          alt="Orchestrator"
+                          ref={orchestratorRef}
+                          style={{
+                            position: "absolute",
+                            top: "4%",
+                            left: "35%",
+                            width: "25%",
+                            height: "25%",
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </Box>
                 </Box>
               </Grid>
             </Grid>
