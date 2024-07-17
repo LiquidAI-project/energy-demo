@@ -3,7 +3,8 @@ import {
   Grid,
   Typography,
 } from "@mui/material";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { motion } from "framer-motion";
 import backgroundImage from "./../assets/yard.png";
 import roadImage from "./../assets/road.png";
 import cabinImage from "./../assets/cabin.png";
@@ -16,7 +17,32 @@ const Demo = () => {
   const orchestratorRef = useRef(null);
   const freezerRef = useRef(null);
 
+  const [codeToFreezerObjPos, setCodeToFreezerObjPos] = useState(({ x: 0, y: 0 }));
+  const [isCodeMoveObjsVisible, setIsCodeMoveObjsVisible] = useState(false);
+
+  // Added a timout to display the code move animation object as it gives wierd movement of (0,0) position to orchestrator position
   useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsCodeMoveObjsVisible(true);
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+
+    // Moving object is referred to the animation of code moving interpretation
+    const setMovingObjInitialPosition = () => {
+      if (orchestratorRef.current) {
+        const orchestrator = orchestratorRef.current.getBoundingClientRect();
+        setCodeToFreezerObjPos({
+          x: orchestrator.left + orchestrator.width / 2,
+          y: orchestrator.top + orchestrator.height / 2,
+        });
+      }
+    };
+
+    setMovingObjInitialPosition();
 
     // This logic will draw a line between the orchestrator and the freezer
     // TODO: Refactor this logic as a common function to draw other lines too
@@ -83,9 +109,29 @@ const Demo = () => {
           columns={5}
           style={{ paddingRight: "3vh", paddingLeft: "3vh" }}
         >
-          <div
-            id="orchestrator-freezer-line"
-          />
+          <div id="orchestrator-freezer-line" />
+          {isCodeMoveObjsVisible && (
+            <motion.div
+              className="round"
+              initial={{
+                x: codeToFreezerObjPos.x - 25,
+                y: codeToFreezerObjPos.y - 25,
+              }} // 25 pixels deducted to get the center of the object
+              animate={{
+                x: codeToFreezerObjPos.x - 25,
+                y: codeToFreezerObjPos.y - 25,
+              }}
+              transition={{ type: "spring", duration: 5 }}
+              style={{
+                position: "absolute",
+                width: "50px",
+                height: "50px",
+                backgroundColor: "#1E90FF",
+                borderRadius: "50%",
+                zIndex: 1,
+              }}
+            />
+          )}
           <Grid item xs={12} sm={3} minWidth={"77vh"}>
             <Box>
               <div
@@ -216,6 +262,7 @@ const Demo = () => {
                             left: "35%",
                             width: "25%",
                             height: "25%",
+                            zIndex: 2,
                           }}
                         />
                       </div>
