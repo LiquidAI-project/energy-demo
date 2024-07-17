@@ -15,7 +15,8 @@
   "dependencies": {
     "@mui/icons-material": "^5.14.11",
     "@mui/x-charts": "^6.0.0-alpha.16",
-    "axios": "^1.5.1"
+    "axios": "^1.5.1",
+    "framer-motion": "^11.3.2"
   },
   "devDependencies": {
     "@babel/preset-env": "^7.22.20",
