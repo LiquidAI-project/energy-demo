@@ -1,16 +1,16 @@
-import React, { useState } from 'react';
-import { Popover } from '@mui/material';
-import freezerImage from '../../assets/freezer.png';
-import energyBorder from "../../assets/freezer_energy.png";
-import activeIcon from '../../assets/active.png';
-import EnergyComponent from '../EnergyComponent';
+import React, { useState } from "react";
+import { Popover } from "@mui/material";
+import washingMachineImage from "../../assets/washing_machine.png";
+import energyBorder from "../../assets/washing_machine_energy.png";
+import activeIcon from "../../assets/active.png";
+import EnergyComponent from "../EnergyComponent";
 
-const Freezer = React.forwardRef((props, ref) => {
+const WashingMachine = React.forwardRef((props, ref) => {
   const component = {
-    id: 'freezer',
-    name: 'Fridge & Freezer',
-    type: 'consumer',
-    description: 'Food stays cold in the fridge and freezer.',
+    id: "washing-machine",
+    name: "WashingMachine",
+    type: "consumer",
+    description: "Washing machine turns dirty laundry clean in just a moment.",
     optimize: false,
   };
 
@@ -29,30 +29,29 @@ const Freezer = React.forwardRef((props, ref) => {
   return (
     <div>
       <img
-        id="freezer-energy"
+        id="washing-machine-energy"
         src={energyBorder}
         alt="energy"
-        className="freezer-energy-border"
+        className="washing-machine-energy-border"
         style={{
           position: "absolute",
-          top: "9%",
-          left: "63.6%",
-          width: "4.5%",
-          height: "11%",
-          opacity: window.sessionStorage.getItem(component.id),
+          top: "22.8%",
+          left: "28.2%",
+          width: "4.8%",
+          height: "4.8%",
         }}
       />
       <img
-        id="freezer"
-        src={freezerImage}
-        alt="freezer"
+        id="washing-machine"
+        src={washingMachineImage}
+        alt="washingMachine"
         ref={ref}
         style={{
           position: "absolute",
-          top: "9.5%",
-          left: "63.8%",
+          top: "23.1%",
+          left: "28.6%",
           width: "4%",
-          height: "10%",
+          height: "4%",
         }}
         onMouseEnter={handleHoverOn}
         onMouseLeave={handleHoverAway}
@@ -62,8 +61,8 @@ const Freezer = React.forwardRef((props, ref) => {
         alt="active"
         style={{
           position: "absolute",
-          top: "5%",
-          left: "63.8%",
+          top: "18.1%",
+          left: "28.6%",
           width: "8%",
           height: "10%",
           transform: "scale(0.2)",
@@ -90,5 +89,5 @@ const Freezer = React.forwardRef((props, ref) => {
   );
 });
 
-Freezer.displayName = 'Freezer';
-export default Freezer;
+WashingMachine.displayName = "WashingMachine";
+export default WashingMachine;
