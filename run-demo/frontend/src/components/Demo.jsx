@@ -10,12 +10,14 @@ import roadImage from "./../assets/road.png";
 import cabinImage from "./../assets/cabin.png";
 import houseImage from "./../assets/house.png";
 import Freezer from "./visual_components/Freezer";
+import WashingMachine from "./visual_components/WashingMachine";
 import Orchestrator from "./../assets/orchestrator.png";
 
 const Demo = () => {
 
   const orchestratorRef = useRef(null);
   const freezerRef = useRef(null);
+  const washingMachineRef = useRef(null);
 
   const [codeToFreezerObjPos, setCodeToFreezerObjPos] = useState(({ x: 0, y: 0 }));
   const [isCodeMoveObjsVisible, setIsCodeMoveObjsVisible] = useState(false);
@@ -211,6 +213,7 @@ const Demo = () => {
                   <div>
                     {/*Energy components inside the house*/}
                     <Freezer ref={freezerRef} />
+                    <WashingMachine ref={washingMachineRef} />
                   </div>
                 </div>
               </div>
