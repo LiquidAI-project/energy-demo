@@ -20,7 +20,24 @@ const Demo = () => {
   const washingMachineRef = useRef(null);
 
   const [codeToFreezerObjPos, setCodeToFreezerObjPos] = useState(({ x: 0, y: 0 }));
+  const [codeToWashingMachineObjPos, setCodeToWashingMachineObjPos] = useState(({ x: 0, y: 0 }));
   const [isCodeMoveObjsVisible, setIsCodeMoveObjsVisible] = useState(false);
+
+  // This function is used to check the code movement animation. Thios should be removed after the implementation of the actual code movement
+  // const sampleClicker = () => {
+  //   if (freezerRef.current) {
+  //     const freezer = freezerRef.current.getBoundingClientRect();
+  //     const washingMachine = washingMachineRef.current.getBoundingClientRect();
+  //     setCodeToFreezerObjPos({
+  //       x: freezer.left + freezer.width / 2,
+  //       y: freezer.top + freezer.height / 2,
+  //     });
+  //     setCodeToWashingMachineObjPos({
+  //       x: washingMachine.left + washingMachine.width / 2,
+  //       y: washingMachine.top + washingMachine.height / 2,
+  //     });
+  //   }
+  // }
 
   // Added a timout to display the code move animation object as it gives wierd movement of (0,0) position to orchestrator position
   useEffect(() => {
@@ -37,26 +54,26 @@ const Demo = () => {
     const setMovingObjInitialPosition = () => {
       if (orchestratorRef.current) {
         const orchestrator = orchestratorRef.current.getBoundingClientRect();
-        setCodeToFreezerObjPos({
-          x: orchestrator.left + orchestrator.width / 2,
-          y: orchestrator.top + orchestrator.height / 2,
-        });
+        const orchestratorX = orchestrator.left + orchestrator.width / 2;
+        const orchestratorY = orchestrator.top + orchestrator.height / 2;
+
+        setCodeToFreezerObjPos({ x: orchestratorX, y: orchestratorY });
+        setCodeToWashingMachineObjPos({ x: orchestratorX, y: orchestratorY });
       }
     };
 
     setMovingObjInitialPosition();
 
-    // This logic will draw a line between the orchestrator and the freezer
-    // TODO: Refactor this logic as a common function to draw other lines too
-    const connectOrchestratorToFreezer = () => {
-      if (orchestratorRef.current && freezerRef.current) {
+    // This logic will draw a line between the orchestrator and the equipment
+    const connectOrchestratorToEquipment = (equipmentRef, equipmentName) => {
+      if (orchestratorRef.current && equipmentRef.current) {
         const orchestrator = orchestratorRef.current.getBoundingClientRect();
-        const freezer = freezerRef.current.getBoundingClientRect();
+        const equipment = equipmentRef.current.getBoundingClientRect();
 
         const x1 = orchestrator.left + orchestrator.width / 2;
         const y1 = orchestrator.top + orchestrator.height / 2;
-        const x2 = freezer.left + freezer.width / 2;
-        const y2 = freezer.top + freezer.height / 2;
+        const x2 = equipment.left + equipment.width / 2;
+        const y2 = equipment.top + equipment.height / 2;
 
         const length = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
         const angle = Math.atan2(y2 - y1, x2 - x1) * (180 / Math.PI);
@@ -72,16 +89,21 @@ const Demo = () => {
           zIndex: 1,
         };
 
-        const lineElement = document.getElementById('orchestrator-freezer-line');
+        const lineElement = document.getElementById(`orchestrator-${equipmentName}-line`);
         Object.assign(lineElement.style, lineStyle);
       }
     };
 
-    connectOrchestratorToFreezer();
-    window.addEventListener('resize', connectOrchestratorToFreezer);
+    connectOrchestratorToEquipment(freezerRef, "freezer");
+    connectOrchestratorToEquipment(washingMachineRef, "washingMachine");
+    window.addEventListener('resize', () => connectOrchestratorToEquipment(freezerRef, "freezer"));
+    window.addEventListener('resize', () => connectOrchestratorToEquipment(washingMachineRef, "washingMachine"));
+    window.addEventListener('resize', setMovingObjInitialPosition);
 
     return () => {
-      window.removeEventListener('resize', connectOrchestratorToFreezer);
+      window.removeEventListener('resize', () => connectOrchestratorToEquipment(freezerRef, "freezer"));
+      window.removeEventListener('resize', () => connectOrchestratorToEquipment(washingMachineRef, "washingMachine"));
+      window.removeEventListener('resize', setMovingObjInitialPosition);
     };
   }, []);
 
@@ -112,6 +134,7 @@ const Demo = () => {
           style={{ paddingRight: "3vh", paddingLeft: "3vh" }}
         >
           <div id="orchestrator-freezer-line" />
+          <div id="orchestrator-washingMachine-line" />
           {isCodeMoveObjsVisible && (
             <motion.div
               className="round"
@@ -122,6 +145,28 @@ const Demo = () => {
               animate={{
                 x: codeToFreezerObjPos.x - 25,
                 y: codeToFreezerObjPos.y - 25,
+              }}
+              transition={{ type: "spring", duration: 5 }}
+              style={{
+                position: "absolute",
+                width: "50px",
+                height: "50px",
+                backgroundColor: "#1E90FF",
+                borderRadius: "50%",
+                zIndex: 1,
+              }}
+            />
+          )}
+          {isCodeMoveObjsVisible && (
+            <motion.div
+              className="round"
+              initial={{
+                x: codeToWashingMachineObjPos.x - 25,
+                y: codeToWashingMachineObjPos.y - 25,
+              }} // 25 pixels deducted to get the center of the object
+              animate={{
+                x: codeToWashingMachineObjPos.x - 25,
+                y: codeToWashingMachineObjPos.y - 25,
               }}
               transition={{ type: "spring", duration: 5 }}
               style={{
@@ -270,6 +315,7 @@ const Demo = () => {
                         />
                       </div>
                     </div>
+                    {/* <button onClick={sampleClicker}>Click me</button> */} {/* This button only for develoment testing. should be removed after actual implementation */}
                   </Box>
                 </Box>
               </Grid>
