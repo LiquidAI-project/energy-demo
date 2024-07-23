@@ -12,6 +12,7 @@ import houseImage from "./../assets/house.png";
 import Freezer from "./visual_components/Freezer";
 import WashingMachine from "./visual_components/WashingMachine";
 import Orchestrator from "./../assets/orchestrator.png";
+import { fetchData } from '../services/apiService';
 
 const Demo = () => {
 
@@ -24,20 +25,29 @@ const Demo = () => {
   const [isCodeMoveObjsVisible, setIsCodeMoveObjsVisible] = useState(false);
 
   // This function is used to check the code movement animation. Thios should be removed after the implementation of the actual code movement
-  // const sampleClicker = () => {
-  //   if (freezerRef.current) {
-  //     const freezer = freezerRef.current.getBoundingClientRect();
-  //     const washingMachine = washingMachineRef.current.getBoundingClientRect();
-  //     setCodeToFreezerObjPos({
-  //       x: freezer.left + freezer.width / 2,
-  //       y: freezer.top + freezer.height / 2,
-  //     });
-  //     setCodeToWashingMachineObjPos({
-  //       x: washingMachine.left + washingMachine.width / 2,
-  //       y: washingMachine.top + washingMachine.height / 2,
-  //     });
-  //   }
-  // }
+  const sampleClicker = () => {
+    const getData = async () => {
+      try {
+        const fetchedData = await fetchData();
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
+    };
+
+    getData();
+    // if (freezerRef.current) {
+    //   const freezer = freezerRef.current.getBoundingClientRect();
+    //   const washingMachine = washingMachineRef.current.getBoundingClientRect();
+    //   setCodeToFreezerObjPos({
+    //     x: freezer.left + freezer.width / 2,
+    //     y: freezer.top + freezer.height / 2,
+    //   });
+    //   setCodeToWashingMachineObjPos({
+    //     x: washingMachine.left + washingMachine.width / 2,
+    //     y: washingMachine.top + washingMachine.height / 2,
+    //   });
+    // }
+  }
 
   // Added a timout to display the code move animation object as it gives wierd movement of (0,0) position to orchestrator position
   useEffect(() => {
@@ -315,7 +325,7 @@ const Demo = () => {
                         />
                       </div>
                     </div>
-                    {/* <button onClick={sampleClicker}>Click me</button> */} {/* This button only for develoment testing. should be removed after actual implementation */}
+                    <button onClick={sampleClicker}>Click me</button> {/* This button only for develoment testing. should be removed after actual implementation */}
                   </Box>
                 </Box>
               </Grid>
