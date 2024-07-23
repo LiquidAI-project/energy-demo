@@ -102,7 +102,7 @@ const Demo = () => {
       console.error("Error fetching data:", error);
     }
   };
-  
+
   useEffect(() => {
     getInitialDeviceHealth();
     resetHealthLogTimer();
@@ -119,7 +119,7 @@ const Demo = () => {
 
     ws.onmessage = (event) => {
       const newLog = JSON.parse(event.data);
-      
+
       // Add new logs to the queue
       logsQueueRef.current.push(newLog);
 
