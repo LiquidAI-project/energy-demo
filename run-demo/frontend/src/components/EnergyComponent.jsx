@@ -7,6 +7,7 @@ const EnergyComponent = (props) => {
     name,
     type,
     description,
+    isActive
   } = props;
 
   return (
@@ -32,7 +33,7 @@ const EnergyComponent = (props) => {
           </>
         )}
         <Typography variant="body2" sx={{ marginBottom: 1 }}>
-          <strong>✅ Active</strong>
+          <strong>{isActive ? "✅ Active" : "⛔ Inactive"}</strong>
           <br />
         </Typography>
         <Typography variant="body2">

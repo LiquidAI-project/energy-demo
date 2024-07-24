@@ -1,20 +1,39 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Popover } from '@mui/material';
 import freezerImage from '../../assets/freezer.png';
 import energyBorder from "../../assets/freezer_energy.png";
 import activeIcon from '../../assets/active.png';
+import inactiveIcon from '../../assets/inactive.png';
 import EnergyComponent from '../EnergyComponent';
 
 const Freezer = React.forwardRef((props, ref) => {
+
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [isActive, setIsActive] = useState(false);
+
   const component = {
     id: 'freezer',
     name: 'Fridge & Freezer',
     type: 'consumer',
     description: 'Food stays cold in the fridge and freezer.',
     optimize: false,
+    isActive:  isActive,
   };
 
-  const [anchorEl, setAnchorEl] = useState(null);
+  useEffect(() => {
+    const checkEquipment = () => {
+      const devices = JSON.parse(localStorage.getItem('devices') || '[]');
+      const isEquipmentActive = devices.some(device => device.name === 'equipment1');
+      setIsActive(isEquipmentActive);
+    };
+  
+    checkEquipment();
+  
+    // Set up the interval to check every 2 seconds
+    const intervalId = setInterval(checkEquipment, 2000);
+  
+    return () => clearInterval(intervalId);
+  }, []);
 
   const handleHoverOn = (event) => {
     setAnchorEl(event.currentTarget);
@@ -58,8 +77,8 @@ const Freezer = React.forwardRef((props, ref) => {
         onMouseLeave={handleHoverAway}
       />
       <img
-        src={activeIcon}
-        alt="active"
+        src={isActive ? activeIcon : inactiveIcon}
+        alt={isActive ? "active" : "inactive"}
         style={{
           position: "absolute",
           top: "5%",

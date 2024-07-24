@@ -5,10 +5,9 @@ const PUBLIC_HOST = process.env.PUBLIC_HOST;
 const PUBLIC_PORT = process.env.PUBLIC_PORT;
 
 // Function to fetch data
-export const fetchData = async () => {
+export const fetchData = async (param) => {
   try {
-    const url = `${PUBLIC_HOST}:${PUBLIC_PORT}/device/logs`;
-    console.log('Request URL:', url); // Log the constructed URL for debugging
+    const url = `${PUBLIC_HOST}:${PUBLIC_PORT}${param}`;
     const response = await axios.get(url);
     return response.data;
   } catch (error) {
