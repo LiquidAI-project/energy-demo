@@ -24,17 +24,8 @@ const Demo = () => {
   const [codeToWashingMachineObjPos, setCodeToWashingMachineObjPos] = useState(({ x: 0, y: 0 }));
   const [isCodeMoveObjsVisible, setIsCodeMoveObjsVisible] = useState(false);
 
-  // This function is used to check the code movement animation. Thios should be removed after the implementation of the actual code movement
+  // This function is used to check the code movement animation. This should be removed after the implementation of the actual code movement
   const sampleClicker = () => {
-    const getData = async () => {
-      try {
-        const fetchedData = await fetchData();
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      }
-    };
-
-    getData();
     // if (freezerRef.current) {
     //   const freezer = freezerRef.current.getBoundingClientRect();
     //   const washingMachine = washingMachineRef.current.getBoundingClientRect();
@@ -48,6 +39,20 @@ const Demo = () => {
     //   });
     // }
   }
+
+  // Det the active devices at the moment
+  const getDeviceData = async () => {
+    try {
+      const devices = await fetchData('/file/device');
+      localStorage.setItem('devices', JSON.stringify(devices.map(({ _id, name }) => ({ _id, name }))));
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
+  
+  useEffect(() => {
+    getDeviceData();
+  }, []);
 
   // Added a timout to display the code move animation object as it gives wierd movement of (0,0) position to orchestrator position
   useEffect(() => {

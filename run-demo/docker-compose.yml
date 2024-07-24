@@ -2,7 +2,6 @@ services:
 
   orchestrator:
     container_name: orchestrator
-    image: ghcr.io/liquidai-project/wasmiot-orchestrator
     build:
       context: ./wasmiot-orchestrator/fileserv
       dockerfile: ./Dockerfile
