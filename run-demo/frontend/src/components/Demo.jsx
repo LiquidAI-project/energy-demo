@@ -14,11 +14,16 @@ import WashingMachine from "./visual_components/WashingMachine";
 import Orchestrator from "./../assets/orchestrator.png";
 import { fetchData } from '../services/apiService';
 
+const PUBLIC_HOST = process.env.PUBLIC_HOST;
+const PUBLIC_PORT = process.env.PUBLIC_PORT;
+
 const Demo = () => {
 
   const orchestratorRef = useRef(null);
   const freezerRef = useRef(null);
   const washingMachineRef = useRef(null);
+  const logsQueueRef = useRef([]);
+  const healthLogTimerRef = useRef(null);
 
   const [codeToFreezerObjPos, setCodeToFreezerObjPos] = useState(({ x: 0, y: 0 }));
   const [codeToWashingMachineObjPos, setCodeToWashingMachineObjPos] = useState(({ x: 0, y: 0 }));
@@ -40,18 +45,99 @@ const Demo = () => {
     // }
   }
 
-  // Det the active devices at the moment
-  const getDeviceData = async () => {
+  // Reset the device storage after 3 minutes of inactivity
+  const resetDeviceStorage = () => {
+    localStorage.setItem("devices", JSON.stringify([]));
+  };
+
+  // Reset the health log timer after 3 minutes
+  const resetHealthLogTimer = () => {
+    clearTimeout(healthLogTimerRef.current);
+    healthLogTimerRef.current = setTimeout(resetDeviceStorage, 3 * 60 * 1000);
+  };
+
+  // Collect logs in a queue and process them in batch
+  const processLogsQueue = () => {
+    const logs = logsQueueRef.current;
+    if (logs.length === 0) return;
+
+    const updatedDevices = [];
+
+    logs.forEach(log => {
+      if (log.funcName === "thingi_health") {
+        if (!updatedDevices.some(device => device.name === log.deviceName)) {
+          updatedDevices.push({ name: log.deviceName });
+        }
+      }
+    });
+
+    // Update the local storage with the new devices array if there are updates
+    if (updatedDevices.length > 0) {
+      localStorage.setItem("devices", JSON.stringify(updatedDevices));
+      resetHealthLogTimer();
+    }
+
+    // Clear the queue
+    logsQueueRef.current = [];
+  };
+
+  // Get the devices health at the moment
+  const getInitialDeviceHealth = async () => {
     try {
-      const devices = await fetchData('/file/device');
-      localStorage.setItem('devices', JSON.stringify(devices.map(({ _id, name }) => ({ _id, name }))));
+      const currentDate = new Date();
+
+      // Subtract 3 minutes from the current date and time because health check is done every 3 minutes from the orchestrator
+      currentDate.setTime(currentDate.getTime() - 0.5 * 60 * 1000);
+
+      // Convert to ISO 8601 format (e.g., "2024-07-24T13:21:35.776Z")
+      const formattedDate = currentDate.toISOString();
+
+      const logs = await fetchData("/device/logs?after=" + formattedDate);
+
+      logs.forEach(log => logsQueueRef.current.push(log));
+      setTimeout(processLogsQueue, 500);
+
+
     } catch (error) {
-      console.error('Error fetching data:', error);
+      console.error("Error fetching data:", error);
     }
   };
   
   useEffect(() => {
-    getDeviceData();
+    getInitialDeviceHealth();
+    resetHealthLogTimer();
+  }, []);
+
+
+  // WebSocket setup to receive new logs
+  useEffect(() => {
+    const ws = new WebSocket(`${PUBLIC_HOST}:${PUBLIC_PORT}`);
+
+    ws.onopen = () => {
+      console.log('Connected to the WebSocket server');
+    };
+
+    ws.onmessage = (event) => {
+      const newLog = JSON.parse(event.data);
+      
+      // Add new logs to the queue
+      logsQueueRef.current.push(newLog);
+
+      // Process the queue after a short delay
+      setTimeout(processLogsQueue, 500);
+    };
+
+    ws.onclose = () => {
+      console.log('Disconnected from the WebSocket server');
+    };
+
+    ws.onerror = (error) => {
+      console.error('WebSocket error:', error);
+    };
+
+    return () => {
+      ws.close();
+    };
   }, []);
 
   // Added a timout to display the code move animation object as it gives wierd movement of (0,0) position to orchestrator position
