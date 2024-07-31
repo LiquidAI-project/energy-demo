@@ -87,7 +87,7 @@ const Demo = () => {
       const currentDate = new Date();
 
       // Subtract 3 minutes from the current date and time because health check is done every 3 minutes from the orchestrator
-      currentDate.setTime(currentDate.getTime() - 0.5 * 60 * 1000);
+      currentDate.setTime(currentDate.getTime() - 3 * 60 * 1000);
 
       // Convert to ISO 8601 format (e.g., "2024-07-24T13:21:35.776Z")
       const formattedDate = currentDate.toISOString();
