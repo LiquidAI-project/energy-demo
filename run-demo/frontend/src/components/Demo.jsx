@@ -29,20 +29,50 @@ const Demo = () => {
   const [codeToWashingMachineObjPos, setCodeToWashingMachineObjPos] = useState(({ x: 0, y: 0 }));
   const [isCodeMoveObjsVisible, setIsCodeMoveObjsVisible] = useState(false);
 
-  // This function is used to check the code movement animation. This should be removed after the implementation of the actual code movement
-  const sampleClicker = () => {
-    // if (freezerRef.current) {
-    //   const freezer = freezerRef.current.getBoundingClientRect();
-    //   const washingMachine = washingMachineRef.current.getBoundingClientRect();
-    //   setCodeToFreezerObjPos({
-    //     x: freezer.left + freezer.width / 2,
-    //     y: freezer.top + freezer.height / 2,
-    //   });
-    //   setCodeToWashingMachineObjPos({
-    //     x: washingMachine.left + washingMachine.width / 2,
-    //     y: washingMachine.top + washingMachine.height / 2,
-    //   });
-    // }
+  const deviceReferences = {
+    "freezer": freezerRef,
+    "washing-machine": washingMachineRef,
+    // Add more device names and their references here
+  };
+
+  const deviceStateMap = {
+    "freezer": setCodeToFreezerObjPos,
+    "washing-machine": setCodeToWashingMachineObjPos,
+    // Add more device names and their corresponding state setters here
+  };
+
+  // Get the reference of the device
+  const getDeviceReference = (deviceName) => {
+    const deviceRef = deviceReferences[deviceName];
+      if (deviceRef) {
+        return deviceRef;
+      } else {
+        console.error(`No reference found for device: ${deviceName}`);
+        return null;
+      }
+  }
+
+  // Update the device position in the state
+  const updateDevicePosition = (deviceName, position) => {
+    const setDevicePosition = deviceStateMap[deviceName];
+    if (setDevicePosition) {
+      setDevicePosition(position);
+    } else {
+      console.error(`No device fount to update postion: ${deviceName}`);
+    }
+  };
+
+  // Move the code animation object to the device position
+  const moveCodeAnimation = (deviceName) => {
+    const deviceRef = getDeviceReference(deviceName);
+    if (deviceRef.current) {
+      const device = deviceRef.current.getBoundingClientRect();
+      const newPosition = {
+        x: device.left + device.width / 2,
+        y: device.top + device.height / 2,
+      };
+      updateDevicePosition(deviceName, newPosition);
+    }
   }
 
   // Reset the device storage after 3 minutes of inactivity
@@ -68,6 +98,9 @@ const Demo = () => {
         if (!updatedDevices.some(device => device.name === log.deviceName)) {
           updatedDevices.push({ name: log.deviceName });
         }
+      }
+      else if (log.funcName === "deployment_create") {
+        moveCodeAnimation(log.deviceName);
       }
     });
 
@@ -111,7 +144,8 @@ const Demo = () => {
 
   // WebSocket setup to receive new logs
   useEffect(() => {
-    const ws = new WebSocket(`${PUBLIC_HOST}:${PUBLIC_PORT}`);
+    const wsHost = PUBLIC_HOST.replace(/^http/, 'ws');
+    const ws = new WebSocket(`${wsHost}:${PUBLIC_PORT}`);
 
     ws.onopen = () => {
       console.log('Connected to the WebSocket server');
@@ -416,7 +450,6 @@ const Demo = () => {
                         />
                       </div>
                     </div>
-                    <button onClick={sampleClicker}>Click me</button> {/* This button only for develoment testing. should be removed after actual implementation */}
                   </Box>
                 </Box>
               </Grid>

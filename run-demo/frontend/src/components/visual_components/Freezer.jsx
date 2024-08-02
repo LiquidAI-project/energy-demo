@@ -23,7 +23,7 @@ const Freezer = React.forwardRef((props, ref) => {
   useEffect(() => {
     const checkEquipment = () => {
       const devices = JSON.parse(localStorage.getItem('devices') || '[]');
-      const isEquipmentActive = devices.some(device => device.name === 'equipment1');
+      const isEquipmentActive = devices.some(device => device.name === component.id);
       setIsActive(isEquipmentActive);
     };
   

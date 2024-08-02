@@ -57,13 +57,13 @@ services:
     links:
       - orchestrator
 
-  equipment1:
+  freezer:
     extends: device-base
     profiles:
       - device
     environment:
       - DEVICE_TYPE=equipment
-      - FLASK_APP=equipment1
+      - FLASK_APP=freezer
       - WASMIOT_SUPERVISOR_IP=172.15.0.21
     ports:
       - 3001:5000
@@ -77,13 +77,13 @@ services:
         ipv4_address: 172.15.0.21
 
 
-  equipment2:
+  washing-machine:
     extends: device-base
     profiles:
       - device
     environment:
       - DEVICE_TYPE=equipment
-      - FLASK_APP=equipment2
+      - FLASK_APP=washing-machine
       - WASMIOT_SUPERVISOR_IP=172.15.0.22
     ports:
       - 3002:5000
