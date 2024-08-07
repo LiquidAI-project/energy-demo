@@ -18,4 +18,4 @@ fi
 
 echo "Starting services... ${@}"
 
-docker compose -f "${DIR}/docker-compose.yml" --profile device up --pull always ${@}
+docker compose -f "${DIR}/docker-compose.yml" --project-name energy-demo --profile device up --pull always ${@}
