@@ -116,6 +116,7 @@ services:
     environment:
       PUBLIC_HOST: ${PUBLIC_HOST}
       PUBLIC_PORT: ${PUBLIC_PORT}
+      DEVICE_CHECK_INTERVAL: ${DEVICE_CHECK_INTERVAL}
     volumes:
     # the volumes included here to allow interactive development
     # for final version, they should be removed
