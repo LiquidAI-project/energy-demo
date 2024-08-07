@@ -83,7 +83,7 @@ const Demo = () => {
     const expiryTime = DEVICE_CHECK_INTERVAL;
 
     const updatedDevices = existingDevices.filter(device => now - device.lastUpdateTime < expiryTime);
-  
+
     localStorage.setItem("devices", JSON.stringify(updatedDevices));
   };
 
@@ -100,16 +100,16 @@ const Demo = () => {
   const processLogsQueue = () => {
     const logs = logsQueueRef.current;
     if (logs.length === 0) return;
-  
+
     // Get the existing devices from local storage
     let existingDevices = JSON.parse(localStorage.getItem("devices")) || [];
-  
+
     // Convert the array to a map for efficient updates
     const deviceMap = new Map(existingDevices.map(device => [device.name, device]));
-  
+
     const now = new Date().getTime();
     const expiryTime = DEVICE_CHECK_INTERVAL;
-  
+
     logs.forEach(log => {
       if (log.funcName === "thingi_health") {
         if (!deviceMap.has(log.deviceName)) {
@@ -121,13 +121,13 @@ const Demo = () => {
         moveCodeAnimation(log.deviceName);
       }
     });
-  
+
     // Filter out devices that haven't been updated within the expiry time
     const updatedDevices = Array.from(deviceMap.values()).filter(device => now - device.lastUpdateTime < expiryTime);
-  
+
     // Update the local storage with the new devices array
     localStorage.setItem("devices", JSON.stringify(updatedDevices));
-  
+
     // Clear the queue
     logsQueueRef.current = [];
   };
@@ -153,7 +153,7 @@ const Demo = () => {
       console.error("Error fetching data:", error);
     }
   };
-  
+
   useEffect(() => {
     getInitialDeviceHealth();
     resetHealthLogTimer();
@@ -171,7 +171,7 @@ const Demo = () => {
 
     ws.onmessage = (event) => {
       const newLog = JSON.parse(event.data);
-      
+
       // Add new logs to the queue
       logsQueueRef.current.push(newLog);
 

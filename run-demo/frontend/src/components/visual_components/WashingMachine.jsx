@@ -26,12 +26,12 @@ const WashingMachine = React.forwardRef((props, ref) => {
       const isEquipmentActive = devices.some(device => device.name === component.id);
       setIsActive(isEquipmentActive);
     };
-  
+
     checkEquipment();
-  
+
     // Set up the interval to check every 2 seconds
     const intervalId = setInterval(checkEquipment, 2000);
-  
+
     return () => clearInterval(intervalId);
   }, []);
 

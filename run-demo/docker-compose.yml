@@ -1,7 +1,7 @@
 services:
 
   orchestrator:
-    container_name: orchestrator
+    image: ghcr.io/liquidai-project/wasmiot-orchestrator
     build:
       context: ./wasmiot-orchestrator/fileserv
       dockerfile: ./Dockerfile
@@ -15,9 +15,13 @@ services:
       MONGO_PORT: ${MONGO_PORT:-27017}
       MONGO_ROOT_USERNAME: ${MONGO_ROOT_USERNAME}
       MONGO_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
+      PUBLIC_HOST: ${PUBLIC_HOST:-http://orchestrator}
+      PUBLIC_PORT: ${PUBLIC_PORT:-3000}
+      WASMIOT_INIT_FOLDER: ${WASMIOT_INIT_FOLDER:-/init}
+      WASMIOT_CLEAR_LOGS: ${WASMIOT_CLEAR_LOGS:-true}
+    volumes:
+      - ./orchestrator-init:/init
     command: nodejs ./server.js
-    env_file:
-      - .env
     depends_on:
       - mongo
 
@@ -45,6 +49,9 @@ services:
       # on their own though (separate profile)...
       - ABSTRACT_BASE_HACK_DO_NOT_USE
     image: ghcr.io/liquidai-project/wasmiot-supervisor
+    build:
+      context: ./wasmiot-supervisor
+      dockerfile: ./Dockerfile
     # ports:
     #   # 5000 is the default Flask-port that is probably used.
     #   - 0:5000 # ::OVERRIDE::
@@ -52,8 +59,9 @@ services:
       - type: bind
         source: ./wasmiot-supervisor/host_app
         target: /app/host_app
-    env_file:
-      - .env
+    environment:
+      WASMIOT_ORCHESTRATOR_URL: ${WASMIOT_ORCHESTRATOR_URL}
+      WASMIOT_LOGGING_ENDPOINT: ${WASMIOT_LOGGING_ENDPOINT}
     links:
       - orchestrator
 
@@ -99,19 +107,20 @@ services:
       - /dev/video0:/dev/video0
 
   frontend:
-    container_name: frontend
-    image: node:latest
-    working_dir: /usr/src/app
+    image: ghcr.io/liquidai-project/energy-demo-frontend
+    build:
+      context: ./frontend
+      dockerfile: ./Dockerfile
     ports:
       - 5173:5173
     environment:
       PUBLIC_HOST: ${PUBLIC_HOST}
       PUBLIC_PORT: ${PUBLIC_PORT}
-      DEVICE_CHECK_INTERVAL: ${DEVICE_CHECK_INTERVAL}
     volumes:
+    # the volumes included here to allow interactive development
+    # for final version, they should be removed
       - ./frontend:/usr/src/app
       - /usr/src/app/node_modules
-    command: sh -c "npm install && npm start"
     depends_on:
       - orchestrator
 
