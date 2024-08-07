@@ -49,6 +49,9 @@ services:
       # on their own though (separate profile)...
       - ABSTRACT_BASE_HACK_DO_NOT_USE
     image: ghcr.io/liquidai-project/wasmiot-supervisor
+    build:
+      context: ./wasmiot-supervisor
+      dockerfile: ./Dockerfile
     # ports:
     #   # 5000 is the default Flask-port that is probably used.
     #   - 0:5000 # ::OVERRIDE::
