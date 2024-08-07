@@ -104,15 +104,17 @@ services:
       - /dev/video0:/dev/video0
 
   frontend:
-    container_name: frontend
-    image: node:latest
-    working_dir: /usr/src/app
+    image: ghcr.io/liquidai-project/energy-demo-frontend
+    build:
+      context: ./frontend
+      dockerfile: ./Dockerfile
     ports:
       - 5173:5173
+    # the volumes included here to allow interactive development
+    # for final version, they should be removed
     volumes:
       - ./frontend:/usr/src/app
       - /usr/src/app/node_modules
-    command: sh -c "npm install && npm start"
     depends_on:
       - orchestrator
 
