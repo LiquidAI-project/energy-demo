@@ -16,13 +16,13 @@ services:
       MONGO_PORT: ${MONGO_PORT:-27017}
       MONGO_ROOT_USERNAME: ${MONGO_ROOT_USERNAME}
       MONGO_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
+      PUBLIC_HOST: ${PUBLIC_HOST:-http://orchestrator}
+      PUBLIC_PORT: ${PUBLIC_PORT:-3000}
       WASMIOT_INIT_FOLDER: ${WASMIOT_INIT_FOLDER:-/init}
       WASMIOT_CLEAR_LOGS: ${WASMIOT_CLEAR_LOGS:-true}
     volumes:
       - ./orchestrator-init:/init
     command: nodejs ./server.js
-    env_file:
-      - .env
     depends_on:
       - mongo
 
@@ -57,8 +57,9 @@ services:
       - type: bind
         source: ./wasmiot-supervisor/host_app
         target: /app/host_app
-    env_file:
-      - .env
+    environment:
+      WASMIOT_ORCHESTRATOR_URL: ${WASMIOT_ORCHESTRATOR_URL}
+      WASMIOT_LOGGING_ENDPOINT: ${WASMIOT_LOGGING_ENDPOINT}
     links:
       - orchestrator
 
