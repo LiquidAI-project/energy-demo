@@ -1,20 +1,39 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from 'react';
 import { Popover } from "@mui/material";
 import washingMachineImage from "../../assets/washing_machine.png";
 import energyBorder from "../../assets/washing_machine_energy.png";
 import activeIcon from "../../assets/active.png";
+import inactiveIcon from '../../assets/inactive.png';
 import EnergyComponent from "../EnergyComponent";
 
 const WashingMachine = React.forwardRef((props, ref) => {
+
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [isActive, setIsActive] = useState(false);
+
   const component = {
     id: "washing-machine",
     name: "WashingMachine",
     type: "consumer",
     description: "Washing machine turns dirty laundry clean in just a moment.",
     optimize: false,
+    isActive:  isActive,
   };
 
-  const [anchorEl, setAnchorEl] = useState(null);
+  useEffect(() => {
+    const checkEquipment = () => {
+      const devices = JSON.parse(localStorage.getItem('devices') || '[]');
+      const isEquipmentActive = devices.some(device => device.name === 'equipment2');
+      setIsActive(isEquipmentActive);
+    };
+  
+    checkEquipment();
+  
+    // Set up the interval to check every 2 seconds
+    const intervalId = setInterval(checkEquipment, 2000);
+  
+    return () => clearInterval(intervalId);
+  }, []);
 
   const handleHoverOn = (event) => {
     setAnchorEl(event.currentTarget);
@@ -57,8 +76,8 @@ const WashingMachine = React.forwardRef((props, ref) => {
         onMouseLeave={handleHoverAway}
       />
       <img
-        src={activeIcon}
-        alt="active"
+        src={isActive ? activeIcon : inactiveIcon}
+        alt={isActive ? "active" : "inactive"}
         style={{
           position: "absolute",
           top: "18.1%",

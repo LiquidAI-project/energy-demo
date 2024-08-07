@@ -5,6 +5,10 @@
 # Get this file directory
 DIR=$(dirname "${BASH_SOURCE[0]}")
 
-echo "Stopping services... ${@}"
+if [ -z "${1}" ]; then
+    echo "Stopping all services..."
+else
+    echo "Stopping services... ${@}"
+fi
 
 docker compose -f "${DIR}/docker-compose.yml" --project-name energy-demo --profile device down ${@}

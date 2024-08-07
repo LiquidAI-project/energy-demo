@@ -16,6 +16,10 @@ fi
 # Implement the docker-compose.yml file
 #cp "${DIR}/orchestrator-init "${DIR}/wasmiot-orchestrator/init"
 
-echo "Starting services... ${@}"
+if [ -z "${1}" ]; then
+    echo "Starting all services..."
+else
+    echo "Starting services... ${@}"
+fi
 
-docker compose -f "${DIR}/docker-compose.yml" --project-name energy-demo --profile device up --pull always ${@}
+docker compose -f "${DIR}/docker-compose.yml" --project-name energy-demo --profile device up --build ${@}
