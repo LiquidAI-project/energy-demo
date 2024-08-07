@@ -107,6 +107,7 @@ services:
     environment:
       PUBLIC_HOST: ${PUBLIC_HOST}
       PUBLIC_PORT: ${PUBLIC_PORT}
+      DEVICE_CHECK_INTERVAL: ${DEVICE_CHECK_INTERVAL}
     volumes:
       - ./frontend:/usr/src/app
       - /usr/src/app/node_modules
