@@ -80,7 +80,7 @@ const Demo = () => {
   const resetDeviceStorage = () => {
     const existingDevices = JSON.parse(localStorage.getItem("devices")) || [];
     const now = new Date().getTime();
-    const expiryTime = DEVICE_CHECK_INTERVAL;
+    const expiryTime = parseInt(DEVICE_CHECK_INTERVAL) + 2000;
 
     const updatedDevices = existingDevices.filter(device => now - device.lastUpdateTime < expiryTime);
 
@@ -93,7 +93,24 @@ const Demo = () => {
     healthLogTimerRef.current = setTimeout(() => {
       resetDeviceStorage();
       resetHealthLogTimer();
-    }, DEVICE_CHECK_INTERVAL);
+    }, parseInt(DEVICE_CHECK_INTERVAL));
+  };
+
+  // Get the device ID map from local storage
+  const getDeviceIdMap = () => {
+    const storedDeviceMap = localStorage.getItem("deviceIdMap");
+    if (!storedDeviceMap) {
+      return null;
+    }
+    const deviceArray = JSON.parse(storedDeviceMap);
+    return new Map(deviceArray);
+  }
+
+  // Get the device ID by name
+  const getDeviceIdByName = (deviceName) => {
+    const deviceIdMap = getDeviceIdMap();
+    const deviceId = deviceIdMap.get(deviceName);
+    return deviceId ? deviceId : null;
   };
 
   // Collect logs in a queue and process them in batch
@@ -108,14 +125,23 @@ const Demo = () => {
     const deviceMap = new Map(existingDevices.map(device => [device.name, device]));
 
     const now = new Date().getTime();
-    const expiryTime = DEVICE_CHECK_INTERVAL;
+    const expiryTime = parseInt(DEVICE_CHECK_INTERVAL) + 2000;
 
     logs.forEach(log => {
+      const deviceId = getDeviceIdByName(log.deviceName);
+
       if (log.funcName === "thingi_health") {
         if (!deviceMap.has(log.deviceName)) {
-          deviceMap.set(log.deviceName, { name: log.deviceName, lastUpdateTime: now });
+          deviceMap.set(log.deviceName, {
+            name: log.deviceName,
+            lastUpdateTime: now,
+            deviceId: deviceId,
+            deploymentSequence: [],
+            modules: [],
+          });
         } else {
           deviceMap.get(log.deviceName).lastUpdateTime = now;
+          deviceMap.get(log.deviceName).deviceId = deviceId;
         }
       } else if (log.funcName === "deployment_create") {
         moveCodeAnimation(log.deviceName);
@@ -132,13 +158,20 @@ const Demo = () => {
     logsQueueRef.current = [];
   };
 
+  // Trigger processing when deviceIdMap changes
+  useEffect(() => {
+    if (getDeviceIdMap.size > 0) {
+      processLogsQueue();
+    }
+  }, [getDeviceIdMap]);
+
   // Get the devices health at the moment
   const getInitialDeviceHealth = async () => {
     try {
       const currentDate = new Date();
 
       // Subtract 3 minutes from the current date and time because health check is done every 3 minutes from the orchestrator
-      currentDate.setTime(currentDate.getTime() - DEVICE_CHECK_INTERVAL);
+      currentDate.setTime(currentDate.getTime() - parseInt(DEVICE_CHECK_INTERVAL));
 
       // Convert to ISO 8601 format (e.g., "2024-07-24T13:21:35.776Z")
       const formattedDate = currentDate.toISOString();
@@ -154,7 +187,19 @@ const Demo = () => {
     }
   };
 
+  // Fetch the device data from the API
+  const fetchDeviceData = async () => {
+    try {
+      const devicesFromAPI = await fetchData("/file/device");
+      const deviceMap = new Map(devicesFromAPI.map(device => [device.name, device._id]));
+      localStorage.setItem("deviceIdMap", JSON.stringify(Array.from(deviceMap.entries())));
+    } catch (error) {
+      console.error('Error fetching device data:', error);
+    }
+  };
+
   useEffect(() => {
+    fetchDeviceData();
     getInitialDeviceHealth();
     resetHealthLogTimer();
   }, []);
