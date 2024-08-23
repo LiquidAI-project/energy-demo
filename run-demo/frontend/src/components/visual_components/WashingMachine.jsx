@@ -10,6 +10,7 @@ const WashingMachine = React.forwardRef((props, ref) => {
 
   const [anchorEl, setAnchorEl] = useState(null);
   const [isActive, setIsActive] = useState(false);
+  const [deviceInfo, setDeviceInfo] = useState({});
 
   const component = {
     id: "washing-machine",
@@ -18,13 +19,15 @@ const WashingMachine = React.forwardRef((props, ref) => {
     description: "Washing machine turns dirty laundry clean in just a moment.",
     optimize: false,
     isActive:  isActive,
+    deviceInfo: deviceInfo,
   };
 
   useEffect(() => {
     const checkEquipment = () => {
       const devices = JSON.parse(localStorage.getItem('devices') || '[]');
-      const isEquipmentActive = devices.some(device => device.name === component.id);
-      setIsActive(isEquipmentActive);
+      const deviceFound = devices.find(device => device.name === component.id);
+      setIsActive(deviceFound ? true : false);
+      setDeviceInfo(deviceFound);
     };
 
     checkEquipment();

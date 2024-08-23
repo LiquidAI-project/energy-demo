@@ -7,7 +7,8 @@ const EnergyComponent = (props) => {
     name,
     type,
     description,
-    isActive
+    isActive,
+    deviceInfo,
   } = props;
 
   return (
@@ -37,7 +38,7 @@ const EnergyComponent = (props) => {
           <br />
         </Typography>
         <Typography variant="body2">
-          <strong>🔵 Module deployed - </strong> None
+          <strong>🔵 Module deployed - </strong> {deviceInfo.isModuleActive ? deviceInfo.existingModuleName : "None"}
         </Typography>
       </CardContent>
     </Card>
@@ -49,6 +50,11 @@ EnergyComponent.propTypes = {
   name: PropTypes.string.isRequired,
   type: PropTypes.oneOf(['consumer', 'producer']),
   description: PropTypes.string,
+  isActive: PropTypes.bool.isRequired,
+  deviceInfo: PropTypes.shape({
+    isModuleActive: PropTypes.bool,
+    existingModuleName: PropTypes.string,
+  }).isRequired,
 };
 
 export default EnergyComponent;

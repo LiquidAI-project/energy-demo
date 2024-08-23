@@ -79,7 +79,7 @@ const Demo = () => {
   // Reset the device storage after 3 minutes of inactivity
   const resetDeviceStorage = () => {
     const existingDevices = JSON.parse(localStorage.getItem("devices")) || [];
-    const now = new Date().getTime();
+    const now = Date.now();
     const expiryTime = parseInt(DEVICE_CHECK_INTERVAL) + 2000;
 
     const updatedDevices = existingDevices.filter(device => now - device.lastUpdateTime < expiryTime);
@@ -113,8 +113,32 @@ const Demo = () => {
     return deviceId ? deviceId : null;
   };
 
+  // Update the deployment details for the device
+  const updateDeployment = async (device) => {
+    const deployments = await fetchData("/file/manifest");
+ 
+    const deviceSpecifiDeployment = deployments.find((item) =>
+      item.sequence.some((seq) => seq.device === device.deviceId)
+    );
+ 
+    if (deviceSpecifiDeployment) {
+ 
+      // Accessing the modules inside fullManifest using the deviceId
+      const deviceManifest = deviceSpecifiDeployment.fullManifest[device.deviceId];
+      
+      device.existingModuleId = deviceManifest.modules[0].id;
+      device.existingModuleName = deviceManifest.modules[0].name;
+      deviceSpecifiDeployment.active ? device.isModuleActive = true : device.isModuleActive = false;
+
+    } else {
+      device.existingModuleId = null;
+      device.existingModuleName = null;
+      device.isModuleActive = false;
+    }
+  };
+
   // Collect logs in a queue and process them in batch
-  const processLogsQueue = () => {
+  const processLogsQueue = async () => {
     const logs = logsQueueRef.current;
     if (logs.length === 0) return;
 
@@ -124,10 +148,12 @@ const Demo = () => {
     // Convert the array to a map for efficient updates
     const deviceMap = new Map(existingDevices.map(device => [device.name, device]));
 
-    const now = new Date().getTime();
+    const now = Date.now();
     const expiryTime = parseInt(DEVICE_CHECK_INTERVAL) + 2000;
 
-    logs.forEach(log => {
+    const updatePromises = [];
+
+    for (const log of logs) {
       const deviceId = getDeviceIdByName(log.deviceName);
 
       if (log.funcName === "thingi_health") {
@@ -136,17 +162,26 @@ const Demo = () => {
             name: log.deviceName,
             lastUpdateTime: now,
             deviceId: deviceId,
-            deploymentSequence: [],
-            modules: [],
+            existingModuleId: null,
+            existingModuleName: null,
+            isModuleActive: false,
           });
         } else {
-          deviceMap.get(log.deviceName).lastUpdateTime = now;
-          deviceMap.get(log.deviceName).deviceId = deviceId;
+          const device = deviceMap.get(log.deviceName);
+          device.lastUpdateTime = now;
+          device.deviceId = deviceId;
+
+          // This will make sure any changes to deployment are updated in local storage
+          updatePromises.push(updateDeployment(deviceMap.get(log.deviceName)));
         }
       } else if (log.funcName === "deployment_create") {
         moveCodeAnimation(log.deviceName);
+        updatePromises.push(updateDeployment(deviceMap.get(log.deviceName)));
       }
-    });
+    }
+
+    // Wait for all updateDeployment calls to complete
+    await Promise.all(updatePromises);
 
     // Filter out devices that haven't been updated within the expiry time
     const updatedDevices = Array.from(deviceMap.values()).filter(device => now - device.lastUpdateTime < expiryTime);
