@@ -38,7 +38,7 @@ const EnergyComponent = (props) => {
           <br />
         </Typography>
         <Typography variant="body2">
-          <strong>🔵 Module deployed - </strong> {deviceInfo.isModuleActive ? deviceInfo.existingModuleName : "None"}
+          <strong>🔵 Module deployed - </strong> {deviceInfo !== undefined && deviceInfo.isModuleActive ? deviceInfo.existingModuleName : "None"}
         </Typography>
       </CardContent>
     </Card>
