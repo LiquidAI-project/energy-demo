@@ -26,8 +26,8 @@ const WashingMachine = React.forwardRef((props, ref) => {
     const checkEquipment = () => {
       const devices = JSON.parse(localStorage.getItem('devices') || '[]');
       const deviceFound = devices.find(device => device.name === component.id);
-      setIsActive(deviceFound ? true : false);
-      setDeviceInfo(deviceFound);
+      setIsActive(deviceFound !== undefined);
+      setDeviceInfo(deviceFound || {});
     };
 
     checkEquipment();
@@ -63,11 +63,7 @@ const WashingMachine = React.forwardRef((props, ref) => {
           height: "4.8%",
         }}
       />
-      <img
-        id="washing-machine"
-        src={washingMachineImage}
-        alt="washingMachine"
-        ref={ref}
+      <button
         style={{
           position: "absolute",
           top: "23.1%",
@@ -77,7 +73,18 @@ const WashingMachine = React.forwardRef((props, ref) => {
         }}
         onMouseEnter={handleHoverOn}
         onMouseLeave={handleHoverAway}
-      />
+      >
+        <img
+          id="washing-machine"
+          src={washingMachineImage}
+          alt="washingMachine"
+          ref={ref}
+          style={{
+            width: "100%",
+            height: "100%",
+          }}
+        />
+      </button>
       <img
         src={isActive ? activeIcon : inactiveIcon}
         alt={isActive ? "active" : "inactive"}

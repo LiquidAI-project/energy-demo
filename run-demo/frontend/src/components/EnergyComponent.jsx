@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 
 const EnergyComponent = (props) => {
   const {
-    id,
+    // id,
     name,
     type,
     description,
@@ -46,7 +46,7 @@ const EnergyComponent = (props) => {
 };
 
 EnergyComponent.propTypes = {
-  id: PropTypes.string,
+  // id: PropTypes.string,
   name: PropTypes.string.isRequired,
   type: PropTypes.oneOf(['consumer', 'producer']),
   description: PropTypes.string,

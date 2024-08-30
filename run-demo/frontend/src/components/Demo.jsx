@@ -62,12 +62,12 @@ const Demo = () => {
         x: orchestrator.left + orchestrator.width / 2,
         y: orchestrator.top + orchestrator.height / 2,
       };
-  
+
       setMovingDeployments((prevDeployments) => {
         const newMovingDeployments = [
           ...prevDeployments,
           {
-            id: prevDeployments.length, 
+            id: prevDeployments.length,
             deviceName,
             startPos: orchestratorPosition,
             endPos: newPosition,
@@ -75,12 +75,12 @@ const Demo = () => {
         ];
 
         setTimeout(() => {
-          setMovingDeployments((currentMovingDeployments) => 
+          setMovingDeployments((currentMovingDeployments) =>
             currentMovingDeployments.filter(dep => dep.id !== newMovingDeployments[newMovingDeployments.length - 1].id)
           );
         }, 5000); // Remove after 5 seconds
 
-        return newMovingDeployments;  
+        return newMovingDeployments;
       });
     }
   };
@@ -119,24 +119,24 @@ const Demo = () => {
   const getDeviceIdByName = (deviceName) => {
     const deviceIdMap = getDeviceIdMap();
     const deviceId = deviceIdMap.get(deviceName);
-    return deviceId ? deviceId : null;
+    return deviceId || null;
   };
 
   // Update the deployment details for the device
   const updateDeployment = async (device, deviceName, deployments) => {
- 
+
     const deviceSpecificDeployment = deployments.find((item) =>
       item.sequence.some((seq) => seq.device === device.deviceId)
     );
- 
+
     if (deviceSpecificDeployment) {
- 
+
       // Accessing the modules inside fullManifest using the deviceId
       const deviceManifest = deviceSpecificDeployment.fullManifest[device.deviceId];
-      
+
       device.existingModuleId = deviceManifest.modules[0].id;
       device.existingModuleName = deviceManifest.modules[0].name;
-      deviceSpecificDeployment.active ? device.isModuleActive = true : device.isModuleActive = false;
+      device.isModuleActive = Boolean(deviceSpecificDeployment.active);
 
       const deviceRef = getDeviceReference(deviceName);
 
@@ -149,8 +149,8 @@ const Demo = () => {
         };
 
         setActiveDeployments((prevActiveDeployments) => {
-          const existingDeploymentIds = prevActiveDeployments.map((dep) => dep.id); 
-          
+          const existingDeploymentIds = prevActiveDeployments.map((dep) => dep.id);
+
           if (!existingDeploymentIds.includes(deviceSpecificDeployment._id)) {
             return [
               ...prevActiveDeployments,
@@ -192,7 +192,7 @@ const Demo = () => {
 
     const updatePromises = [];
 
-    const deployments = await fetchData("/file/manifest"); // Fetch all the deployments availble in orchestrator
+    const deployments = await fetchData("/file/manifest"); // Fetch all the deployments available in orchestrator
 
     for (const log of logs) {
       const deviceId = getDeviceIdByName(log.deviceName);
@@ -216,8 +216,8 @@ const Demo = () => {
           // This will make sure any changes to deployment are updated in local storage
           updatePromises.push(updateDeployment(deviceMap.get(log.deviceName), log.deviceName, deployments));
         }
-        // Added log time and current time difference check to prevent to create multiple moving object for old logs when refreshing the page 
-      } else if (log.funcName === "deployment_create" && ((now - logReceivedTime) < 5000)) { 
+        // Added log time and current time difference check to prevent to create multiple moving object for old logs when refreshing the page
+      } else if (log.funcName === "deployment_create" && ((now - logReceivedTime) < 5000)) {
         moveCodeAnimation(log.deviceName);
         setTimeout(() => {
           updatePromises.push(updateDeployment(deviceMap.get(log.deviceName), log.deviceName, deployments));
@@ -423,7 +423,7 @@ const Demo = () => {
                 y: deployment.wasmModuleIconPosition.y - 25,
                 width: "50px",  // Set initial width
                 height: "50px", // Set initial height
-              }} 
+              }}
               animate={{
                 x: deployment.wasmModuleIconPosition.x - 25,
                 y: deployment.wasmModuleIconPosition.y - 25,

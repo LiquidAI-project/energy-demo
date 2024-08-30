@@ -26,8 +26,9 @@ const Freezer = React.forwardRef((props, ref) => {
     const checkEquipment = () => {
       const devices = JSON.parse(localStorage.getItem('devices') || '[]');
       const deviceFound = devices.find(device => device.name === component.id);
-      setIsActive(deviceFound ? true : false);
-      setDeviceInfo(deviceFound);
+      setIsActive(deviceFound !== undefined);
+      setDeviceInfo(deviceFound || {});
+      console.log(devices);
     };
 
     checkEquipment();
@@ -64,11 +65,7 @@ const Freezer = React.forwardRef((props, ref) => {
           opacity: window.sessionStorage.getItem(component.id),
         }}
       />
-      <img
-        id="freezer"
-        src={freezerImage}
-        alt="freezer"
-        ref={ref}
+      <button
         style={{
           position: "absolute",
           top: "9.5%",
@@ -78,7 +75,18 @@ const Freezer = React.forwardRef((props, ref) => {
         }}
         onMouseEnter={handleHoverOn}
         onMouseLeave={handleHoverAway}
-      />
+      >
+        <img
+          id="freezer"
+          src={freezerImage}
+          alt="freezer"
+          ref={ref}
+          style={{
+            width: "100%",
+            height: "100%",
+          }}
+        />
+      </button>
       <img
         src={isActive ? activeIcon : inactiveIcon}
         alt={isActive ? "active" : "inactive"}
