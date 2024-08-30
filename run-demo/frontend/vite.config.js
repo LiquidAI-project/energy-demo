@@ -1,8 +1,8 @@
+/* eslint-disable no-undef */
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import dotenv from 'dotenv';
 import { resolve } from 'path';
-
 
 // Load environment variables from the .env file
 dotenv.config({ path: resolve(__dirname, '../.env') });

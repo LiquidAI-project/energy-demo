@@ -3,7 +3,7 @@ import {
   Grid,
   Typography,
 } from "@mui/material";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { motion } from "framer-motion";
 import backgroundImage from "./../assets/yard.png";
 import roadImage from "./../assets/road.png";
@@ -15,8 +15,11 @@ import Orchestrator from "./../assets/orchestrator.png";
 import WebAssembly_Logo from "./../assets/WebAssembly_Logo.png";
 import { fetchData } from '../services/apiService';
 
+// eslint-disable-next-line no-undef
 const PUBLIC_HOST = process.env.PUBLIC_HOST;
+// eslint-disable-next-line no-undef
 const PUBLIC_PORT = process.env.PUBLIC_PORT;
+// eslint-disable-next-line no-undef
 const DEVICE_CHECK_INTERVAL = process.env.DEVICE_CHECK_INTERVAL;
 
 const Demo = () => {
@@ -31,14 +34,14 @@ const Demo = () => {
   const [activeDeployments, setActiveDeployments] = useState([]);
 
   // Store reference for each devices if needs to get the device location in UI
-  const deviceReferences = {
+  const deviceReferences = useMemo(() => ({
     "freezer": freezerRef,
     "washing-machine": washingMachineRef,
     // Add more device names and their references here
-  };
+  }), []);
 
   // Get the reference of the device
-  const getDeviceReference = (deviceName) => {
+  const getDeviceReference = useCallback((deviceName) => {
     const deviceRef = deviceReferences[deviceName];
       if (deviceRef) {
         return deviceRef;
@@ -46,10 +49,10 @@ const Demo = () => {
         console.error(`No reference found for device: ${deviceName}`);
         return null;
       }
-  }
+  }, [deviceReferences]);
 
   // Move the code animation object to the device position
-  const moveCodeAnimation = (deviceName) => {
+  const moveCodeAnimation = useCallback((deviceName) => {
     const deviceRef = getDeviceReference(deviceName);
     if (deviceRef.current) {
       const device = deviceRef.current.getBoundingClientRect();
@@ -83,7 +86,7 @@ const Demo = () => {
         return newMovingDeployments;
       });
     }
-  };
+  }, [getDeviceReference]);
 
   // Reset the device storage after 3 minutes of inactivity
   const resetDeviceStorage = () => {
@@ -97,33 +100,33 @@ const Demo = () => {
   };
 
   // Reset the health log timer after 3 minutes
-  const resetHealthLogTimer = () => {
+  const resetHealthLogTimer = useCallback(() => {
     clearTimeout(healthLogTimerRef.current);
     healthLogTimerRef.current = setTimeout(() => {
       resetDeviceStorage();
       resetHealthLogTimer();
     }, parseInt(DEVICE_CHECK_INTERVAL));
-  };
+  }, []);
 
   // Get the device ID map from local storage
-  const getDeviceIdMap = () => {
+  const getDeviceIdMap = useCallback(() => {
     const storedDeviceMap = localStorage.getItem("deviceIdMap");
     if (!storedDeviceMap) {
       return null;
     }
     const deviceArray = JSON.parse(storedDeviceMap);
     return new Map(deviceArray);
-  }
+  }, []);
 
   // Get the device ID by name
-  const getDeviceIdByName = (deviceName) => {
+  const getDeviceIdByName = useCallback((deviceName) => {
     const deviceIdMap = getDeviceIdMap();
     const deviceId = deviceIdMap.get(deviceName);
     return deviceId || null;
-  };
+  }, [getDeviceIdMap]);
 
   // Update the deployment details for the device
-  const updateDeployment = async (device, deviceName, deployments) => {
+  const updateDeployment = useCallback(async (device, deviceName, deployments) => {
 
     const deviceSpecificDeployment = deployments.find((item) =>
       item.sequence.some((seq) => seq.device === device.deviceId)
@@ -171,13 +174,13 @@ const Demo = () => {
       device.isModuleActive = false;
 
       setActiveDeployments((prevActiveDeployments) => {
-        return prevActiveDeployments.filter((dep) => dep.deviceId !== device.deviceId);;
+        return prevActiveDeployments.filter((dep) => dep.deviceId !== device.deviceId);
       });
     }
-  };
+  }, [getDeviceReference]);
 
   // Collect logs in a queue and process them in batch
-  const processLogsQueue = async () => {
+  const processLogsQueue = useCallback(async () => {
     const logs = logsQueueRef.current;
     if (logs.length === 0) return;
 
@@ -236,17 +239,17 @@ const Demo = () => {
 
     // Clear the queue
     logsQueueRef.current = [];
-  };
+  }, [getDeviceIdByName, moveCodeAnimation, updateDeployment]);
 
   // Trigger processing when deviceIdMap changes
   useEffect(() => {
     if (getDeviceIdMap.size > 0) {
       processLogsQueue();
     }
-  }, [getDeviceIdMap]);
+  }, [getDeviceIdMap, processLogsQueue]);
 
   // Get the devices health at the moment
-  const getInitialDeviceHealth = async () => {
+  const getInitialDeviceHealth = useCallback(async () => {
     try {
       const currentDate = new Date();
 
@@ -261,11 +264,10 @@ const Demo = () => {
       logs.forEach(log => logsQueueRef.current.push(log));
       setTimeout(processLogsQueue, 500);
 
-
     } catch (error) {
       console.error("Error fetching data:", error);
     }
-  };
+  }, [processLogsQueue]);
 
   // Fetch the device data from the API
   const fetchDeviceData = async () => {
@@ -282,7 +284,7 @@ const Demo = () => {
     fetchDeviceData();
     getInitialDeviceHealth();
     resetHealthLogTimer();
-  }, []);
+  }, [getInitialDeviceHealth, resetHealthLogTimer]);
 
 
   // WebSocket setup to receive new logs
@@ -315,7 +317,7 @@ const Demo = () => {
     return () => {
       ws.close();
     };
-  }, []);
+  }, [processLogsQueue]);
 
   useEffect(() => {
 

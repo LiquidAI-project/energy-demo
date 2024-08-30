@@ -36,7 +36,7 @@ const Freezer = React.forwardRef((props, ref) => {
     const intervalId = setInterval(checkEquipment, 2000);
 
     return () => clearInterval(intervalId);
-  }, []);
+  }, [component.id]);
 
   const handleHoverOn = (event) => {
     setAnchorEl(event.currentTarget);
