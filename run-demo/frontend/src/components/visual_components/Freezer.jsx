@@ -28,7 +28,6 @@ const Freezer = React.forwardRef((props, ref) => {
       const deviceFound = devices.find(device => device.name === component.id);
       setIsActive(deviceFound !== undefined);
       setDeviceInfo(deviceFound || {});
-      console.log(devices);
     };
 
     checkEquipment();
