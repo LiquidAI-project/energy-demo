@@ -71,6 +71,9 @@ const Freezer = React.forwardRef((props, ref) => {
           left: "63.8%",
           width: "4%",
           height: "10%",
+          backgroundColor: "transparent",
+          border: "none",
+          padding: "0%",
         }}
         onMouseEnter={handleHoverOn}
         onMouseLeave={handleHoverAway}

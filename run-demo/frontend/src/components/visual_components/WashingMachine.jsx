@@ -70,6 +70,9 @@ const WashingMachine = React.forwardRef((props, ref) => {
           left: "28.6%",
           width: "4%",
           height: "4%",
+          backgroundColor: "transparent",
+          border: "none",
+          padding: "0%",
         }}
         onMouseEnter={handleHoverOn}
         onMouseLeave={handleHoverAway}
