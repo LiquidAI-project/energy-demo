@@ -53,39 +53,44 @@ const Demo = () => {
 
   // Move the code animation object to the device position
   const moveCodeAnimation = useCallback((deviceName) => {
-    const deviceRef = getDeviceReference(deviceName);
-    if (deviceRef.current) {
-      const device = deviceRef.current.getBoundingClientRect();
-      const orchestrator = orchestratorRef.current.getBoundingClientRect();
-      const newPosition = {
-        x: device.left + device.width / 2,
-        y: device.top + device.height / 2,
-      };
-      const orchestratorPosition = {
-        x: orchestrator.left + orchestrator.width / 2,
-        y: orchestrator.top + orchestrator.height / 2,
-      };
-
-      setMovingDeployments((prevDeployments) => {
-        const newMovingDeployments = [
-          ...prevDeployments,
-          {
-            id: prevDeployments.length,
-            deviceName,
-            startPos: orchestratorPosition,
-            endPos: newPosition,
-          },
-        ];
-
-        setTimeout(() => {
-          setMovingDeployments((currentMovingDeployments) =>
-            currentMovingDeployments.filter(dep => dep.id !== newMovingDeployments[newMovingDeployments.length - 1].id)
-          );
-        }, 5000); // Remove after 5 seconds
-
-        return newMovingDeployments;
-      });
-    }
+    return new Promise((resolve) => {
+      const deviceRef = getDeviceReference(deviceName);
+      if (deviceRef.current) {
+        const device = deviceRef.current.getBoundingClientRect();
+        const orchestrator = orchestratorRef.current.getBoundingClientRect();
+        const newPosition = {
+          x: device.left + device.width / 2,
+          y: device.top + device.height / 2,
+        };
+        const orchestratorPosition = {
+          x: orchestrator.left + orchestrator.width / 2,
+          y: orchestrator.top + orchestrator.height / 2,
+        };
+  
+        setMovingDeployments((prevDeployments) => {
+          const newMovingDeployments = [
+            ...prevDeployments,
+            {
+              id: prevDeployments.length,
+              deviceName,
+              startPos: orchestratorPosition,
+              endPos: newPosition,
+            },
+          ];
+  
+          setTimeout(() => {
+            setMovingDeployments((currentMovingDeployments) =>
+              currentMovingDeployments.filter(dep => dep.id !== newMovingDeployments[newMovingDeployments.length - 1].id)
+            );
+            resolve(); // Resolve the promise after the setTimeout is complete
+          }, 5000); // Remove after 5 seconds
+  
+          return newMovingDeployments;
+        });
+      } else {
+        resolve();
+      }
+    });
   }, [getDeviceReference]);
 
   // Reset the device storage after 3 minutes of inactivity
@@ -221,10 +226,8 @@ const Demo = () => {
         }
         // Added log time and current time difference check to prevent to create multiple moving object for old logs when refreshing the page
       } else if (log.funcName === "deployment_create" && ((now - logReceivedTime) < 5000)) {
-        moveCodeAnimation(log.deviceName);
-        setTimeout(() => {
-          updatePromises.push(updateDeployment(deviceMap.get(log.deviceName), log.deviceName, deployments));
-        }, 5000);
+        await moveCodeAnimation(log.deviceName);
+        updatePromises.push(updateDeployment(deviceMap.get(log.deviceName), log.deviceName, deployments));
       }
     }
 
