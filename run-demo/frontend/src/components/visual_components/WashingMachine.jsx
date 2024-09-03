@@ -10,6 +10,7 @@ const WashingMachine = React.forwardRef((props, ref) => {
 
   const [anchorEl, setAnchorEl] = useState(null);
   const [isActive, setIsActive] = useState(false);
+  const [deviceInfo, setDeviceInfo] = useState({});
 
   const component = {
     id: "washing-machine",
@@ -18,22 +19,24 @@ const WashingMachine = React.forwardRef((props, ref) => {
     description: "Washing machine turns dirty laundry clean in just a moment.",
     optimize: false,
     isActive:  isActive,
+    deviceInfo: deviceInfo,
   };
 
   useEffect(() => {
     const checkEquipment = () => {
       const devices = JSON.parse(localStorage.getItem('devices') || '[]');
-      const isEquipmentActive = devices.some(device => device.name === 'equipment2');
-      setIsActive(isEquipmentActive);
+      const deviceFound = devices.find(device => device.name === component.id);
+      setIsActive(deviceFound !== undefined);
+      setDeviceInfo(deviceFound || {});
     };
-  
+
     checkEquipment();
-  
+
     // Set up the interval to check every 2 seconds
     const intervalId = setInterval(checkEquipment, 2000);
-  
+
     return () => clearInterval(intervalId);
-  }, []);
+  }, [component.id]);
 
   const handleHoverOn = (event) => {
     setAnchorEl(event.currentTarget);
@@ -60,21 +63,31 @@ const WashingMachine = React.forwardRef((props, ref) => {
           height: "4.8%",
         }}
       />
-      <img
-        id="washing-machine"
-        src={washingMachineImage}
-        alt="washingMachine"
-        ref={ref}
+      <button
         style={{
           position: "absolute",
           top: "23.1%",
           left: "28.6%",
           width: "4%",
           height: "4%",
+          backgroundColor: "transparent",
+          border: "none",
+          padding: "0%",
         }}
         onMouseEnter={handleHoverOn}
         onMouseLeave={handleHoverAway}
-      />
+      >
+        <img
+          id="washing-machine"
+          src={washingMachineImage}
+          alt="washingMachine"
+          ref={ref}
+          style={{
+            width: "100%",
+            height: "100%",
+          }}
+        />
+      </button>
       <img
         src={isActive ? activeIcon : inactiveIcon}
         alt={isActive ? "active" : "inactive"}

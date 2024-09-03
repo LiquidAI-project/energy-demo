@@ -3,7 +3,7 @@ import {
   Grid,
   Typography,
 } from "@mui/material";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { motion } from "framer-motion";
 import backgroundImage from "./../assets/yard.png";
 import roadImage from "./../assets/road.png";
@@ -12,10 +12,15 @@ import houseImage from "./../assets/house.png";
 import Freezer from "./visual_components/Freezer";
 import WashingMachine from "./visual_components/WashingMachine";
 import Orchestrator from "./../assets/orchestrator.png";
+import WebAssembly_Logo from "./../assets/WebAssembly_Logo.png";
 import { fetchData } from '../services/apiService';
 
+// eslint-disable-next-line no-undef
 const PUBLIC_HOST = process.env.PUBLIC_HOST;
+// eslint-disable-next-line no-undef
 const PUBLIC_PORT = process.env.PUBLIC_PORT;
+// eslint-disable-next-line no-undef
+const DEVICE_CHECK_INTERVAL = process.env.DEVICE_CHECK_INTERVAL;
 
 const Demo = () => {
 
@@ -25,69 +30,234 @@ const Demo = () => {
   const logsQueueRef = useRef([]);
   const healthLogTimerRef = useRef(null);
 
-  const [codeToFreezerObjPos, setCodeToFreezerObjPos] = useState(({ x: 0, y: 0 }));
-  const [codeToWashingMachineObjPos, setCodeToWashingMachineObjPos] = useState(({ x: 0, y: 0 }));
-  const [isCodeMoveObjsVisible, setIsCodeMoveObjsVisible] = useState(false);
+  const [movingDeployments, setMovingDeployments] = useState([]);
+  const [activeDeployments, setActiveDeployments] = useState([]);
 
-  // This function is used to check the code movement animation. This should be removed after the implementation of the actual code movement
-  const sampleClicker = () => {
-    // if (freezerRef.current) {
-    //   const freezer = freezerRef.current.getBoundingClientRect();
-    //   const washingMachine = washingMachineRef.current.getBoundingClientRect();
-    //   setCodeToFreezerObjPos({
-    //     x: freezer.left + freezer.width / 2,
-    //     y: freezer.top + freezer.height / 2,
-    //   });
-    //   setCodeToWashingMachineObjPos({
-    //     x: washingMachine.left + washingMachine.width / 2,
-    //     y: washingMachine.top + washingMachine.height / 2,
-    //   });
-    // }
-  }
+  // Store reference for each devices if needs to get the device location in UI
+  const deviceReferences = useMemo(() => ({
+    "freezer": freezerRef,
+    "washing-machine": washingMachineRef,
+    // Add more device names and their references here
+  }), []);
+
+  // Get the reference of the device
+  const getDeviceReference = useCallback((deviceName) => {
+    const deviceRef = deviceReferences[deviceName];
+      if (deviceRef) {
+        return deviceRef;
+      } else {
+        console.error(`No reference found for device: ${deviceName}`);
+        return null;
+      }
+  }, [deviceReferences]);
+
+  // Move the code animation object to the device position
+  const moveCodeAnimation = useCallback((deviceName) => {
+    return new Promise((resolve) => {
+      const deviceRef = getDeviceReference(deviceName);
+      if (deviceRef.current) {
+        const device = deviceRef.current.getBoundingClientRect();
+        const orchestrator = orchestratorRef.current.getBoundingClientRect();
+        const newPosition = {
+          x: device.left + device.width / 2,
+          y: device.top + device.height / 2,
+        };
+        const orchestratorPosition = {
+          x: orchestrator.left + orchestrator.width / 2,
+          y: orchestrator.top + orchestrator.height / 2,
+        };
+  
+        setMovingDeployments((prevDeployments) => {
+          const newMovingDeployments = [
+            ...prevDeployments,
+            {
+              id: prevDeployments.length,
+              deviceName,
+              startPos: orchestratorPosition,
+              endPos: newPosition,
+            },
+          ];
+  
+          setTimeout(() => {
+            setMovingDeployments((currentMovingDeployments) =>
+              currentMovingDeployments.filter(dep => dep.id !== newMovingDeployments[newMovingDeployments.length - 1].id)
+            );
+            resolve(); // Resolve the promise after the setTimeout is complete
+          }, 5000); // Remove after 5 seconds
+  
+          return newMovingDeployments;
+        });
+      } else {
+        resolve();
+      }
+    });
+  }, [getDeviceReference]);
 
   // Reset the device storage after 3 minutes of inactivity
   const resetDeviceStorage = () => {
-    localStorage.setItem("devices", JSON.stringify([]));
+    const existingDevices = JSON.parse(localStorage.getItem("devices")) || [];
+    const now = Date.now();
+    const expiryTime = parseInt(DEVICE_CHECK_INTERVAL) + 2000;
+
+    const updatedDevices = existingDevices.filter(device => now - device.lastUpdateTime < expiryTime);
+
+    localStorage.setItem("devices", JSON.stringify(updatedDevices));
   };
 
   // Reset the health log timer after 3 minutes
-  const resetHealthLogTimer = () => {
+  const resetHealthLogTimer = useCallback(() => {
     clearTimeout(healthLogTimerRef.current);
-    healthLogTimerRef.current = setTimeout(resetDeviceStorage, 3 * 60 * 1000);
-  };
+    healthLogTimerRef.current = setTimeout(() => {
+      resetDeviceStorage();
+      resetHealthLogTimer();
+    }, parseInt(DEVICE_CHECK_INTERVAL));
+  }, []);
+
+  // Get the device ID map from local storage
+  const getDeviceIdMap = useCallback(() => {
+    const storedDeviceMap = localStorage.getItem("deviceIdMap");
+    if (!storedDeviceMap) {
+      return null;
+    }
+    const deviceArray = JSON.parse(storedDeviceMap);
+    return new Map(deviceArray);
+  }, []);
+
+  // Get the device ID by name
+  const getDeviceIdByName = useCallback((deviceName) => {
+    const deviceIdMap = getDeviceIdMap();
+    const deviceId = deviceIdMap.get(deviceName);
+    return deviceId || null;
+  }, [getDeviceIdMap]);
+
+  // Update the deployment details for the device
+  const updateDeployment = useCallback(async (device, deviceName, deployments) => {
+
+    const deviceSpecificDeployment = deployments.find((item) =>
+      item.sequence.some((seq) => seq.device === device.deviceId)
+    );
+
+    if (deviceSpecificDeployment) {
+
+      // Accessing the modules inside fullManifest using the deviceId
+      const deviceManifest = deviceSpecificDeployment.fullManifest[device.deviceId];
+
+      device.existingModuleId = deviceManifest.modules[0].id;
+      device.existingModuleName = deviceManifest.modules[0].name;
+      device.isModuleActive = Boolean(deviceSpecificDeployment.active);
+
+      const deviceRef = getDeviceReference(deviceName);
+
+      if (deviceRef.current && device.isModuleActive) {
+        const deviceBounds = deviceRef.current.getBoundingClientRect();
+
+        const wasmModuleIconPosition = {
+          x: deviceBounds.left + deviceBounds.width / 2,
+          y: deviceBounds.top + deviceBounds.height / 2,
+        };
+
+        setActiveDeployments((prevActiveDeployments) => {
+          const existingDeploymentIds = prevActiveDeployments.map((dep) => dep.id);
+
+          if (!existingDeploymentIds.includes(deviceSpecificDeployment._id)) {
+            return [
+              ...prevActiveDeployments,
+              {
+                id: deviceSpecificDeployment._id,
+                wasmModuleIconPosition: wasmModuleIconPosition,
+                deviceId: device.deviceId,
+              },
+            ];
+          }
+          return prevActiveDeployments;
+        });
+      }
+
+    } else {
+      device.existingModuleId = null;
+      device.existingModuleName = null;
+      device.isModuleActive = false;
+
+      setActiveDeployments((prevActiveDeployments) => {
+        return prevActiveDeployments.filter((dep) => dep.deviceId !== device.deviceId);
+      });
+    }
+  }, [getDeviceReference]);
 
   // Collect logs in a queue and process them in batch
-  const processLogsQueue = () => {
+  const processLogsQueue = useCallback(async () => {
     const logs = logsQueueRef.current;
     if (logs.length === 0) return;
 
-    const updatedDevices = [];
+    // Get the existing devices from local storage
+    let existingDevices = JSON.parse(localStorage.getItem("devices")) || [];
 
-    logs.forEach(log => {
+    // Convert the array to a map for efficient updates
+    const deviceMap = new Map(existingDevices.map(device => [device.name, device]));
+
+    const now = Date.now();
+    const expiryTime = parseInt(DEVICE_CHECK_INTERVAL) + 2000;
+
+    const updatePromises = [];
+
+    const deployments = await fetchData("/file/manifest"); // Fetch all the deployments available in orchestrator
+
+    for (const log of logs) {
+      const deviceId = getDeviceIdByName(log.deviceName);
+      const logReceivedTime = new Date(log.dateReceived).getTime(); // This is in milliseconds
+
       if (log.funcName === "thingi_health") {
-        if (!updatedDevices.some(device => device.name === log.deviceName)) {
-          updatedDevices.push({ name: log.deviceName });
-        }
-      }
-    });
+        if (!deviceMap.has(log.deviceName)) {
+          deviceMap.set(log.deviceName, {
+            name: log.deviceName,
+            lastUpdateTime: now,
+            deviceId: deviceId,
+            existingModuleId: null,
+            existingModuleName: null,
+            isModuleActive: false,
+          });
+        } else {
+          const device = deviceMap.get(log.deviceName);
+          device.lastUpdateTime = now;
+          device.deviceId = deviceId;
 
-    // Update the local storage with the new devices array if there are updates
-    if (updatedDevices.length > 0) {
-      localStorage.setItem("devices", JSON.stringify(updatedDevices));
-      resetHealthLogTimer();
+          // This will make sure any changes to deployment are updated in local storage
+          updatePromises.push(updateDeployment(deviceMap.get(log.deviceName), log.deviceName, deployments));
+        }
+        // Added log time and current time difference check to prevent to create multiple moving object for old logs when refreshing the page
+      } else if (log.funcName === "deployment_create" && ((now - logReceivedTime) < 5000)) {
+        await moveCodeAnimation(log.deviceName);
+        updatePromises.push(updateDeployment(deviceMap.get(log.deviceName), log.deviceName, deployments));
+      }
     }
+
+    // Wait for all updateDeployment calls to complete
+    await Promise.all(updatePromises);
+
+    // Filter out devices that haven't been updated within the expiry time
+    const updatedDevices = Array.from(deviceMap.values()).filter(device => now - device.lastUpdateTime < expiryTime);
+
+    // Update the local storage with the new devices array
+    localStorage.setItem("devices", JSON.stringify(updatedDevices));
 
     // Clear the queue
     logsQueueRef.current = [];
-  };
+  }, [getDeviceIdByName, moveCodeAnimation, updateDeployment]);
+
+  // Trigger processing when deviceIdMap changes
+  useEffect(() => {
+    if (getDeviceIdMap.size > 0) {
+      processLogsQueue();
+    }
+  }, [getDeviceIdMap, processLogsQueue]);
 
   // Get the devices health at the moment
-  const getInitialDeviceHealth = async () => {
+  const getInitialDeviceHealth = useCallback(async () => {
     try {
       const currentDate = new Date();
 
       // Subtract 3 minutes from the current date and time because health check is done every 3 minutes from the orchestrator
-      currentDate.setTime(currentDate.getTime() - 3 * 60 * 1000);
+      currentDate.setTime(currentDate.getTime() - parseInt(DEVICE_CHECK_INTERVAL));
 
       // Convert to ISO 8601 format (e.g., "2024-07-24T13:21:35.776Z")
       const formattedDate = currentDate.toISOString();
@@ -97,21 +267,33 @@ const Demo = () => {
       logs.forEach(log => logsQueueRef.current.push(log));
       setTimeout(processLogsQueue, 500);
 
-
     } catch (error) {
       console.error("Error fetching data:", error);
+    }
+  }, [processLogsQueue]);
+
+  // Fetch the device data from the API
+  const fetchDeviceData = async () => {
+    try {
+      const devicesFromAPI = await fetchData("/file/device");
+      const deviceMap = new Map(devicesFromAPI.map(device => [device.name, device._id]));
+      localStorage.setItem("deviceIdMap", JSON.stringify(Array.from(deviceMap.entries())));
+    } catch (error) {
+      console.error('Error fetching device data:', error);
     }
   };
 
   useEffect(() => {
+    fetchDeviceData();
     getInitialDeviceHealth();
     resetHealthLogTimer();
-  }, []);
+  }, [getInitialDeviceHealth, resetHealthLogTimer]);
 
 
   // WebSocket setup to receive new logs
   useEffect(() => {
-    const ws = new WebSocket(`${PUBLIC_HOST}:${PUBLIC_PORT}`);
+    const wsHost = PUBLIC_HOST.replace(/^http/, 'ws');
+    const ws = new WebSocket(`${wsHost}:${PUBLIC_PORT}`);
 
     ws.onopen = () => {
       console.log('Connected to the WebSocket server');
@@ -138,32 +320,9 @@ const Demo = () => {
     return () => {
       ws.close();
     };
-  }, []);
-
-  // Added a timout to display the code move animation object as it gives wierd movement of (0,0) position to orchestrator position
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsCodeMoveObjsVisible(true);
-    }, 3000);
-
-    return () => clearTimeout(timer);
-  }, []);
+  }, [processLogsQueue]);
 
   useEffect(() => {
-
-    // Moving object is referred to the animation of code moving interpretation
-    const setMovingObjInitialPosition = () => {
-      if (orchestratorRef.current) {
-        const orchestrator = orchestratorRef.current.getBoundingClientRect();
-        const orchestratorX = orchestrator.left + orchestrator.width / 2;
-        const orchestratorY = orchestrator.top + orchestrator.height / 2;
-
-        setCodeToFreezerObjPos({ x: orchestratorX, y: orchestratorY });
-        setCodeToWashingMachineObjPos({ x: orchestratorX, y: orchestratorY });
-      }
-    };
-
-    setMovingObjInitialPosition();
 
     // This logic will draw a line between the orchestrator and the equipment
     const connectOrchestratorToEquipment = (equipmentRef, equipmentName) => {
@@ -199,12 +358,10 @@ const Demo = () => {
     connectOrchestratorToEquipment(washingMachineRef, "washingMachine");
     window.addEventListener('resize', () => connectOrchestratorToEquipment(freezerRef, "freezer"));
     window.addEventListener('resize', () => connectOrchestratorToEquipment(washingMachineRef, "washingMachine"));
-    window.addEventListener('resize', setMovingObjInitialPosition);
 
     return () => {
       window.removeEventListener('resize', () => connectOrchestratorToEquipment(freezerRef, "freezer"));
       window.removeEventListener('resize', () => connectOrchestratorToEquipment(washingMachineRef, "washingMachine"));
-      window.removeEventListener('resize', setMovingObjInitialPosition);
     };
   }, []);
 
@@ -236,50 +393,64 @@ const Demo = () => {
         >
           <div id="orchestrator-freezer-line" />
           <div id="orchestrator-washingMachine-line" />
-          {isCodeMoveObjsVisible && (
+          {movingDeployments.map((deployment) => (
             <motion.div
-              className="round"
+              key={deployment.id}
               initial={{
-                x: codeToFreezerObjPos.x - 25,
-                y: codeToFreezerObjPos.y - 25,
-              }} // 25 pixels deducted to get the center of the object
+                x: deployment.startPos.x - 25,
+                y: deployment.startPos.y - 25,
+              }} // Center the animation object
               animate={{
-                x: codeToFreezerObjPos.x - 25,
-                y: codeToFreezerObjPos.y - 25,
+                x: deployment.endPos.x - 25,
+                y: deployment.endPos.y - 25,
               }}
               transition={{ type: "spring", duration: 5 }}
               style={{
                 position: "absolute",
-                width: "50px",
-                height: "50px",
-                backgroundColor: "#1E90FF",
-                borderRadius: "50%",
                 zIndex: 1,
               }}
-            />
-          )}
-          {isCodeMoveObjsVisible && (
+            >
+              <img
+                src={WebAssembly_Logo}
+                alt="Moving object"
+                style={{
+                  width: "50px",
+                  height: "50px",
+                }}
+              />
+            </motion.div>
+          ))}
+          {activeDeployments.map((deployment) => (
             <motion.div
-              className="round"
+              key={deployment.id}
               initial={{
-                x: codeToWashingMachineObjPos.x - 25,
-                y: codeToWashingMachineObjPos.y - 25,
-              }} // 25 pixels deducted to get the center of the object
+                x: deployment.wasmModuleIconPosition.x - 25,
+                y: deployment.wasmModuleIconPosition.y - 25,
+                width: "50px",  // Set initial width
+                height: "50px", // Set initial height
+              }}
               animate={{
-                x: codeToWashingMachineObjPos.x - 25,
-                y: codeToWashingMachineObjPos.y - 25,
+                x: deployment.wasmModuleIconPosition.x - 25,
+                y: deployment.wasmModuleIconPosition.y - 25,
+                width: "20px",  // Animate to smaller width
+                height: "20px", // Animate to smaller height
               }}
               transition={{ type: "spring", duration: 5 }}
               style={{
                 position: "absolute",
-                width: "50px",
-                height: "50px",
-                backgroundColor: "#1E90FF",
-                borderRadius: "50%",
                 zIndex: 1,
               }}
-            />
-          )}
+            >
+              <img
+                src={WebAssembly_Logo}
+                alt="Moving object"
+                style={{
+                  width: "100%",
+                  height: "100%",
+                }}
+              />
+            </motion.div>
+          ))}
           <Grid item xs={12} sm={3} minWidth={"77vh"}>
             <Box>
               <div
@@ -416,7 +587,6 @@ const Demo = () => {
                         />
                       </div>
                     </div>
-                    <button onClick={sampleClicker}>Click me</button> {/* This button only for develoment testing. should be removed after actual implementation */}
                   </Box>
                 </Box>
               </Grid>

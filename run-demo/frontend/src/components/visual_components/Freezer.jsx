@@ -10,6 +10,7 @@ const Freezer = React.forwardRef((props, ref) => {
 
   const [anchorEl, setAnchorEl] = useState(null);
   const [isActive, setIsActive] = useState(false);
+  const [deviceInfo, setDeviceInfo] = useState({});
 
   const component = {
     id: 'freezer',
@@ -18,22 +19,24 @@ const Freezer = React.forwardRef((props, ref) => {
     description: 'Food stays cold in the fridge and freezer.',
     optimize: false,
     isActive:  isActive,
+    deviceInfo: deviceInfo,
   };
 
   useEffect(() => {
     const checkEquipment = () => {
       const devices = JSON.parse(localStorage.getItem('devices') || '[]');
-      const isEquipmentActive = devices.some(device => device.name === 'equipment1');
-      setIsActive(isEquipmentActive);
+      const deviceFound = devices.find(device => device.name === component.id);
+      setIsActive(deviceFound !== undefined);
+      setDeviceInfo(deviceFound || {});
     };
-  
+
     checkEquipment();
-  
+
     // Set up the interval to check every 2 seconds
     const intervalId = setInterval(checkEquipment, 2000);
-  
+
     return () => clearInterval(intervalId);
-  }, []);
+  }, [component.id]);
 
   const handleHoverOn = (event) => {
     setAnchorEl(event.currentTarget);
@@ -61,21 +64,31 @@ const Freezer = React.forwardRef((props, ref) => {
           opacity: window.sessionStorage.getItem(component.id),
         }}
       />
-      <img
-        id="freezer"
-        src={freezerImage}
-        alt="freezer"
-        ref={ref}
+      <button
         style={{
           position: "absolute",
           top: "9.5%",
           left: "63.8%",
           width: "4%",
           height: "10%",
+          backgroundColor: "transparent",
+          border: "none",
+          padding: "0%",
         }}
         onMouseEnter={handleHoverOn}
         onMouseLeave={handleHoverAway}
-      />
+      >
+        <img
+          id="freezer"
+          src={freezerImage}
+          alt="freezer"
+          ref={ref}
+          style={{
+            width: "100%",
+            height: "100%",
+          }}
+        />
+      </button>
       <img
         src={isActive ? activeIcon : inactiveIcon}
         alt={isActive ? "active" : "inactive"}

@@ -3,11 +3,12 @@ import PropTypes from 'prop-types';
 
 const EnergyComponent = (props) => {
   const {
-    id,
+    // id,
     name,
     type,
     description,
-    isActive
+    isActive,
+    deviceInfo,
   } = props;
 
   return (
@@ -37,7 +38,7 @@ const EnergyComponent = (props) => {
           <br />
         </Typography>
         <Typography variant="body2">
-          <strong>🔵 Module deployed - </strong> None
+          <strong>🔵 Module deployed - </strong> {deviceInfo !== undefined && deviceInfo.isModuleActive ? deviceInfo.existingModuleName : "None"}
         </Typography>
       </CardContent>
     </Card>
@@ -45,10 +46,15 @@ const EnergyComponent = (props) => {
 };
 
 EnergyComponent.propTypes = {
-  id: PropTypes.string,
+  // id: PropTypes.string,
   name: PropTypes.string.isRequired,
   type: PropTypes.oneOf(['consumer', 'producer']),
   description: PropTypes.string,
+  isActive: PropTypes.bool.isRequired,
+  deviceInfo: PropTypes.shape({
+    isModuleActive: PropTypes.bool,
+    existingModuleName: PropTypes.string,
+  }).isRequired,
 };
 
 export default EnergyComponent;
