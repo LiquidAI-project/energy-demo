@@ -13,6 +13,7 @@ import Freezer from "./visual_components/Freezer";
 import WashingMachine from "./visual_components/WashingMachine";
 import Orchestrator from "./../assets/orchestrator.png";
 import WebAssembly_Logo from "./../assets/WebAssembly_Logo.png";
+import ServiceProvider from "./serviceProvider/ServiceProvider";
 import { fetchData } from '../services/apiService';
 
 // eslint-disable-next-line no-undef
@@ -25,6 +26,7 @@ const DEVICE_CHECK_INTERVAL = process.env.DEVICE_CHECK_INTERVAL;
 const Demo = () => {
 
   const orchestratorRef = useRef(null);
+  const serviceProviderRef = useRef(null);
   const freezerRef = useRef(null);
   const washingMachineRef = useRef(null);
   const logsQueueRef = useRef([]);
@@ -142,6 +144,7 @@ const Demo = () => {
       // Accessing the modules inside fullManifest using the deviceId
       const deviceManifest = deviceSpecificDeployment.fullManifest[device.deviceId];
 
+      device.deploymentId = deviceSpecificDeployment._id;
       device.existingModuleId = deviceManifest.modules[0].id;
       device.existingModuleName = deviceManifest.modules[0].name;
       device.isModuleActive = Boolean(deviceSpecificDeployment.active);
@@ -174,6 +177,7 @@ const Demo = () => {
       }
 
     } else {
+      device.deploymentId = null;
       device.existingModuleId = null;
       device.existingModuleName = null;
       device.isModuleActive = false;
@@ -212,6 +216,7 @@ const Demo = () => {
             name: log.deviceName,
             lastUpdateTime: now,
             deviceId: deviceId,
+            deploymentId: null,
             existingModuleId: null,
             existingModuleName: null,
             isModuleActive: false,
@@ -325,15 +330,15 @@ const Demo = () => {
   useEffect(() => {
 
     // This logic will draw a line between the orchestrator and the equipment
-    const connectOrchestratorToEquipment = (equipmentRef, equipmentName) => {
-      if (orchestratorRef.current && equipmentRef.current) {
-        const orchestrator = orchestratorRef.current.getBoundingClientRect();
-        const equipment = equipmentRef.current.getBoundingClientRect();
+    const drawLines = (point_A_ref, point_A_name, point_B_ref, point_B_name) => {
+      if (point_A_ref.current && point_B_ref.current) {
+        const point_A_bounds = point_A_ref.current.getBoundingClientRect();
+        const point_B_bounds = point_B_ref.current.getBoundingClientRect();
 
-        const x1 = orchestrator.left + orchestrator.width / 2;
-        const y1 = orchestrator.top + orchestrator.height / 2;
-        const x2 = equipment.left + equipment.width / 2;
-        const y2 = equipment.top + equipment.height / 2;
+        const x1 = point_A_bounds.left + point_A_bounds.width / 2;
+        const y1 = point_A_bounds.top + point_A_bounds.height / 2;
+        const x2 = point_B_bounds.left + point_B_bounds.width / 2;
+        const y2 = point_B_bounds.top + point_B_bounds.height / 2;
 
         const length = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
         const angle = Math.atan2(y2 - y1, x2 - x1) * (180 / Math.PI);
@@ -349,19 +354,22 @@ const Demo = () => {
           zIndex: 1,
         };
 
-        const lineElement = document.getElementById(`orchestrator-${equipmentName}-line`);
+        const lineElement = document.getElementById(`${point_A_name}-${point_B_name}-line`);
         Object.assign(lineElement.style, lineStyle);
       }
     };
 
-    connectOrchestratorToEquipment(freezerRef, "freezer");
-    connectOrchestratorToEquipment(washingMachineRef, "washingMachine");
-    window.addEventListener('resize', () => connectOrchestratorToEquipment(freezerRef, "freezer"));
-    window.addEventListener('resize', () => connectOrchestratorToEquipment(washingMachineRef, "washingMachine"));
+    drawLines(orchestratorRef, "orchestrator", freezerRef, "freezer");
+    drawLines(orchestratorRef, "orchestrator", washingMachineRef, "washingMachine");
+    drawLines(orchestratorRef, "orchestrator", serviceProviderRef, "serviceProvider");
+    window.addEventListener('resize', () => drawLines(orchestratorRef, "orchestrator", freezerRef, "freezer"));
+    window.addEventListener('resize', () => drawLines(orchestratorRef, "orchestrator", washingMachineRef, "washingMachine"));
+    window.addEventListener('resize', () => drawLines(orchestratorRef, "orchestrator", serviceProviderRef, "serviceProvider"));
 
     return () => {
-      window.removeEventListener('resize', () => connectOrchestratorToEquipment(freezerRef, "freezer"));
-      window.removeEventListener('resize', () => connectOrchestratorToEquipment(washingMachineRef, "washingMachine"));
+      window.removeEventListener('resize', () => drawLines(orchestratorRef, "orchestrator", freezerRef, "freezer"));
+      window.removeEventListener('resize', () => drawLines(orchestratorRef, "orchestrator", washingMachineRef, "washingMachine"));
+      window.addEventListener('resize', () => drawLines(orchestratorRef, "orchestrator", serviceProviderRef, "serviceProvider"));
     };
   }, []);
 
@@ -393,6 +401,7 @@ const Demo = () => {
         >
           <div id="orchestrator-freezer-line" />
           <div id="orchestrator-washingMachine-line" />
+          <div id="orchestrator-serviceProvider-line" />
           {movingDeployments.map((deployment) => (
             <motion.div
               key={deployment.id}
@@ -426,13 +435,13 @@ const Demo = () => {
               initial={{
                 x: deployment.wasmModuleIconPosition.x - 25,
                 y: deployment.wasmModuleIconPosition.y - 25,
-                width: "50px",  // Set initial width
+                width: "50px", // Set initial width
                 height: "50px", // Set initial height
               }}
               animate={{
                 x: deployment.wasmModuleIconPosition.x - 25,
                 y: deployment.wasmModuleIconPosition.y - 25,
-                width: "20px",  // Animate to smaller width
+                width: "20px", // Animate to smaller width
                 height: "20px", // Animate to smaller height
               }}
               transition={{ type: "spring", duration: 5 }}
@@ -554,7 +563,7 @@ const Demo = () => {
                       style={{
                         position: "relative",
                         marginTop: "15px",
-                        paddingBottom: "83%",
+                        paddingBottom: "26%",
                         width: "100%",
                         height: 0,
                       }}
@@ -581,13 +590,14 @@ const Demo = () => {
                             top: "4%",
                             left: "35%",
                             width: "25%",
-                            height: "25%",
+                            height: "80%",
                             zIndex: 2,
                           }}
                         />
                       </div>
                     </div>
                   </Box>
+                  <ServiceProvider ref={serviceProviderRef} />
                 </Box>
               </Grid>
             </Grid>
