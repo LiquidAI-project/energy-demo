@@ -9,12 +9,15 @@ import backgroundImage from "./../assets/yard.png";
 import roadImage from "./../assets/road.png";
 import cabinImage from "./../assets/cabin.png";
 import houseImage from "./../assets/house.png";
+import House_Warning_Border from "./../assets/house_warning_border.png";
 import Freezer from "./visual_components/Freezer";
 import WashingMachine from "./visual_components/WashingMachine";
+import MovingIcon from "./visual_components/MovingIcon";
 import Orchestrator from "./../assets/orchestrator.png";
 import WebAssembly_Icon from "./../assets/WebAssembly_Logo.png";
 import Query_Icon from "./../assets/query_icon.png";
-import Result_Icon from "./../assets/result_icon.png";
+import Result_Icon_Blue from "./../assets/result_icon.png";
+import Result_Icon_Red from "./../assets/result_icon_with_warning.png";
 import ServiceProvider from "./serviceProvider/ServiceProvider";
 import { fetchData, fetchPostData } from '../services/apiService';
 
@@ -36,6 +39,27 @@ const Demo = () => {
 
   const [movingDeployments, setMovingDeployments] = useState([]);
   const [activeDeployments, setActiveDeployments] = useState([]);
+  const [warningBorderVisible, setWarningBorderVisible] = useState(false);
+  const [shouldBlink, setShouldBlink] = useState(false);
+
+  // This function will make the house border blink in order to indicate the warning state when data is going outside
+  const startBlinking = () => {
+    if (shouldBlink) return; // Prevent multiple triggers
+
+    setShouldBlink(true);
+
+    // Toggle visibility every 250ms
+    const blinkInterval = setInterval(() => {
+      setWarningBorderVisible(prev => !prev);
+    }, 250);
+
+    // Stop blinking after 2 seconds
+    setTimeout(() => {
+      clearInterval(blinkInterval);
+      setWarningBorderVisible(false);
+      setShouldBlink(false);
+    }, 2000);
+  };
 
   // Store reference for each devices if needs to get the device location in UI
   const deviceReferences = useMemo(() => ({
@@ -58,7 +82,7 @@ const Demo = () => {
   }, [deviceReferences]);
 
   // Object moving one place to another place animation
-  const moveCodeAnimation = useCallback((startDeviceName, endDeviceName, iconName) => {
+  const moveCodeAnimation = useCallback((startDeviceName, endDeviceName, iconSource, changingIconSource = null) => {
     return new Promise((resolve) => {
       const startDeviceRef = getDeviceReference(startDeviceName);
       const endDeviceRef = getDeviceReference(endDeviceName);
@@ -75,7 +99,7 @@ const Demo = () => {
           x: endDevice.left + endDevice.width / 2,
           y: endDevice.top + endDevice.height / 2,
         };
-  
+
         setMovingDeployments((prevDeployments) => {
           const newMovingDeployments = [
             ...prevDeployments,
@@ -83,17 +107,21 @@ const Demo = () => {
               id: prevDeployments.length,
               startPos: startPosition,
               endPos: endPosition,
-              iconName: iconName,
+              iconSource: iconSource,
+              changingIconSource: changingIconSource, // Optional new icon
             },
           ];
-  
+
+          // Remove the deployment after 5 seconds
           setTimeout(() => {
             setMovingDeployments((currentMovingDeployments) =>
-              currentMovingDeployments.filter(dep => dep.id !== newMovingDeployments[newMovingDeployments.length - 1].id)
+              currentMovingDeployments.filter(
+                (dep) => dep.id !== newMovingDeployments[newMovingDeployments.length - 1].id
+              )
             );
             resolve(); // Resolve the promise after the setTimeout is complete
-          }, 5000); // Remove after 5 seconds
-  
+          }, 5000);
+
           return newMovingDeployments;
         });
       } else {
@@ -155,16 +183,22 @@ const Demo = () => {
     await Promise.all(moveToDevicesPromises);
     await delay(100);
 
+    if (devicesWithDeployment.length !== 0) {
+      setTimeout(() => {
+        startBlinking(); // Start blinking the house border when data going outside the house
+      }, 700);
+    }
+
     // Prepare an array of moveCodeAnimation promises for responses from valid devices
     const moveFromDevicesPromises = devicesWithDeployment.map((device) =>
-      moveCodeAnimation(device.name, "orchestrator", Result_Icon)
+      moveCodeAnimation(device.name, "orchestrator", Result_Icon_Blue, Result_Icon_Red)
     );
 
     // Execute moveCodeAnimation from valid devices in parallel
     await Promise.all(moveFromDevicesPromises);
     await delay(100);
 
-    await moveCodeAnimation("orchestrator", "service-provider", Result_Icon);
+    await moveCodeAnimation("orchestrator", "service-provider", Result_Icon_Red);
     await delay(100);
   };
 
@@ -481,31 +515,7 @@ const Demo = () => {
           <div id="orchestrator-washingMachine-line" />
           <div id="orchestrator-serviceProvider-line" />
           {movingDeployments.map((deployment) => (
-            <motion.div
-              key={deployment.id}
-              initial={{
-                x: deployment.startPos.x - 25,
-                y: deployment.startPos.y - 25,
-              }} // Center the animation object
-              animate={{
-                x: deployment.endPos.x - 25,
-                y: deployment.endPos.y - 25,
-              }}
-              transition={{ type: "spring", duration: 5 }}
-              style={{
-                position: "absolute",
-                zIndex: 1,
-              }}
-            >
-              <img
-                src={deployment.iconName}
-                alt="Moving object"
-                style={{
-                  width: "50px",
-                  height: "50px",
-                }}
-              />
-            </motion.div>
+            <MovingIcon key={deployment.id} deployment={deployment} />
           ))}
           {activeDeployments.map((deployment) => (
             <motion.div
@@ -549,6 +559,20 @@ const Demo = () => {
                   height: 0,
                 }}
               >
+                <img
+                  id="house_warning_border"
+                  src={House_Warning_Border}
+                  alt="warning"
+                  className="house_warning_border"
+                  style={{
+                    position: "absolute",
+                    left: "-1%",
+                    top: "-1%",
+                    width: "102%",
+                    height: "97%",
+                    opacity: warningBorderVisible ? 1 : 0, transition: 'opacity 0.25s' 
+                  }}
+                />
                 <img
                   src={backgroundImage}
                   alt="Home yard"
@@ -675,7 +699,10 @@ const Demo = () => {
                       </div>
                     </div>
                   </Box>
-                  <ServiceProvider ref={serviceProviderRef} onClick={handleQueryClick} />
+                  <ServiceProvider
+                    ref={serviceProviderRef}
+                    onClick={handleQueryClick}
+                  />
                 </Box>
               </Grid>
             </Grid>

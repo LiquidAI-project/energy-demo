@@ -14,7 +14,7 @@ const ServiceProvider = React.forwardRef((props, serviceProviderRef) => {
         <div
           style={{
             position: "relative",
-            marginTop: "50%",
+            marginTop: "10%",
             paddingBottom: "30%",
             width: "100%",
             height: 0,
