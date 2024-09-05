@@ -6,31 +6,39 @@ import {
   Grid,
   InputAdornment,
 } from "@mui/material";
-import { fetchPostData } from "../../../services/apiService";
+import PropTypes from "prop-types";
 import RealtimeClock from "./RealtimeClock";
 
-const EnergyQuery = () => {
+const EnergyQuery = ({ onClick }) => {
   const [timeDuration, setTimeDuration] = useState("");
-  const [powerUsage, setPowerUsage] = useState("0.0");
+  const [totalPowerUsage, setTotalPowerUsage] = useState("0.0");
+  const [deviceSpecificPowerUsage, setDeviceSpecificPowerUsage] = useState({}); 
+  const [queryButtonDisable, setQueryButtonDisable] = useState(true);
 
   const handleTimeDurationChange = (event) => {
+    setQueryButtonDisable(event.target.value === "" || event.target.value <= 0);
     setTimeDuration(event.target.value);
   };
 
-  const handleClick = async () => {
-    try {
-      const timeDurationInSeconds = timeDuration * 3600;
-      const startTime = new Date().getTime();
-      const endpoint = `/execute/66d850d576a9328f5f1c9b24`; // TODO: Update the endpoint with the correct deployment ID. Up to now hardcod the correct deployment ID for testing.
-      const postData = {
-        param0: startTime,
-        param1: timeDurationInSeconds,
-      };
-      const response = await fetchPostData(endpoint, postData);
-      setPowerUsage(response[0]);
-    } catch (error) {
-      console.error("Error deploying module:", error);
-      setPowerUsage("0.0");
+  const handleButtonClick = async () => {
+
+    setQueryButtonDisable(true);
+    setTotalPowerUsage("0.0");
+    setDeviceSpecificPowerUsage({});
+
+    const powerUsageResponse = await onClick(timeDuration);
+
+    if (Object.keys(powerUsageResponse).length === 0) {
+      setTotalPowerUsage("0.0");
+    } else {
+      const sumOfValues = Object.values(powerUsageResponse).reduce(
+        (sum, value) => sum + value,
+        0
+      );
+
+      setQueryButtonDisable(false);
+      setDeviceSpecificPowerUsage(powerUsageResponse);
+      setTotalPowerUsage(sumOfValues.toFixed(5));
     }
   };
 
@@ -48,6 +56,7 @@ const EnergyQuery = () => {
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
+              marginBottom: "5%",
             }}
           >
             <Typography variant="body1">Duration : </Typography>
@@ -62,17 +71,35 @@ const EnergyQuery = () => {
               variant="outlined"
               style={{ width: "30%" }}
             />
-            <Button variant="contained" color="primary" onClick={handleClick}>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={handleButtonClick}
+              disabled={queryButtonDisable}
+            >
               Query
             </Button>
           </div>
-          <Typography variant="body1" style={{ marginTop: "10%" }}>
-            Total Power Usage: {powerUsage}
+          {Object.entries(deviceSpecificPowerUsage).map(
+            ([deviceName, usage]) => (
+              <Grid item xs={12} md={12} key={deviceName}>
+                <Typography variant="body1" gutterBottom>
+                  {deviceName}: {usage.toFixed(5)} kWh
+                </Typography>
+              </Grid>
+            )
+          )}
+          <Typography variant="body1" style={{ marginTop: "5%", marginBottom: "5%" }}>
+            Total Power Usage: {totalPowerUsage} kWh
           </Typography>
         </Grid>
       </Grid>
     </div>
   );
+};
+
+EnergyQuery.propTypes = {
+  onClick: PropTypes.func.isRequired,
 };
 
 export default EnergyQuery;

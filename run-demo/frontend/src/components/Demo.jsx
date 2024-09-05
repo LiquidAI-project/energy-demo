@@ -12,9 +12,11 @@ import houseImage from "./../assets/house.png";
 import Freezer from "./visual_components/Freezer";
 import WashingMachine from "./visual_components/WashingMachine";
 import Orchestrator from "./../assets/orchestrator.png";
-import WebAssembly_Logo from "./../assets/WebAssembly_Logo.png";
+import WebAssembly_Icon from "./../assets/WebAssembly_Logo.png";
+import Query_Icon from "./../assets/query_icon.png";
+import Result_Icon from "./../assets/result_icon.png";
 import ServiceProvider from "./serviceProvider/ServiceProvider";
-import { fetchData } from '../services/apiService';
+import { fetchData, fetchPostData } from '../services/apiService';
 
 // eslint-disable-next-line no-undef
 const PUBLIC_HOST = process.env.PUBLIC_HOST;
@@ -39,6 +41,8 @@ const Demo = () => {
   const deviceReferences = useMemo(() => ({
     "freezer": freezerRef,
     "washing-machine": washingMachineRef,
+    "orchestrator": orchestratorRef,
+    "service-provider": serviceProviderRef,
     // Add more device names and their references here
   }), []);
 
@@ -53,20 +57,23 @@ const Demo = () => {
       }
   }, [deviceReferences]);
 
-  // Move the code animation object to the device position
-  const moveCodeAnimation = useCallback((deviceName) => {
+  // Object moving one place to another place animation
+  const moveCodeAnimation = useCallback((startDeviceName, endDeviceName, iconName) => {
     return new Promise((resolve) => {
-      const deviceRef = getDeviceReference(deviceName);
-      if (deviceRef.current) {
-        const device = deviceRef.current.getBoundingClientRect();
-        const orchestrator = orchestratorRef.current.getBoundingClientRect();
-        const newPosition = {
-          x: device.left + device.width / 2,
-          y: device.top + device.height / 2,
+      const startDeviceRef = getDeviceReference(startDeviceName);
+      const endDeviceRef = getDeviceReference(endDeviceName);
+      if (endDeviceRef.current) {
+        const startDevice = startDeviceRef.current.getBoundingClientRect();
+        const endDevice = endDeviceRef.current.getBoundingClientRect();
+
+        const startPosition = {
+          x: startDevice.left + startDevice.width / 2,
+          y: startDevice.top + startDevice.height / 2,
         };
-        const orchestratorPosition = {
-          x: orchestrator.left + orchestrator.width / 2,
-          y: orchestrator.top + orchestrator.height / 2,
+
+        const endPosition = {
+          x: endDevice.left + endDevice.width / 2,
+          y: endDevice.top + endDevice.height / 2,
         };
   
         setMovingDeployments((prevDeployments) => {
@@ -74,9 +81,9 @@ const Demo = () => {
             ...prevDeployments,
             {
               id: prevDeployments.length,
-              deviceName,
-              startPos: orchestratorPosition,
-              endPos: newPosition,
+              startPos: startPosition,
+              endPos: endPosition,
+              iconName: iconName,
             },
           ];
   
@@ -131,6 +138,77 @@ const Demo = () => {
     const deviceId = deviceIdMap.get(deviceName);
     return deviceId || null;
   }, [getDeviceIdMap]);
+
+  // Animation for the whole process while querying the devices for energy usage
+  const queryAnimation = async (devicesWithDeployment) => {
+
+    const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+    await moveCodeAnimation("service-provider", "orchestrator", Query_Icon);
+    await delay(100);
+
+    // Prepare an array of moveCodeAnimation promises for devices with valid deploymentId
+    const moveToDevicesPromises = devicesWithDeployment.map((device) =>
+      moveCodeAnimation("orchestrator", device.name, Query_Icon)
+    );
+
+    await Promise.all(moveToDevicesPromises);
+    await delay(100);
+
+    // Prepare an array of moveCodeAnimation promises for responses from valid devices
+    const moveFromDevicesPromises = devicesWithDeployment.map((device) =>
+      moveCodeAnimation(device.name, "orchestrator", Result_Icon)
+    );
+
+    // Execute moveCodeAnimation from valid devices in parallel
+    await Promise.all(moveFromDevicesPromises);
+    await delay(100);
+
+    await moveCodeAnimation("orchestrator", "service-provider", Result_Icon);
+    await delay(100);
+  };
+
+
+  // Query the devices for energy usage
+  const handleQueryClick = async (timeDuration) => {
+
+    let existingDevices = JSON.parse(localStorage.getItem("devices")) || [];
+    const devicesWithDeployment = existingDevices.filter(
+      (device) => device.deploymentId
+    );
+
+    try {
+
+      await queryAnimation(devicesWithDeployment);
+
+      const timeDurationInSeconds = timeDuration * 3600;
+      const startTime = new Date().getTime();
+
+      // Prepare an array of API call promises for each device with valid deploymentId
+      const apiCalls = devicesWithDeployment.map((device) => {
+        const endpoint = `/execute/${device.deploymentId}`;
+        const postData = {
+          param0: startTime,
+          param1: timeDurationInSeconds,
+        };
+        return fetchPostData(endpoint, postData);
+      });
+
+      // Execute all API calls in parallel and wait for their completion
+      const responses = await Promise.all(apiCalls);
+
+      // Create a map of device names to the first item of their respective responses
+      const responseMap = devicesWithDeployment.reduce((acc, device, index) => {
+        acc[device.name] = parseFloat(responses[index][0]);
+        return acc;
+      }, {});
+
+      return responseMap;
+    } catch (error) {
+      console.error("Error deploying module:", error);
+      return {};
+    }
+  };
 
   // Update the deployment details for the device
   const updateDeployment = useCallback(async (device, deviceName, deployments) => {
@@ -231,7 +309,7 @@ const Demo = () => {
         }
         // Added log time and current time difference check to prevent to create multiple moving object for old logs when refreshing the page
       } else if (log.funcName === "deployment_create" && ((now - logReceivedTime) < 5000)) {
-        await moveCodeAnimation(log.deviceName);
+        await moveCodeAnimation("orchestrator", log.deviceName, WebAssembly_Icon);
         updatePromises.push(updateDeployment(deviceMap.get(log.deviceName), log.deviceName, deployments));
       }
     }
@@ -420,7 +498,7 @@ const Demo = () => {
               }}
             >
               <img
-                src={WebAssembly_Logo}
+                src={deployment.iconName}
                 alt="Moving object"
                 style={{
                   width: "50px",
@@ -451,7 +529,7 @@ const Demo = () => {
               }}
             >
               <img
-                src={WebAssembly_Logo}
+                src={WebAssembly_Icon}
                 alt="Moving object"
                 style={{
                   width: "100%",
@@ -597,7 +675,7 @@ const Demo = () => {
                       </div>
                     </div>
                   </Box>
-                  <ServiceProvider ref={serviceProviderRef} />
+                  <ServiceProvider ref={serviceProviderRef} onClick={handleQueryClick} />
                 </Box>
               </Grid>
             </Grid>
