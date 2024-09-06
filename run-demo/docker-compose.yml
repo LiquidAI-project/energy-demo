@@ -44,7 +44,6 @@ services:
 
   mongo-express:
     image: mongo-express:1.0.2
-    container_name: wasmiot-mongo-express
     restart: unless-stopped
     depends_on:
       - mongo
@@ -52,11 +51,9 @@ services:
       default:
         ipv4_address: 172.15.0.3
     environment:
-      ME_CONFIG_MONGODB_SERVER: ${MONGO_HOST:-mongo}
-      ME_CONFIG_MONGODB_PORT: ${MONGO_PORT:-27017}
+      ME_CONFIG_SITE_BASEURL: ${MONGO_EXPRESS_BASEURL:-/}
+      ME_CONFIG_MONGODB_URL: ${MONGO_URL:-mongodb://mongo:27017}
       ME_CONFIG_MONGODB_ENABLE_ADMIN: ${MONGO_EXPRESS_ENABLE_ADMIN:-false}
-      ME_CONFIG_MONGODB_AUTH_USERNAME: ${MONGO_ROOT_USERNAME}
-      ME_CONFIG_MONGODB_AUTH_PASSWORD: ${MONGO_ROOT_PASSWORD}
       ME_CONFIG_BASICAUTH: ${MONGO_EXPRESS_BASICAUTH:-false}
       ME_CONFIG_BASICAUTH_USERNAME: ${MONGO_EXPRESS_USERNAME}
       ME_CONFIG_BASICAUTH_PASSWORD: ${MONGO_EXPRESS_PASSWORD}
@@ -131,8 +128,8 @@ services:
     ports:
       - ${FRONTEND_PORT-5173}:5173
     environment:
-      PUBLIC_HOST: ${PUBLIC_HOST}
-      PUBLIC_PORT: ${PUBLIC_PORT}
+      PUBLIC_HOST: ${ORCHESTRATOR_HOST}
+      PUBLIC_PORT: ${ORCHESTRATOR_PORT}
       DEVICE_CHECK_INTERVAL: ${DEVICE_CHECK_INTERVAL}
     volumes:
     # the volumes included here to allow interactive development
