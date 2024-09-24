@@ -10,7 +10,7 @@ import checkAndFetchData from "./src/fetchElectricityPrice.js";
 import convertJsonToFinnishTime from "./src/convertToFinnishTime.js";
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.BACKEND_PORT || 3001;
 
 app.use(cors());
 
