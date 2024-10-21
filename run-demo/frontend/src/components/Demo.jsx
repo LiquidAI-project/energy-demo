@@ -9,11 +9,17 @@ import backgroundImage from "./../assets/yard.png";
 import roadImage from "./../assets/road.png";
 import cabinImage from "./../assets/cabin.png";
 import houseImage from "./../assets/house.png";
+import House_Warning_Border from "./../assets/house_warning_border.png";
 import Freezer from "./visual_components/Freezer";
 import WashingMachine from "./visual_components/WashingMachine";
+import MovingIcon from "./visual_components/MovingIcon";
 import Orchestrator from "./../assets/orchestrator.png";
-import WebAssembly_Logo from "./../assets/WebAssembly_Logo.png";
-import { fetchData } from '../services/apiService';
+import WebAssembly_Icon from "./../assets/WebAssembly_Logo.png";
+import Query_Icon from "./../assets/query_icon.png";
+import Result_Icon_Blue from "./../assets/result_icon.png";
+import Result_Icon_Red from "./../assets/result_icon_with_warning.png";
+import ServiceProvider from "./serviceProvider/ServiceProvider";
+import { fetchData, fetchPostData } from '../services/apiService';
 
 // eslint-disable-next-line no-undef
 const PUBLIC_HOST = process.env.PUBLIC_HOST;
@@ -25,6 +31,7 @@ const DEVICE_CHECK_INTERVAL = process.env.DEVICE_CHECK_INTERVAL;
 const Demo = () => {
 
   const orchestratorRef = useRef(null);
+  const serviceProviderRef = useRef(null);
   const freezerRef = useRef(null);
   const washingMachineRef = useRef(null);
   const logsQueueRef = useRef([]);
@@ -32,11 +39,34 @@ const Demo = () => {
 
   const [movingDeployments, setMovingDeployments] = useState([]);
   const [activeDeployments, setActiveDeployments] = useState([]);
+  const [warningBorderVisible, setWarningBorderVisible] = useState(false);
+  const [shouldBlink, setShouldBlink] = useState(false);
+
+  // This function will make the house border blink in order to indicate the warning state when data is going outside
+  const startBlinking = () => {
+    if (shouldBlink) return; // Prevent multiple triggers
+
+    setShouldBlink(true);
+
+    // Toggle visibility every 250ms
+    const blinkInterval = setInterval(() => {
+      setWarningBorderVisible(prev => !prev);
+    }, 250);
+
+    // Stop blinking after 2 seconds
+    setTimeout(() => {
+      clearInterval(blinkInterval);
+      setWarningBorderVisible(false);
+      setShouldBlink(false);
+    }, 2000);
+  };
 
   // Store reference for each devices if needs to get the device location in UI
   const deviceReferences = useMemo(() => ({
     "freezer": freezerRef,
     "washing-machine": washingMachineRef,
+    "orchestrator": orchestratorRef,
+    "service-provider": serviceProviderRef,
     // Add more device names and their references here
   }), []);
 
@@ -51,40 +81,47 @@ const Demo = () => {
       }
   }, [deviceReferences]);
 
-  // Move the code animation object to the device position
-  const moveCodeAnimation = useCallback((deviceName) => {
+  // Object moving one place to another place animation
+  const moveCodeAnimation = useCallback((startDeviceName, endDeviceName, iconSource, changingIconSource = null) => {
     return new Promise((resolve) => {
-      const deviceRef = getDeviceReference(deviceName);
-      if (deviceRef.current) {
-        const device = deviceRef.current.getBoundingClientRect();
-        const orchestrator = orchestratorRef.current.getBoundingClientRect();
-        const newPosition = {
-          x: device.left + device.width / 2,
-          y: device.top + device.height / 2,
+      const startDeviceRef = getDeviceReference(startDeviceName);
+      const endDeviceRef = getDeviceReference(endDeviceName);
+      if (endDeviceRef.current) {
+        const startDevice = startDeviceRef.current.getBoundingClientRect();
+        const endDevice = endDeviceRef.current.getBoundingClientRect();
+
+        const startPosition = {
+          x: startDevice.left + startDevice.width / 2,
+          y: startDevice.top + startDevice.height / 2,
         };
-        const orchestratorPosition = {
-          x: orchestrator.left + orchestrator.width / 2,
-          y: orchestrator.top + orchestrator.height / 2,
+
+        const endPosition = {
+          x: endDevice.left + endDevice.width / 2,
+          y: endDevice.top + endDevice.height / 2,
         };
-  
+
         setMovingDeployments((prevDeployments) => {
           const newMovingDeployments = [
             ...prevDeployments,
             {
               id: prevDeployments.length,
-              deviceName,
-              startPos: orchestratorPosition,
-              endPos: newPosition,
+              startPos: startPosition,
+              endPos: endPosition,
+              iconSource: iconSource,
+              changingIconSource: changingIconSource, // Optional new icon
             },
           ];
-  
+
+          // Remove the deployment after 5 seconds
           setTimeout(() => {
             setMovingDeployments((currentMovingDeployments) =>
-              currentMovingDeployments.filter(dep => dep.id !== newMovingDeployments[newMovingDeployments.length - 1].id)
+              currentMovingDeployments.filter(
+                (dep) => dep.id !== newMovingDeployments[newMovingDeployments.length - 1].id
+              )
             );
             resolve(); // Resolve the promise after the setTimeout is complete
-          }, 5000); // Remove after 5 seconds
-  
+          }, 5000);
+
           return newMovingDeployments;
         });
       } else {
@@ -130,6 +167,83 @@ const Demo = () => {
     return deviceId || null;
   }, [getDeviceIdMap]);
 
+  // Animation for the whole process while querying the devices for energy usage
+  const queryAnimation = async (devicesWithDeployment) => {
+
+    const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+    await moveCodeAnimation("service-provider", "orchestrator", Query_Icon);
+    await delay(100);
+
+    // Prepare an array of moveCodeAnimation promises for devices with valid deploymentId
+    const moveToDevicesPromises = devicesWithDeployment.map((device) =>
+      moveCodeAnimation("orchestrator", device.name, Query_Icon)
+    );
+
+    await Promise.all(moveToDevicesPromises);
+    await delay(100);
+
+    if (devicesWithDeployment.length !== 0) {
+      setTimeout(() => {
+        startBlinking(); // Start blinking the house border when data going outside the house
+      }, 700);
+    }
+
+    // Prepare an array of moveCodeAnimation promises for responses from valid devices
+    const moveFromDevicesPromises = devicesWithDeployment.map((device) =>
+      moveCodeAnimation(device.name, "orchestrator", Result_Icon_Blue, Result_Icon_Red)
+    );
+
+    // Execute moveCodeAnimation from valid devices in parallel
+    await Promise.all(moveFromDevicesPromises);
+    await delay(100);
+
+    await moveCodeAnimation("orchestrator", "service-provider", Result_Icon_Red);
+    await delay(100);
+  };
+
+
+  // Query the devices for energy usage
+  const handleQueryClick = async (timeDuration) => {
+
+    let existingDevices = JSON.parse(localStorage.getItem("devices")) || [];
+    const devicesWithDeployment = existingDevices.filter(
+      (device) => device.deploymentId
+    );
+
+    try {
+
+      await queryAnimation(devicesWithDeployment);
+
+      const timeDurationInSeconds = timeDuration * 3600;
+      const startTime = new Date().getTime();
+
+      // Prepare an array of API call promises for each device with valid deploymentId
+      const apiCalls = devicesWithDeployment.map((device) => {
+        const endpoint = `/execute/${device.deploymentId}`;
+        const postData = {
+          param0: startTime,
+          param1: timeDurationInSeconds,
+        };
+        return fetchPostData(endpoint, postData);
+      });
+
+      // Execute all API calls in parallel and wait for their completion
+      const responses = await Promise.all(apiCalls);
+
+      // Create a map of device names to the first item of their respective responses
+      const responseMap = devicesWithDeployment.reduce((acc, device, index) => {
+        acc[device.name] = parseFloat(responses[index][0]);
+        return acc;
+      }, {});
+
+      return responseMap;
+    } catch (error) {
+      console.error("Error deploying module:", error);
+      return {};
+    }
+  };
+
   // Update the deployment details for the device
   const updateDeployment = useCallback(async (device, deviceName, deployments) => {
 
@@ -142,6 +256,7 @@ const Demo = () => {
       // Accessing the modules inside fullManifest using the deviceId
       const deviceManifest = deviceSpecificDeployment.fullManifest[device.deviceId];
 
+      device.deploymentId = deviceSpecificDeployment._id;
       device.existingModuleId = deviceManifest.modules[0].id;
       device.existingModuleName = deviceManifest.modules[0].name;
       device.isModuleActive = Boolean(deviceSpecificDeployment.active);
@@ -174,6 +289,7 @@ const Demo = () => {
       }
 
     } else {
+      device.deploymentId = null;
       device.existingModuleId = null;
       device.existingModuleName = null;
       device.isModuleActive = false;
@@ -212,6 +328,7 @@ const Demo = () => {
             name: log.deviceName,
             lastUpdateTime: now,
             deviceId: deviceId,
+            deploymentId: null,
             existingModuleId: null,
             existingModuleName: null,
             isModuleActive: false,
@@ -226,7 +343,7 @@ const Demo = () => {
         }
         // Added log time and current time difference check to prevent to create multiple moving object for old logs when refreshing the page
       } else if (log.funcName === "deployment_create" && ((now - logReceivedTime) < 5000)) {
-        await moveCodeAnimation(log.deviceName);
+        await moveCodeAnimation("orchestrator", log.deviceName, WebAssembly_Icon);
         updatePromises.push(updateDeployment(deviceMap.get(log.deviceName), log.deviceName, deployments));
       }
     }
@@ -325,15 +442,15 @@ const Demo = () => {
   useEffect(() => {
 
     // This logic will draw a line between the orchestrator and the equipment
-    const connectOrchestratorToEquipment = (equipmentRef, equipmentName) => {
-      if (orchestratorRef.current && equipmentRef.current) {
-        const orchestrator = orchestratorRef.current.getBoundingClientRect();
-        const equipment = equipmentRef.current.getBoundingClientRect();
+    const drawLines = (point_A_ref, point_A_name, point_B_ref, point_B_name) => {
+      if (point_A_ref.current && point_B_ref.current) {
+        const point_A_bounds = point_A_ref.current.getBoundingClientRect();
+        const point_B_bounds = point_B_ref.current.getBoundingClientRect();
 
-        const x1 = orchestrator.left + orchestrator.width / 2;
-        const y1 = orchestrator.top + orchestrator.height / 2;
-        const x2 = equipment.left + equipment.width / 2;
-        const y2 = equipment.top + equipment.height / 2;
+        const x1 = point_A_bounds.left + point_A_bounds.width / 2;
+        const y1 = point_A_bounds.top + point_A_bounds.height / 2;
+        const x2 = point_B_bounds.left + point_B_bounds.width / 2;
+        const y2 = point_B_bounds.top + point_B_bounds.height / 2;
 
         const length = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
         const angle = Math.atan2(y2 - y1, x2 - x1) * (180 / Math.PI);
@@ -349,19 +466,22 @@ const Demo = () => {
           zIndex: 1,
         };
 
-        const lineElement = document.getElementById(`orchestrator-${equipmentName}-line`);
+        const lineElement = document.getElementById(`${point_A_name}-${point_B_name}-line`);
         Object.assign(lineElement.style, lineStyle);
       }
     };
 
-    connectOrchestratorToEquipment(freezerRef, "freezer");
-    connectOrchestratorToEquipment(washingMachineRef, "washingMachine");
-    window.addEventListener('resize', () => connectOrchestratorToEquipment(freezerRef, "freezer"));
-    window.addEventListener('resize', () => connectOrchestratorToEquipment(washingMachineRef, "washingMachine"));
+    drawLines(orchestratorRef, "orchestrator", freezerRef, "freezer");
+    drawLines(orchestratorRef, "orchestrator", washingMachineRef, "washingMachine");
+    drawLines(orchestratorRef, "orchestrator", serviceProviderRef, "serviceProvider");
+    window.addEventListener('resize', () => drawLines(orchestratorRef, "orchestrator", freezerRef, "freezer"));
+    window.addEventListener('resize', () => drawLines(orchestratorRef, "orchestrator", washingMachineRef, "washingMachine"));
+    window.addEventListener('resize', () => drawLines(orchestratorRef, "orchestrator", serviceProviderRef, "serviceProvider"));
 
     return () => {
-      window.removeEventListener('resize', () => connectOrchestratorToEquipment(freezerRef, "freezer"));
-      window.removeEventListener('resize', () => connectOrchestratorToEquipment(washingMachineRef, "washingMachine"));
+      window.removeEventListener('resize', () => drawLines(orchestratorRef, "orchestrator", freezerRef, "freezer"));
+      window.removeEventListener('resize', () => drawLines(orchestratorRef, "orchestrator", washingMachineRef, "washingMachine"));
+      window.addEventListener('resize', () => drawLines(orchestratorRef, "orchestrator", serviceProviderRef, "serviceProvider"));
     };
   }, []);
 
@@ -393,32 +513,9 @@ const Demo = () => {
         >
           <div id="orchestrator-freezer-line" />
           <div id="orchestrator-washingMachine-line" />
+          <div id="orchestrator-serviceProvider-line" />
           {movingDeployments.map((deployment) => (
-            <motion.div
-              key={deployment.id}
-              initial={{
-                x: deployment.startPos.x - 25,
-                y: deployment.startPos.y - 25,
-              }} // Center the animation object
-              animate={{
-                x: deployment.endPos.x - 25,
-                y: deployment.endPos.y - 25,
-              }}
-              transition={{ type: "spring", duration: 5 }}
-              style={{
-                position: "absolute",
-                zIndex: 1,
-              }}
-            >
-              <img
-                src={WebAssembly_Logo}
-                alt="Moving object"
-                style={{
-                  width: "50px",
-                  height: "50px",
-                }}
-              />
-            </motion.div>
+            <MovingIcon key={deployment.id} deployment={deployment} />
           ))}
           {activeDeployments.map((deployment) => (
             <motion.div
@@ -426,13 +523,13 @@ const Demo = () => {
               initial={{
                 x: deployment.wasmModuleIconPosition.x - 25,
                 y: deployment.wasmModuleIconPosition.y - 25,
-                width: "50px",  // Set initial width
+                width: "50px", // Set initial width
                 height: "50px", // Set initial height
               }}
               animate={{
                 x: deployment.wasmModuleIconPosition.x - 25,
                 y: deployment.wasmModuleIconPosition.y - 25,
-                width: "20px",  // Animate to smaller width
+                width: "20px", // Animate to smaller width
                 height: "20px", // Animate to smaller height
               }}
               transition={{ type: "spring", duration: 5 }}
@@ -442,7 +539,7 @@ const Demo = () => {
               }}
             >
               <img
-                src={WebAssembly_Logo}
+                src={WebAssembly_Icon}
                 alt="Moving object"
                 style={{
                   width: "100%",
@@ -462,6 +559,20 @@ const Demo = () => {
                   height: 0,
                 }}
               >
+                <img
+                  id="house_warning_border"
+                  src={House_Warning_Border}
+                  alt="warning"
+                  className="house_warning_border"
+                  style={{
+                    position: "absolute",
+                    left: "-1%",
+                    top: "-1%",
+                    width: "102%",
+                    height: "97%",
+                    opacity: warningBorderVisible ? 1 : 0, transition: 'opacity 0.25s' 
+                  }}
+                />
                 <img
                   src={backgroundImage}
                   alt="Home yard"
@@ -554,7 +665,7 @@ const Demo = () => {
                       style={{
                         position: "relative",
                         marginTop: "15px",
-                        paddingBottom: "83%",
+                        paddingBottom: "26%",
                         width: "100%",
                         height: 0,
                       }}
@@ -581,13 +692,17 @@ const Demo = () => {
                             top: "4%",
                             left: "35%",
                             width: "25%",
-                            height: "25%",
+                            height: "80%",
                             zIndex: 2,
                           }}
                         />
                       </div>
                     </div>
                   </Box>
+                  <ServiceProvider
+                    ref={serviceProviderRef}
+                    onClick={handleQueryClick}
+                  />
                 </Box>
               </Grid>
             </Grid>
