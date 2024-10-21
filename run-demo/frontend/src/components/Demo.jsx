@@ -6,8 +6,8 @@ import {
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { motion } from "framer-motion";
 import backgroundImage from "./../assets/yard.png";
-import roadImage from "./../assets/road.png";
-import cabinImage from "./../assets/cabin.png";
+import controlHub from "./../assets/controlHub.png";
+import Service_Provider from "./../assets/service_provider.png";
 import houseImage from "./../assets/house.png";
 import House_Warning_Border from "./../assets/house_warning_border.png";
 import Freezer from "./visual_components/Freezer";
@@ -595,7 +595,8 @@ const Demo = () => {
                     top: "-1%",
                     width: "102%",
                     height: "97%",
-                    opacity: warningBorderVisible ? 1 : 0, transition: 'opacity 0.25s' 
+                    opacity: warningBorderVisible ? 1 : 0,
+                    transition: "opacity 0.25s",
                   }}
                 />
                 <img
@@ -607,7 +608,7 @@ const Demo = () => {
                     top: 0,
                     left: 0,
                     width: "100%",
-                    height: "94.4%",
+                    height: "67%",
                     objectFit: "cover",
                     border: "1px solid #DCDCDC",
                     borderRadius: "5px",
@@ -628,27 +629,40 @@ const Demo = () => {
                   }}
                 >
                   <img
-                    src={roadImage}
-                    alt="Road"
-                    className="road-image"
+                    src={controlHub}
+                    alt="controlHub"
+                    className="controlHub-image"
                     style={{
                       position: "absolute",
                       top: "54%",
-                      left: "47%",
-                      width: "47.5%",
-                      height: "40.655%",
+                      left: "17%",
+                      width: "77%",
+                      height: "10.655%",
                     }}
                   />
                   <img
-                    src={cabinImage}
-                    alt="Cabin"
-                    className="cabin-image"
+                    src={Orchestrator}
+                    alt="Orchestrator"
+                    ref={orchestratorRef}
                     style={{
                       position: "absolute",
-                      top: "67%",
-                      left: "5%",
-                      width: "30%",
-                      height: "25%",
+                      top: "57%",
+                      left: "25%",
+                      width: "7%",
+                      height: "7%",
+                      zIndex: 2,
+                    }}
+                  />
+                  <img
+                    src={Service_Provider}
+                    alt="Service_Provider"
+                    ref={serviceProviderRef}
+                    style={{
+                      position: "absolute",
+                      top: "90%",
+                      left: "21.2%",
+                      width: "15%",
+                      zIndex: 2,
                     }}
                   />
                   <img
@@ -707,28 +721,14 @@ const Demo = () => {
                           flexDirection: "column",
                           justifyContent: "space-between",
                         }}
-                      >
-                        <img
-                          src={Orchestrator}
-                          alt="Orchestrator"
-                          ref={orchestratorRef}
-                          style={{
-                            position: "absolute",
-                            top: "4%",
-                            left: "35%",
-                            width: "25%",
-                            height: "80%",
-                            zIndex: 2,
-                          }}
-                        />
-                      </div>
+                      ></div>
                     </div>
                   </Box>
                   <ServiceProvider
                     ref={serviceProviderRef}
                     onClick={handleQueryClick}
                   />
-                  <ElectricityPrice consumptionData={consumptionData}/>
+                  <ElectricityPrice consumptionData={consumptionData} />
                 </Box>
               </Grid>
             </Grid>
