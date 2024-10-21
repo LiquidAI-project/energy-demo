@@ -139,6 +139,12 @@ services:
     depends_on:
       - orchestrator
 
+  backend:
+    build: ./backend
+    container_name: backend
+    ports: 
+      - ${BACKEND_PORT-3001}:3001
+
 volumes:
   mongo-config:
   mongo-db:

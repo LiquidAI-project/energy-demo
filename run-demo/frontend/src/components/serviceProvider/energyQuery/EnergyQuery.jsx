@@ -11,8 +11,6 @@ import RealtimeClock from "./RealtimeClock";
 
 const EnergyQuery = ({ onClick }) => {
   const [timeDuration, setTimeDuration] = useState("");
-  const [totalPowerUsage, setTotalPowerUsage] = useState("0.0");
-  const [deviceSpecificPowerUsage, setDeviceSpecificPowerUsage] = useState({}); 
   const [queryButtonDisable, setQueryButtonDisable] = useState(true);
 
   const handleTimeDurationChange = (event) => {
@@ -23,23 +21,7 @@ const EnergyQuery = ({ onClick }) => {
   const handleButtonClick = async () => {
 
     setQueryButtonDisable(true);
-    setTotalPowerUsage("0.0");
-    setDeviceSpecificPowerUsage({});
-
-    const powerUsageResponse = await onClick(timeDuration);
-
-    if (Object.keys(powerUsageResponse).length === 0) {
-      setTotalPowerUsage("0.0");
-    } else {
-      const sumOfValues = Object.values(powerUsageResponse).reduce(
-        (sum, value) => sum + value,
-        0
-      );
-
-      setQueryButtonDisable(false);
-      setDeviceSpecificPowerUsage(powerUsageResponse);
-      setTotalPowerUsage(sumOfValues.toFixed(5));
-    }
+    await onClick(timeDuration);
   };
 
   return (
@@ -80,18 +62,6 @@ const EnergyQuery = ({ onClick }) => {
               Query
             </Button>
           </div>
-          {Object.entries(deviceSpecificPowerUsage).map(
-            ([deviceName, usage]) => (
-              <Grid item xs={12} md={12} key={deviceName}>
-                <Typography variant="body1" gutterBottom>
-                  {deviceName}: {usage.toFixed(5)} kWh
-                </Typography>
-              </Grid>
-            )
-          )}
-          <Typography variant="body1" style={{ marginTop: "5%", marginBottom: "5%" }}>
-            Total Power Usage: {totalPowerUsage} kWh
-          </Typography>
         </Grid>
       </Grid>
     </div>

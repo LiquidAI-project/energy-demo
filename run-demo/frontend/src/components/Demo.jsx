@@ -19,6 +19,7 @@ import Query_Icon from "./../assets/query_icon.png";
 import Result_Icon_Blue from "./../assets/result_icon.png";
 import Result_Icon_Red from "./../assets/result_icon_with_warning.png";
 import ServiceProvider from "./serviceProvider/ServiceProvider";
+import ElectricityPrice from "./serviceProvider/energyQuery/ElectricityConsumption";
 import { fetchData, fetchPostData } from '../services/apiService';
 
 // eslint-disable-next-line no-undef
@@ -41,6 +42,7 @@ const Demo = () => {
   const [activeDeployments, setActiveDeployments] = useState([]);
   const [warningBorderVisible, setWarningBorderVisible] = useState(false);
   const [shouldBlink, setShouldBlink] = useState(false);
+  const [consumptionData, setConsumptionData] = useState([]); 
 
   // This function will make the house border blink in order to indicate the warning state when data is going outside
   const startBlinking = () => {
@@ -205,44 +207,67 @@ const Demo = () => {
 
   // Query the devices for energy usage
   const handleQueryClick = async (timeDuration) => {
-
     let existingDevices = JSON.parse(localStorage.getItem("devices")) || [];
     const devicesWithDeployment = existingDevices.filter(
-      (device) => device.deploymentId
+      (device) => device.deploymentId && device.isModuleActive
     );
 
+    const initalTime = new Date().getTime();
+    setConsumptionData([]); // Clear the existing data
+  
     try {
+  
+      for (let hourIndex = 0; hourIndex < timeDuration; hourIndex++) {
 
-      await queryAnimation(devicesWithDeployment);
+        await queryAnimation(devicesWithDeployment);
 
-      const timeDurationInSeconds = timeDuration * 3600;
-      const startTime = new Date().getTime();
+        const startTime = initalTime + hourIndex * 3600 * 1000; // Adjust start time for each hour
+        const timeDurationInSeconds = 3600; // Query for 1 hour at a time
+        
+        // Prepare an array of API call promises for each device with valid deploymentId
+        const apiCalls = devicesWithDeployment.map((device) => {
+          const endpoint = `/execute/${device.deploymentId}`;
+          const postData = {
+            param0: startTime,
+            param1: timeDurationInSeconds,
+          };
+          return fetchPostData(endpoint, postData);
+        });
+        
+        // Execute all API calls for this hour in parallel and wait for their completion
+        const responses = await Promise.all(apiCalls);
+  
+        // Calculate total consumption for the current hour
+        let totalConsumptionForHour = 0;
+  
+        devicesWithDeployment.forEach((device, index) => {
+          const consumption = parseFloat(responses[index][0]) || 0;
+          totalConsumptionForHour += consumption;
+        });
 
-      // Prepare an array of API call promises for each device with valid deploymentId
-      const apiCalls = devicesWithDeployment.map((device) => {
-        const endpoint = `/execute/${device.deploymentId}`;
-        const postData = {
-          param0: startTime,
-          param1: timeDurationInSeconds,
+      setConsumptionData((prevData) => {
+        const newItem = {
+          time: new Date(startTime),
+          total: totalConsumptionForHour,
         };
-        return fetchPostData(endpoint, postData);
+  
+        // Check if the newItem's time already exists in the existing data
+        const updatedData = prevData.some(
+          (item) => new Date(item.time).getTime() === new Date(newItem.time).getTime()
+        )
+          ? prevData
+          : [...prevData, newItem];
+  
+        return updatedData;
       });
-
-      // Execute all API calls in parallel and wait for their completion
-      const responses = await Promise.all(apiCalls);
-
-      // Create a map of device names to the first item of their respective responses
-      const responseMap = devicesWithDeployment.reduce((acc, device, index) => {
-        acc[device.name] = parseFloat(responses[index][0]);
-        return acc;
-      }, {});
-
-      return responseMap;
+      }
+  
     } catch (error) {
       console.error("Error deploying module:", error);
       return {};
     }
   };
+  
 
   // Update the deployment details for the device
   const updateDeployment = useCallback(async (device, deviceName, deployments) => {
@@ -703,6 +728,7 @@ const Demo = () => {
                     ref={serviceProviderRef}
                     onClick={handleQueryClick}
                   />
+                  <ElectricityPrice consumptionData={consumptionData}/>
                 </Box>
               </Grid>
             </Grid>
