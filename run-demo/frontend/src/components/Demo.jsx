@@ -21,6 +21,8 @@ import Result_Icon_Red from "./../assets/result_icon_with_warning.png";
 import ServiceProvider from "./serviceProvider/ServiceProvider";
 import ElectricityPrice from "./serviceProvider/energyQuery/ElectricityConsumption";
 import { fetchData, fetchPostData } from '../services/apiService';
+import DemoControlls from "./DemoControlls";
+import DemoDataVisualize from "./DemoDataVisualize";
 
 // eslint-disable-next-line no-undef
 const PUBLIC_HOST = process.env.PUBLIC_HOST;
@@ -699,35 +701,14 @@ const Demo = () => {
                   height="auto"
                   overflow="hidden"
                 >
-                  <Box>
-                    <div
-                      style={{
-                        position: "relative",
-                        marginTop: "15px",
-                        paddingBottom: "26%",
-                        width: "100%",
-                        height: 0,
-                      }}
-                    >
-                      <div
-                        className="overlay-content"
-                        style={{
-                          position: "absolute",
-                          top: 0,
-                          left: 0,
-                          width: "100%",
-                          height: "100%",
-                          display: "flex",
-                          flexDirection: "column",
-                          justifyContent: "space-between",
-                        }}
-                      ></div>
-                    </div>
-                  </Box>
-                  <ServiceProvider
+                  <div style={{marginBottom: "5%"}}>
+                    <DemoControlls />
+                  </div>
+                  <DemoDataVisualize />
+                  {/* <ServiceProvider
                     ref={serviceProviderRef}
                     onClick={handleQueryClick}
-                  />
+                  /> */}
                   <ElectricityPrice consumptionData={consumptionData} />
                 </Box>
               </Grid>
