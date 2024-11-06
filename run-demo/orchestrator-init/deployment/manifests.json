@@ -314,5 +314,121 @@
                 }
             }
         }
+    },
+    {
+        "_id": "672b59bb0eccba03d47bb193",
+        "name": "washing-machine-run-dep",
+        "proc0": "{\"device\":\"66d855bcdf5773ad1b05d17d\",\"module\":\"672b59a20eccba03d47bb192\",\"func\":\"run_washing_machine\"}",
+        "sequence": [
+            {
+                "device": "66d855bcdf5773ad1b05d17d",
+                "module": "672b59a20eccba03d47bb192",
+                "func": "run_washing_machine"
+            }
+        ],
+        "fullManifest": {
+            "66d855bcdf5773ad1b05d17d": {
+                "deploymentId": "672b59bb0eccba03d47bb193",
+                "modules": [
+                    {
+                        "id": "672b59a20eccba03d47bb192",
+                        "name": "washing-machine-run",
+                        "urls": {
+                            "binary": "http://2e7c5d502fcb:3000/file/module/672b59a20eccba03d47bb192/wasm",
+                            "description": "http://2e7c5d502fcb:3000/file/module/672b59a20eccba03d47bb192/description",
+                            "other": {}
+                        }
+                    }
+                ],
+                "endpoints": {
+                    "washing-machine-run": {
+                        "run_washing_machine": {
+                            "url": "http://172.15.0.22:5000",
+                            "path": "/672b59bb0eccba03d47bb193/modules/washing-machine-run/run_washing_machine",
+                            "method": "get",
+                            "request": {
+                                "parameters": [
+                                    {
+                                        "name": "param0",
+                                        "in": "query",
+                                        "description": "Auto-generated description",
+                                        "required": true,
+                                        "schema": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    {
+                                        "name": "param1",
+                                        "in": "query",
+                                        "description": "Auto-generated description",
+                                        "required": true,
+                                        "schema": {
+                                            "type": "integer"
+                                        }
+                                    }
+                                ]
+                            },
+                            "response": {
+                                "media_type": "application/json",
+                                "schema": {
+                                    "type": "integer"
+                                }
+                            }
+                        }
+                    }
+                },
+                "instructions": {
+                    "modules": {
+                        "washing-machine-run": {
+                            "run_washing_machine": {
+                                "from": {
+                                    "url": "http://172.15.0.22:5000",
+                                    "path": "/672b59bb0eccba03d47bb193/modules/washing-machine-run/run_washing_machine",
+                                    "method": "get",
+                                    "request": {
+                                        "parameters": [
+                                            {
+                                                "name": "param0",
+                                                "in": "query",
+                                                "description": "Auto-generated description",
+                                                "required": true,
+                                                "schema": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            {
+                                                "name": "param1",
+                                                "in": "query",
+                                                "description": "Auto-generated description",
+                                                "required": true,
+                                                "schema": {
+                                                    "type": "integer"
+                                                }
+                                            }
+                                        ]
+                                    },
+                                    "response": {
+                                        "media_type": "application/json",
+                                        "schema": {
+                                            "type": "integer"
+                                        }
+                                    }
+                                },
+                                "to": null
+                            }
+                        }
+                    }
+                },
+                "mounts": {
+                    "washing-machine-run": {
+                        "run_washing_machine": {
+                            "execution": [],
+                            "deployment": [],
+                            "output": []
+                        }
+                    }
+                }
+            }
+        }
     }
 ]
