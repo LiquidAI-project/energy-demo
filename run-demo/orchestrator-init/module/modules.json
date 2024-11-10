@@ -506,5 +506,224 @@
                 }
             }
         }
+    },
+    {
+        "_id": "672b59a20eccba03d47bb192",
+        "name": "washing-machine-run",
+        "exports": [
+            {
+                "name": "_start",
+                "parameterCount": 0
+            },
+            {
+                "name": "__main_void",
+                "parameterCount": 0
+            },
+            {
+                "name": "run_washing_machine",
+                "parameterCount": 2
+            }
+        ],
+        "requirements": [
+            {
+                "module": "wasi_snapshot_preview1",
+                "name": "fd_write",
+                "kind": "function"
+            },
+            {
+                "module": "wasi_snapshot_preview1",
+                "name": "path_open",
+                "kind": "function"
+            },
+            {
+                "module": "wasi_snapshot_preview1",
+                "name": "poll_oneoff",
+                "kind": "function"
+            },
+            {
+                "module": "wasi_snapshot_preview1",
+                "name": "environ_get",
+                "kind": "function"
+            },
+            {
+                "module": "wasi_snapshot_preview1",
+                "name": "environ_sizes_get",
+                "kind": "function"
+            },
+            {
+                "module": "wasi_snapshot_preview1",
+                "name": "fd_close",
+                "kind": "function"
+            },
+            {
+                "module": "wasi_snapshot_preview1",
+                "name": "fd_prestat_get",
+                "kind": "function"
+            },
+            {
+                "module": "wasi_snapshot_preview1",
+                "name": "fd_prestat_dir_name",
+                "kind": "function"
+            },
+            {
+                "module": "wasi_snapshot_preview1",
+                "name": "proc_exit",
+                "kind": "function"
+            }
+        ],
+        "wasm": {
+            "originalFilename": "washing-machine-run.wasm",
+            "fileName": "6acd94c3097392fffc5ff4c75cbf0d6e",
+            "path": "/app/fileserv/files/wasm/6acd94c3097392fffc5ff4c75cbf0d6e"
+        },
+        "dataFiles": {},
+        "description": {
+            "openapi": "3.0.3",
+            "info": {
+                "title": "washing-machine-run",
+                "description": "Calling microservices defined as WebAssembly functions",
+                "version": "0.0.1"
+            },
+            "tags": [
+                {
+                    "name": "WebAssembly",
+                    "description": "Executing WebAssembly functions"
+                }
+            ],
+            "servers": [
+                {
+                    "url": "http://{serverIp}:{port}",
+                    "variables": {
+                        "serverIp": {
+                            "default": "localhost",
+                            "description": "IP or name found with mDNS of the machine running supervisor"
+                        },
+                        "port": {
+                            "enum": ["5000", "80"],
+                            "default": "5000"
+                        }
+                    }
+                }
+            ],
+            "paths": {
+                "/{deployment}/modules/washing-machine-run/_start": {
+                    "summary": "Auto-generated description of function",
+                    "parameters": [
+                        {
+                            "name": "deployment",
+                            "in": "path",
+                            "description": "Deployment ID",
+                            "required": true,
+                            "schema": {
+                                "type": "string"
+                            }
+                        }
+                    ],
+                    "get": {
+                        "tags": [],
+                        "summary": "Auto-generated description of function call method",
+                        "parameters": [],
+                        "responses": {
+                            "200": {
+                                "description": "Auto-generated description of response",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "type": "integer"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "/{deployment}/modules/washing-machine-run/__main_void": {
+                    "summary": "Auto-generated description of function",
+                    "parameters": [
+                        {
+                            "name": "deployment",
+                            "in": "path",
+                            "description": "Deployment ID",
+                            "required": true,
+                            "schema": {
+                                "type": "string"
+                            }
+                        }
+                    ],
+                    "get": {
+                        "tags": [],
+                        "summary": "Auto-generated description of function call method",
+                        "parameters": [],
+                        "responses": {
+                            "200": {
+                                "description": "Auto-generated description of response",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "type": "integer"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "/{deployment}/modules/washing-machine-run/run_washing_machine": {
+                    "summary": "Auto-generated description of function",
+                    "parameters": [
+                        {
+                            "name": "deployment",
+                            "in": "path",
+                            "description": "Deployment ID",
+                            "required": true,
+                            "schema": {
+                                "type": "string"
+                            }
+                        }
+                    ],
+                    "get": {
+                        "tags": [],
+                        "summary": "Auto-generated description of function call method",
+                        "parameters": [
+                            {
+                                "name": "param0",
+                                "in": "query",
+                                "description": "Auto-generated description",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer"
+                                }
+                            },
+                            {
+                                "name": "param1",
+                                "in": "query",
+                                "description": "Auto-generated description",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer"
+                                }
+                            }
+                        ],
+                        "responses": {
+                            "200": {
+                                "description": "Auto-generated description of response",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "type": "integer"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "mounts": {
+            "_start": {},
+            "__main_void": {},
+            "run_washing_machine": {}
+        }
     }
 ]
