@@ -1,5 +1,14 @@
 #!/bin/bash
 
+# Get this file directory
+DIR=$(dirname "${BASH_SOURCE[0]}")
+
+# Check for .env file
+if [ ! -f "${DIR}/.env" ]; then
+    echo "Creating .env file"
+    cp "${DIR}/.env.example" "${DIR}/.env"
+fi
+
 # Start orchestrator in background with nohup
 echo "Starting the orchestrator service..."
 cd ./wasmiot-orchestrator/fileserv || { echo "Failed to navigate to ./wasmiot-orchestrator/fileserv"; exit 1; }

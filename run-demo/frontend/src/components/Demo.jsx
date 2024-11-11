@@ -1,3 +1,8 @@
+// Copyright 2024 Tampere University
+// This software was developed as a part of the LiquidAI project
+// This source code is licensed under the MIT license. See LICENSE in the repository root directory.
+// Author(s): Lakshan Rathnayaka <lakshan.rathnayaka@tuni.fi>, Ville Heikkilä <ville.heikkila@tuni.fi>.
+
 import {
   Box,
   Grid,
@@ -30,6 +35,8 @@ const PUBLIC_HOST = process.env.PUBLIC_HOST;
 const PUBLIC_PORT = process.env.PUBLIC_PORT;
 // eslint-disable-next-line no-undef
 const DEVICE_CHECK_INTERVAL = process.env.DEVICE_CHECK_INTERVAL;
+// eslint-disable-next-line no-undef
+const ANUMATION_MOVING_TIME = process.env.ANUMATION_MOVING_TIME;
 
 const Demo = () => {
 
@@ -124,7 +131,7 @@ const Demo = () => {
               )
             );
             resolve(); // Resolve the promise after the setTimeout is complete
-          }, 5000);
+          }, ANUMATION_MOVING_TIME);
 
           return newMovingDeployments;
         });

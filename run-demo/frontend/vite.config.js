@@ -19,6 +19,7 @@ export default defineConfig({
       PUBLIC_HOST: `${process.env.PUBLIC_HOST}`,
       PUBLIC_PORT: `${process.env.PUBLIC_PORT}`,
       DEVICE_CHECK_INTERVAL: `${process.env.DEVICE_CHECK_INTERVAL}`,
+      ANUMATION_MOVING_TIME: `${process.env.ANUMATION_MOVING_TIME}`,
       // Add other environment variables here
     }
   }
