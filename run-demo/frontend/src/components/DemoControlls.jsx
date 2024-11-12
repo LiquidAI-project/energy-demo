@@ -5,6 +5,8 @@
 
 import { Button } from "@mui/material";
 import { fetchData,fetchPostData } from "../services/apiService";
+import RealtimeClock from "./RealtimeClock";
+import DemoClock from "./DemoClock";
 
 // eslint-disable-next-line no-undef
 const ANUMATION_MOVING_TIME = process.env.ANUMATION_MOVING_TIME;
@@ -84,17 +86,23 @@ const DemoControlls = () => {
 
     return (
         <div>
-            <Button
-                variant="contained"
-                color="primary"
-                sx={{ mr: 4 }}
-                onClick={handleStart}
-            >
-                Start
-            </Button>
-            <Button variant="contained" color="primary">
-                Next
-            </Button>
+            <div>
+                <Button
+                    variant="contained"
+                    color="primary"
+                    sx={{ mr: 4 }}
+                    onClick={handleStart}
+                >
+                    Start
+                </Button>
+                <Button variant="contained" color="primary">
+                    Next
+                </Button>
+            </div>
+            <div style={{ marginTop: "5%" }}>
+                <RealtimeClock />
+                <DemoClock />
+            </div>
         </div>
     );
 };

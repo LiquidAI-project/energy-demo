@@ -212,72 +212,7 @@ const Demo = () => {
     await moveCodeAnimation("orchestrator", "service-provider", Result_Icon_Red);
     await delay(100);
   };
-
-
-  // Query the devices for energy usage
-  const handleQueryClick = async (timeDuration) => {
-    let existingDevices = JSON.parse(localStorage.getItem("devices")) || [];
-    const devicesWithDeployment = existingDevices.filter(
-      (device) => device.deploymentId && device.isModuleActive
-    );
-
-    const initalTime = new Date().getTime();
-    setConsumptionData([]); // Clear the existing data
   
-    try {
-  
-      for (let hourIndex = 0; hourIndex < timeDuration; hourIndex++) {
-
-        await queryAnimation(devicesWithDeployment);
-
-        const startTime = initalTime + hourIndex * 3600 * 1000; // Adjust start time for each hour
-        const timeDurationInSeconds = 3600; // Query for 1 hour at a time
-        
-        // Prepare an array of API call promises for each device with valid deploymentId
-        const apiCalls = devicesWithDeployment.map((device) => {
-          const endpoint = `/execute/${device.deploymentId}`;
-          const postData = {
-            param0: startTime,
-            param1: timeDurationInSeconds,
-          };
-          return fetchPostData(endpoint, postData);
-        });
-        
-        // Execute all API calls for this hour in parallel and wait for their completion
-        const responses = await Promise.all(apiCalls);
-  
-        // Calculate total consumption for the current hour
-        let totalConsumptionForHour = 0;
-  
-        devicesWithDeployment.forEach((device, index) => {
-          const consumption = parseFloat(responses[index][0]) || 0;
-          totalConsumptionForHour += consumption;
-        });
-
-      setConsumptionData((prevData) => {
-        const newItem = {
-          time: new Date(startTime),
-          total: totalConsumptionForHour,
-        };
-  
-        // Check if the newItem's time already exists in the existing data
-        const updatedData = prevData.some(
-          (item) => new Date(item.time).getTime() === new Date(newItem.time).getTime()
-        )
-          ? prevData
-          : [...prevData, newItem];
-  
-        return updatedData;
-      });
-      }
-  
-    } catch (error) {
-      console.error("Error deploying module:", error);
-      return {};
-    }
-  };
-  
-
   // Update the deployment details for the device
   const updateDeployment = useCallback(async (device, deviceName, deployments) => {
 
