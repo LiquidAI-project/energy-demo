@@ -3,6 +3,7 @@
 // This source code is licensed under the MIT license. See LICENSE in the repository root directory.
 // Author(s): Lakshan Rathnayaka <lakshan.rathnayaka@tuni.fi>, Ville Heikkilä <ville.heikkila@tuni.fi>.
 
+import { useState } from "react";
 import { Button } from "@mui/material";
 import { fetchData,fetchPostData } from "../services/apiService";
 import RealtimeClock from "./RealtimeClock";
@@ -12,29 +13,14 @@ import DemoClock from "./DemoClock";
 const ANUMATION_MOVING_TIME = process.env.ANUMATION_MOVING_TIME;
 
 const DemoControlls = () => {
+    const [demoRunning, setDemoRunning] = useState(false);
+
     /**
-     * Fetches the manifest data and finds the deployment object with given name.
-     * If found, it proceeds to deploy the wasm module for that object.
+     * Start of the demo.
      */
     const handleStart = async () => {
-        try {
-            const response = await fetchData("/file/manifest");
-
-            // Find the deployment object where name is "wm-run"
-            const deploymentObj = response.find((obj) => obj.name === "wm-run");
-
-            if (deploymentObj) {
-                console.log(`Processing deployment : ${deploymentObj.name}`);
-                wasmModuleDeployment(deploymentObj);
-            } else {
-                console.warn("No deployment found");
-            }
-        } catch (error) {
-            console.error(
-                "Error fetching manifests when starting the demo:",
-                error
-            );
-        }
+        await wasmModuleDeployment("wm-run");
+        await wasmModuleDeployment("wm-energy-query");
     };
 
     /**
@@ -42,23 +28,45 @@ const DemoControlls = () => {
      * After confirming the deployment status, it pauses for the animation duration
      * and then triggers the run function to start the wasm module on the device.
      *
-     * @param {Object} deploymentObj - The deployment object containing device information.
+     * @param {string} module name - Name of the module that needs to be deployed.
      */
-    const wasmModuleDeployment = async (deploymentObj) => {
+    const wasmModuleDeployment = async (moduleName) => {
         try {
-            const deviceId = deploymentObj.sequence[0].device;
+            // Fetch manifest data
+            const response = await fetchData("/file/manifest");
+
+            // Find deployment object with name "wm-run"
+            const deploymentObj = response.find(
+                (obj) => obj.name === moduleName
+            );
+
+            if (!deploymentObj) {
+                console.warn("No deployment found");
+                return;
+            }
+
+            console.log(`Processing deployment: ${deploymentObj.name}`);
+            const deviceId = deploymentObj.sequence[0]?.device;
+
+            // Post deployment object and process response
             const res = await fetchPostData(`/file/manifest/${deploymentObj._id}`,JSON.stringify(deploymentObj));
 
-            if (res.deviceResponses[deviceId].status === 200) {
-                // Wait for 5 seconds until the animation of moving wasm module to the device is finished
+            if (res.deviceResponses?.[deviceId]?.status === 200) {
+                // Wait for animation to complete before running the function
                 await new Promise((resolve) =>
                     setTimeout(resolve, ANUMATION_MOVING_TIME)
                 );
-                runFunction(deploymentObj._id, 3600, 1731304800);
-                console.log("Running washing machine");
+
+                // Allow to run the demo time only for device running fucntions for simulating the device running. 
+                if (moduleName.includes("run")) {
+                    setDemoRunning(true);
+                }
+                await runFunction(deploymentObj._id, 3600, 1731304800);
+            } else {
+                console.error("Device response status is not 200");
             }
         } catch (error) {
-            console.error("Error when deploying wasm modules:", error);
+            console.error("Error during wasm module deployment:", error);
         }
     };
 
@@ -77,7 +85,8 @@ const DemoControlls = () => {
                 param1: timeDuration,
             };
             const res = await fetchPostData(endpoint, postData);
-            console.log("Response from running wasm module:", res);
+            setDemoRunning(false);
+            console.log(`Response from the wasm module:`, res);
         } catch (error) {
             console.error("Error deploying module:", error);
             return {};
@@ -101,7 +110,10 @@ const DemoControlls = () => {
             </div>
             <div style={{ marginTop: "5%" }}>
                 <RealtimeClock />
-                <DemoClock />
+                <DemoClock
+                    demoRunning={demoRunning}
+                    setDemoRunning={(status) => setDemoRunning(status)}
+                />
             </div>
         </div>
     );

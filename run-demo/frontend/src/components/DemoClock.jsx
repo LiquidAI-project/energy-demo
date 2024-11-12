@@ -4,6 +4,7 @@
 // Author(s): Lakshan Rathnayaka <lakshan.rathnayaka@tuni.fi>, Ville Heikkilä <ville.heikkila@tuni.fi>.
 
 import { useState, useEffect } from "react";
+import PropTypes from "prop-types";
 import { Box } from "@mui/material";
 
 function getDayName(date) {
@@ -20,13 +21,11 @@ function getDayName(date) {
     return dayName;
 }
 
-function DemoClock() {
+function DemoClock({ demoRunning, setDemoRunning }) {
     const [demoTime, setDemoTime] = useState(new Date().setMinutes(0, 0));
     const [demoPassedHours, setDmoPassedHours] = useState(0);
     const demoTimeDateObj = new Date(demoTime);
     const [demoPassedMinutes, setDemoPassedMinutes] = useState(0);
-
-    const [isPaused, setIsPaused] = useState(true);
 
     // Default speed 1 hour per 10 seconds
     const [speed, setSpeed] = useState(10000 / 6);
@@ -36,7 +35,7 @@ function DemoClock() {
     useEffect(() => {
         let intervalId;
 
-        if (!isPaused) {
+        if (demoRunning || demoPassedMinutes >= 50) {
             intervalId = setInterval(() => {
                 setSpeed(speed);
                 // Increase hours while passed hours are low enough
@@ -55,20 +54,13 @@ function DemoClock() {
                     }
                 } else {
                     // stop the interval when demoPassedHours reaches 24
-                    setIsPaused(true);
+                    setDemoRunning(false);
                 }
             }, speed);
         }
 
         return () => clearInterval(intervalId);
-    }, [isPaused, speed, demoTime, demoPassedHours, demoPassedMinutes]);
-
-    /**
-     * Handles the start of the demo time.
-     */
-    const handleDemoTimeStart = () => {
-        setIsPaused(false);
-    };
+    }, [demoRunning, speed, demoTime, demoPassedHours, demoPassedMinutes, setDemoRunning]);
 
     return (
         <Box>
@@ -84,5 +76,9 @@ function DemoClock() {
         </Box>
     );
 }
+DemoClock.propTypes = {
+    demoRunning: PropTypes.bool.isRequired,
+    setDemoRunning: PropTypes.func.isRequired,
+};
 
 export default DemoClock;
