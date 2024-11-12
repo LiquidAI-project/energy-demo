@@ -36,7 +36,7 @@ const PUBLIC_PORT = process.env.PUBLIC_PORT;
 // eslint-disable-next-line no-undef
 const DEVICE_CHECK_INTERVAL = process.env.DEVICE_CHECK_INTERVAL;
 // eslint-disable-next-line no-undef
-const ANUMATION_MOVING_TIME = process.env.ANUMATION_MOVING_TIME;
+const ANIMATION_MOVING_TIME = process.env.ANIMATION_MOVING_TIME;
 
 const Demo = () => {
 
@@ -131,7 +131,7 @@ const Demo = () => {
               )
             );
             resolve(); // Resolve the promise after the setTimeout is complete
-          }, ANUMATION_MOVING_TIME);
+          }, ANIMATION_MOVING_TIME);
 
           return newMovingDeployments;
         });

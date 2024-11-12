@@ -10,7 +10,7 @@ import RealtimeClock from "./RealtimeClock";
 import DemoClock from "./DemoClock";
 
 // eslint-disable-next-line no-undef
-const ANUMATION_MOVING_TIME = process.env.ANUMATION_MOVING_TIME;
+const ANIMATION_MOVING_TIME = process.env.ANIMATION_MOVING_TIME;
 
 const DemoControlls = () => {
     const [demoRunning, setDemoRunning] = useState(false);
@@ -54,7 +54,7 @@ const DemoControlls = () => {
             if (res.deviceResponses?.[deviceId]?.status === 200) {
                 // Wait for animation to complete before running the function
                 await new Promise((resolve) =>
-                    setTimeout(resolve, ANUMATION_MOVING_TIME)
+                    setTimeout(resolve, ANIMATION_MOVING_TIME)
                 );
 
                 // Allow to run the demo time only for device running fucntions for simulating the device running. 
