@@ -483,12 +483,12 @@ const Demo = () => {
           <div id="orchestrator-freezer-line" />
           <div id="orchestrator-washingMachine-line" />
           <div id="orchestrator-serviceProvider-line" />
-          {movingDeployments.map((deployment) => (
-            <MovingIcon key={deployment.id} deployment={deployment} />
+          {movingDeployments.map((deployment, index) => (
+            <MovingIcon key={index} deployment={deployment} />
           ))}
-          {activeDeployments.map((deployment) => (
+          {activeDeployments.map((deployment, index) => (
             <motion.div
-              key={deployment.id}
+              key={index}
               initial={{
                 x: deployment.wasmModuleIconPosition.x - 25,
                 y: deployment.wasmModuleIconPosition.y - 25,

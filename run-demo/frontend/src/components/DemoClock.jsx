@@ -21,7 +21,7 @@ function getDayName(date) {
     return dayName;
 }
 
-function DemoClock({ demoRunning, setDemoRunning }) {
+function DemoClock({ demoRunning, setDemoRunning, onDemoTimeChange }) {
     const [demoTime, setDemoTime] = useState(new Date().setMinutes(0, 0));
     const [demoPassedHours, setDmoPassedHours] = useState(0);
     const demoTimeDateObj = new Date(demoTime);
@@ -47,6 +47,7 @@ function DemoClock({ demoRunning, setDemoRunning }) {
                         setDemoTime(
                             newDemoTime.setHours(newDemoTime.getHours() + 1)
                         );
+                        onDemoTimeChange(newDemoTime);
                     } else {
                         // Increase passed minutes by ten
                         const newPassedMinutes = demoPassedMinutes + 10;
@@ -60,7 +61,15 @@ function DemoClock({ demoRunning, setDemoRunning }) {
         }
 
         return () => clearInterval(intervalId);
-    }, [demoRunning, speed, demoTime, demoPassedHours, demoPassedMinutes, setDemoRunning]);
+    }, [
+        demoRunning,
+        speed,
+        demoTime,
+        demoPassedHours,
+        demoPassedMinutes,
+        setDemoRunning,
+        onDemoTimeChange,
+    ]);
 
     return (
         <Box>
@@ -79,6 +88,7 @@ function DemoClock({ demoRunning, setDemoRunning }) {
 DemoClock.propTypes = {
     demoRunning: PropTypes.bool.isRequired,
     setDemoRunning: PropTypes.func.isRequired,
+    onDemoTimeChange: PropTypes.func.isRequired,
 };
 
 export default DemoClock;
