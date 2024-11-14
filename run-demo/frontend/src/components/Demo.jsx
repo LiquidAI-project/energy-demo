@@ -51,6 +51,7 @@ const Demo = () => {
   const [activeDeployments, setActiveDeployments] = useState([]);
   const [warningBorderVisible, setWarningBorderVisible] = useState(false);
   const [shouldBlink, setShouldBlink] = useState(false);
+  const [logs, setLogs] = useState([]);
   const [consumptionData, setConsumptionData] = useState([]); 
 
   // This function will make the house border blink in order to indicate the warning state when data is going outside
@@ -91,6 +92,10 @@ const Demo = () => {
         return null;
       }
   }, [deviceReferences]);
+
+  const addLog = (message) => {
+      setLogs((prevLogs) => [...prevLogs, message]);
+  };
 
   // Object moving one place to another place animation
   const moveCodeAnimation = useCallback((startDeviceName, endDeviceName, iconSource, changingIconSource = null) => {
@@ -644,9 +649,9 @@ const Demo = () => {
                   overflow="hidden"
                 >
                   <div style={{marginBottom: "5%"}}>
-                    <DemoControlls />
+                    <DemoControlls onLogAdd={(log) => addLog(log)}/>
                   </div>
-                  <DemoDataVisualize />
+                  <DemoDataVisualize logs={logs}/>
                   {/* <ServiceProvider
                     ref={serviceProviderRef}
                     onClick={handleQueryClick}

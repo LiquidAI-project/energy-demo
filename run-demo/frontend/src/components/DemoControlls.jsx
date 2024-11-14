@@ -8,11 +8,12 @@ import { Button } from "@mui/material";
 import { fetchData,fetchPostData } from "../services/apiService";
 import RealtimeClock from "./RealtimeClock";
 import DemoClock from "./DemoClock";
+import PropTypes from "prop-types";
 
 // eslint-disable-next-line no-undef
 const ANIMATION_MOVING_TIME = process.env.ANIMATION_MOVING_TIME;
 
-const DemoControlls = () => {
+const DemoControlls = ({ onLogAdd }) => {
     const [demoRunning, setDemoRunning] = useState(false);
     const [demoTime, setDemoTime] = useState(new Date().setMinutes(0, 0));
     const [hourlyQueryCompleted, setHourlyQueryCompleted] = useState(false);
@@ -39,8 +40,7 @@ const DemoControlls = () => {
                     console.warn("No deployment found");
                     return;
                 }
-
-                console.log(`Processing deployment: ${deploymentObj.name}`);
+                onLogAdd(`Deployment of ${deploymentObj.name} module`);
                 const deviceId = deploymentObj.sequence[0]?.device;
 
                 // Post deployment object and process response
@@ -57,11 +57,17 @@ const DemoControlls = () => {
 
                     // Allow to run the demo time only for device running functions for simulating the device running.
                     if (moduleName.includes("run")) {
+                        onLogAdd(`Running washing-machine....`);
                         setDemoRunning(true);
+                    } else {
+                        onLogAdd(`Running ${deploymentObj.name} on washing-machine....`);
                     }
-                    await runFunction(deploymentObj._id, 3600, Math.floor(demoTime / 1000));
+                    const res = await runFunction(deploymentObj._id, 3600, Math.floor(demoTime / 1000));
 
                     if (moduleName.includes("energy-query")) {
+                        const newTime = new Date(demoTime);
+                        newTime.setHours(newTime.getHours() + 1);
+                        onLogAdd(`Energy usage between (${new Date(demoTime).toLocaleTimeString()} - ${newTime.toLocaleTimeString()}) : ${res[0]}`);
                         setHourlyQueryCompleted(true);
                     }
                 } else {
@@ -91,6 +97,7 @@ const DemoControlls = () => {
             const res = await fetchPostData(endpoint, postData);
             setDemoRunning(false);
             console.log(`Response from the wasm module:`, res);
+            return res
         } catch (error) {
             console.error("Error deploying module:", error);
             return {};
@@ -135,6 +142,10 @@ const DemoControlls = () => {
             </div>
         </div>
     );
+};
+
+DemoControlls.propTypes = {
+    onLogAdd: PropTypes.func.isRequired,
 };
 
 export default DemoControlls;
