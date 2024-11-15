@@ -184,9 +184,16 @@ const Demo = () => {
   }, [getDeviceIdMap]);
 
   // Animation for the whole process while querying the devices for energy usage
-  const queryAnimation = async (devicesWithDeployment) => {
+  const queryAnimation = async () => {
 
     const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+    await delay(5000);
+
+    let existingDevices = JSON.parse(localStorage.getItem("devices")) || [];
+    const devicesWithDeployment = existingDevices.filter(
+      (device) => device.deploymentId && device.isModuleActive
+    );
 
     await moveCodeAnimation("service-provider", "orchestrator", Query_Icon);
     await delay(100);
@@ -199,22 +206,22 @@ const Demo = () => {
     await Promise.all(moveToDevicesPromises);
     await delay(100);
 
-    if (devicesWithDeployment.length !== 0) {
-      setTimeout(() => {
-        startBlinking(); // Start blinking the house border when data going outside the house
-      }, 700);
-    }
-
     // Prepare an array of moveCodeAnimation promises for responses from valid devices
     const moveFromDevicesPromises = devicesWithDeployment.map((device) =>
-      moveCodeAnimation(device.name, "orchestrator", Result_Icon_Blue, Result_Icon_Red)
+      moveCodeAnimation(device.name, "orchestrator", Result_Icon_Blue)
     );
 
     // Execute moveCodeAnimation from valid devices in parallel
     await Promise.all(moveFromDevicesPromises);
     await delay(100);
 
-    await moveCodeAnimation("orchestrator", "service-provider", Result_Icon_Red);
+    if (devicesWithDeployment.length !== 0) {
+        setTimeout(() => {
+            startBlinking(); // Start blinking the house border when data going outside the house
+        }, 700);
+    }
+
+    await moveCodeAnimation("orchestrator", "service-provider", Result_Icon_Blue, Result_Icon_Red);
     await delay(100);
   };
   
@@ -543,7 +550,7 @@ const Demo = () => {
                     left: "-1%",
                     top: "-1%",
                     width: "102%",
-                    height: "97%",
+                    height: "69%",
                     opacity: warningBorderVisible ? 1 : 0,
                     transition: "opacity 0.25s",
                   }}
@@ -649,7 +656,7 @@ const Demo = () => {
                   overflow="hidden"
                 >
                   <div style={{marginBottom: "5%"}}>
-                    <DemoControlls onLogAdd={(log) => addLog(log)}/>
+                    <DemoControlls onLogAdd={(log) => addLog(log)} queryingAnimationRun={queryAnimation}/>
                   </div>
                   <DemoDataVisualize logs={logs}/>
                   {/* <ServiceProvider

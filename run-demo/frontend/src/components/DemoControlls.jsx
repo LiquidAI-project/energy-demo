@@ -13,7 +13,7 @@ import PropTypes from "prop-types";
 // eslint-disable-next-line no-undef
 const ANIMATION_MOVING_TIME = process.env.ANIMATION_MOVING_TIME;
 
-const DemoControlls = ({ onLogAdd }) => {
+const DemoControlls = ({ onLogAdd, queryingAnimationRun }) => {
     const [demoRunning, setDemoRunning] = useState(false);
     const [demoTime, setDemoTime] = useState(new Date().setMinutes(0, 0));
     const [hourlyQueryCompleted, setHourlyQueryCompleted] = useState(false);
@@ -60,8 +60,9 @@ const DemoControlls = ({ onLogAdd }) => {
                         onLogAdd(`Running washing-machine....`);
                         setDemoRunning(true);
                     } else {
-                        onLogAdd(`Running ${deploymentObj.name} on washing-machine....`);
+                        await queryingAnimationRun();
                     }
+
                     const res = await runFunction(deploymentObj._id, 3600, Math.floor(demoTime / 1000));
 
                     if (moduleName.includes("energy-query")) {
@@ -146,6 +147,7 @@ const DemoControlls = ({ onLogAdd }) => {
 
 DemoControlls.propTypes = {
     onLogAdd: PropTypes.func.isRequired,
+    queryingAnimationRun: PropTypes.func.isRequired,
 };
 
 export default DemoControlls;
