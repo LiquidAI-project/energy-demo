@@ -18,11 +18,15 @@ import House_Warning_Border from "./../assets/house_warning_border.png";
 import Freezer from "./visual_components/Freezer";
 import WashingMachine from "./visual_components/WashingMachine";
 import MovingIcon from "./visual_components/MovingIcon";
+import ElectricCar1 from "./visual_components/ElectricCar1";
+import ElectricCar2 from "./visual_components/ElectricCar2";
+import Jacuzzi from "./visual_components/Jacuzzi";
 import Orchestrator from "./../assets/orchestrator.png";
 import WebAssembly_Icon from "./../assets/WebAssembly_Logo.png";
 import Query_Icon from "./../assets/query_icon.png";
 import Result_Icon_Blue from "./../assets/result_icon.png";
 import Result_Icon_Red from "./../assets/result_icon_with_warning.png";
+import roadImage from "./../assets/road.png";
 import ServiceProvider from "./serviceProvider/ServiceProvider";
 import ElectricityPrice from "./serviceProvider/energyQuery/ElectricityConsumption";
 import { fetchData, fetchPostData } from '../services/apiService';
@@ -44,6 +48,9 @@ const Demo = () => {
   const serviceProviderRef = useRef(null);
   const freezerRef = useRef(null);
   const washingMachineRef = useRef(null);
+  const electricCar1Ref = useRef(null);
+  const jacuzziRef = useRef(null);
+  const electricCar2Ref = useRef(null);
   const logsQueueRef = useRef([]);
   const healthLogTimerRef = useRef(null);
 
@@ -550,7 +557,7 @@ const Demo = () => {
                     left: "-1%",
                     top: "-1%",
                     width: "102%",
-                    height: "69%",
+                    height: "85.5%",
                     opacity: warningBorderVisible ? 1 : 0,
                     transition: "opacity 0.25s",
                   }}
@@ -564,7 +571,7 @@ const Demo = () => {
                     top: 0,
                     left: 0,
                     width: "100%",
-                    height: "67%",
+                    height: "83%",
                     objectFit: "cover",
                     border: "1px solid #DCDCDC",
                     borderRadius: "5px",
@@ -594,6 +601,18 @@ const Demo = () => {
                       left: "17%",
                       width: "77%",
                       height: "10.655%",
+                    }}
+                  />
+                    <img
+                        src={roadImage}
+                        alt="Road"
+                        className="road-image"
+                        style={{
+                        position: "absolute",
+                        top: "54%",
+                        left: "47%",
+                        width: "47.5%",
+                        height: "29.2%",
                     }}
                   />
                   <img
@@ -637,6 +656,9 @@ const Demo = () => {
                     {/*Energy components inside the house*/}
                     <Freezer ref={freezerRef} />
                     <WashingMachine ref={washingMachineRef} />
+                    <ElectricCar1 ref={electricCar1Ref} />
+                    <ElectricCar2 ref={electricCar2Ref} />
+                    <Jacuzzi ref={jacuzziRef} />
                   </div>
                 </div>
               </div>
