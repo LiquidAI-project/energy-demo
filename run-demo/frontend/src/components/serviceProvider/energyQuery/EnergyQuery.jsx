@@ -7,7 +7,7 @@ import {
   InputAdornment,
 } from "@mui/material";
 import PropTypes from "prop-types";
-import RealtimeClock from "./RealtimeClock";
+import RealtimeClock from "../../RealtimeClock";
 
 const EnergyQuery = ({ onClick }) => {
   const [timeDuration, setTimeDuration] = useState("");

@@ -1,3 +1,8 @@
+// Copyright 2024 Tampere University
+// This software was developed as a part of the LiquidAI project
+// This source code is licensed under the MIT license. See LICENSE in the repository root directory.
+// Author(s): Lakshan Rathnayaka <lakshan.rathnayaka@tuni.fi>, Ville Heikkilä <ville.heikkila@tuni.fi>.
+
 import {
   Box,
   Grid,
@@ -6,21 +11,27 @@ import {
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { motion } from "framer-motion";
 import backgroundImage from "./../assets/yard.png";
-import roadImage from "./../assets/road.png";
-import cabinImage from "./../assets/cabin.png";
+import controlHub from "./../assets/controlHub.png";
+import Service_Provider from "./../assets/service_provider.png";
 import houseImage from "./../assets/house.png";
 import House_Warning_Border from "./../assets/house_warning_border.png";
 import Freezer from "./visual_components/Freezer";
 import WashingMachine from "./visual_components/WashingMachine";
 import MovingIcon from "./visual_components/MovingIcon";
+import ElectricCar1 from "./visual_components/ElectricCar1";
+import ElectricCar2 from "./visual_components/ElectricCar2";
+import Jacuzzi from "./visual_components/Jacuzzi";
 import Orchestrator from "./../assets/orchestrator.png";
 import WebAssembly_Icon from "./../assets/WebAssembly_Logo.png";
 import Query_Icon from "./../assets/query_icon.png";
 import Result_Icon_Blue from "./../assets/result_icon.png";
 import Result_Icon_Red from "./../assets/result_icon_with_warning.png";
+import roadImage from "./../assets/road.png";
 import ServiceProvider from "./serviceProvider/ServiceProvider";
 import ElectricityPrice from "./serviceProvider/energyQuery/ElectricityConsumption";
 import { fetchData, fetchPostData } from '../services/apiService';
+import DemoControlls from "./DemoControlls";
+import DemoDataVisualize from "./DemoDataVisualize";
 
 // eslint-disable-next-line no-undef
 const PUBLIC_HOST = process.env.PUBLIC_HOST;
@@ -28,6 +39,8 @@ const PUBLIC_HOST = process.env.PUBLIC_HOST;
 const PUBLIC_PORT = process.env.PUBLIC_PORT;
 // eslint-disable-next-line no-undef
 const DEVICE_CHECK_INTERVAL = process.env.DEVICE_CHECK_INTERVAL;
+// eslint-disable-next-line no-undef
+const ANIMATION_MOVING_TIME = process.env.ANIMATION_MOVING_TIME;
 
 const Demo = () => {
 
@@ -35,6 +48,9 @@ const Demo = () => {
   const serviceProviderRef = useRef(null);
   const freezerRef = useRef(null);
   const washingMachineRef = useRef(null);
+  const electricCar1Ref = useRef(null);
+  const jacuzziRef = useRef(null);
+  const electricCar2Ref = useRef(null);
   const logsQueueRef = useRef([]);
   const healthLogTimerRef = useRef(null);
 
@@ -42,6 +58,7 @@ const Demo = () => {
   const [activeDeployments, setActiveDeployments] = useState([]);
   const [warningBorderVisible, setWarningBorderVisible] = useState(false);
   const [shouldBlink, setShouldBlink] = useState(false);
+  const [logs, setLogs] = useState([]);
   const [consumptionData, setConsumptionData] = useState([]); 
 
   // This function will make the house border blink in order to indicate the warning state when data is going outside
@@ -83,6 +100,10 @@ const Demo = () => {
       }
   }, [deviceReferences]);
 
+  const addLog = (message) => {
+      setLogs((prevLogs) => [...prevLogs, message]);
+  };
+
   // Object moving one place to another place animation
   const moveCodeAnimation = useCallback((startDeviceName, endDeviceName, iconSource, changingIconSource = null) => {
     return new Promise((resolve) => {
@@ -122,7 +143,7 @@ const Demo = () => {
               )
             );
             resolve(); // Resolve the promise after the setTimeout is complete
-          }, 5000);
+          }, ANIMATION_MOVING_TIME);
 
           return newMovingDeployments;
         });
@@ -170,9 +191,16 @@ const Demo = () => {
   }, [getDeviceIdMap]);
 
   // Animation for the whole process while querying the devices for energy usage
-  const queryAnimation = async (devicesWithDeployment) => {
+  const queryAnimation = async () => {
 
     const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+    await delay(5000);
+
+    let existingDevices = JSON.parse(localStorage.getItem("devices")) || [];
+    const devicesWithDeployment = existingDevices.filter(
+      (device) => device.deploymentId && device.isModuleActive
+    );
 
     await moveCodeAnimation("service-provider", "orchestrator", Query_Icon);
     await delay(100);
@@ -185,90 +213,25 @@ const Demo = () => {
     await Promise.all(moveToDevicesPromises);
     await delay(100);
 
-    if (devicesWithDeployment.length !== 0) {
-      setTimeout(() => {
-        startBlinking(); // Start blinking the house border when data going outside the house
-      }, 700);
-    }
-
     // Prepare an array of moveCodeAnimation promises for responses from valid devices
     const moveFromDevicesPromises = devicesWithDeployment.map((device) =>
-      moveCodeAnimation(device.name, "orchestrator", Result_Icon_Blue, Result_Icon_Red)
+      moveCodeAnimation(device.name, "orchestrator", Result_Icon_Blue)
     );
 
     // Execute moveCodeAnimation from valid devices in parallel
     await Promise.all(moveFromDevicesPromises);
     await delay(100);
 
-    await moveCodeAnimation("orchestrator", "service-provider", Result_Icon_Red);
+    if (devicesWithDeployment.length !== 0) {
+        setTimeout(() => {
+            startBlinking(); // Start blinking the house border when data going outside the house
+        }, 700);
+    }
+
+    await moveCodeAnimation("orchestrator", "service-provider", Result_Icon_Blue, Result_Icon_Red);
     await delay(100);
   };
-
-
-  // Query the devices for energy usage
-  const handleQueryClick = async (timeDuration) => {
-    let existingDevices = JSON.parse(localStorage.getItem("devices")) || [];
-    const devicesWithDeployment = existingDevices.filter(
-      (device) => device.deploymentId && device.isModuleActive
-    );
-
-    const initalTime = new Date().getTime();
-    setConsumptionData([]); // Clear the existing data
   
-    try {
-  
-      for (let hourIndex = 0; hourIndex < timeDuration; hourIndex++) {
-
-        await queryAnimation(devicesWithDeployment);
-
-        const startTime = initalTime + hourIndex * 3600 * 1000; // Adjust start time for each hour
-        const timeDurationInSeconds = 3600; // Query for 1 hour at a time
-        
-        // Prepare an array of API call promises for each device with valid deploymentId
-        const apiCalls = devicesWithDeployment.map((device) => {
-          const endpoint = `/execute/${device.deploymentId}`;
-          const postData = {
-            param0: startTime,
-            param1: timeDurationInSeconds,
-          };
-          return fetchPostData(endpoint, postData);
-        });
-        
-        // Execute all API calls for this hour in parallel and wait for their completion
-        const responses = await Promise.all(apiCalls);
-  
-        // Calculate total consumption for the current hour
-        let totalConsumptionForHour = 0;
-  
-        devicesWithDeployment.forEach((device, index) => {
-          const consumption = parseFloat(responses[index][0]) || 0;
-          totalConsumptionForHour += consumption;
-        });
-
-      setConsumptionData((prevData) => {
-        const newItem = {
-          time: new Date(startTime),
-          total: totalConsumptionForHour,
-        };
-  
-        // Check if the newItem's time already exists in the existing data
-        const updatedData = prevData.some(
-          (item) => new Date(item.time).getTime() === new Date(newItem.time).getTime()
-        )
-          ? prevData
-          : [...prevData, newItem];
-  
-        return updatedData;
-      });
-      }
-  
-    } catch (error) {
-      console.error("Error deploying module:", error);
-      return {};
-    }
-  };
-  
-
   // Update the deployment details for the device
   const updateDeployment = useCallback(async (device, deviceName, deployments) => {
 
@@ -539,12 +502,12 @@ const Demo = () => {
           <div id="orchestrator-freezer-line" />
           <div id="orchestrator-washingMachine-line" />
           <div id="orchestrator-serviceProvider-line" />
-          {movingDeployments.map((deployment) => (
-            <MovingIcon key={deployment.id} deployment={deployment} />
+          {movingDeployments.map((deployment, index) => (
+            <MovingIcon key={index} deployment={deployment} />
           ))}
-          {activeDeployments.map((deployment) => (
+          {activeDeployments.map((deployment, index) => (
             <motion.div
-              key={deployment.id}
+              key={index}
               initial={{
                 x: deployment.wasmModuleIconPosition.x - 25,
                 y: deployment.wasmModuleIconPosition.y - 25,
@@ -594,8 +557,9 @@ const Demo = () => {
                     left: "-1%",
                     top: "-1%",
                     width: "102%",
-                    height: "97%",
-                    opacity: warningBorderVisible ? 1 : 0, transition: 'opacity 0.25s' 
+                    height: "85.5%",
+                    opacity: warningBorderVisible ? 1 : 0,
+                    transition: "opacity 0.25s",
                   }}
                 />
                 <img
@@ -607,7 +571,7 @@ const Demo = () => {
                     top: 0,
                     left: 0,
                     width: "100%",
-                    height: "94.4%",
+                    height: "83%",
                     objectFit: "cover",
                     border: "1px solid #DCDCDC",
                     borderRadius: "5px",
@@ -628,27 +592,52 @@ const Demo = () => {
                   }}
                 >
                   <img
-                    src={roadImage}
-                    alt="Road"
-                    className="road-image"
+                    src={controlHub}
+                    alt="controlHub"
+                    className="controlHub-image"
                     style={{
                       position: "absolute",
                       top: "54%",
-                      left: "47%",
-                      width: "47.5%",
-                      height: "40.655%",
+                      left: "17%",
+                      width: "77%",
+                      height: "10.655%",
+                    }}
+                  />
+                    <img
+                        src={roadImage}
+                        alt="Road"
+                        className="road-image"
+                        style={{
+                        position: "absolute",
+                        top: "54%",
+                        left: "47%",
+                        width: "47.5%",
+                        height: "29.2%",
                     }}
                   />
                   <img
-                    src={cabinImage}
-                    alt="Cabin"
-                    className="cabin-image"
+                    src={Orchestrator}
+                    alt="Orchestrator"
+                    ref={orchestratorRef}
                     style={{
                       position: "absolute",
-                      top: "67%",
-                      left: "5%",
-                      width: "30%",
-                      height: "25%",
+                      top: "57%",
+                      left: "25%",
+                      width: "7%",
+                      height: "7%",
+                      zIndex: 2,
+                    }}
+                  />
+                  <img
+                    src={Service_Provider}
+                    alt="Service_Provider"
+                    ref={serviceProviderRef}
+                    style={{
+                      position: "absolute",
+                      top: "90%",
+                      left: "21.2%",
+                      width: "15%",
+                      zIndex: 2,
                     }}
                   />
                   <img
@@ -667,6 +656,9 @@ const Demo = () => {
                     {/*Energy components inside the house*/}
                     <Freezer ref={freezerRef} />
                     <WashingMachine ref={washingMachineRef} />
+                    <ElectricCar1 ref={electricCar1Ref} />
+                    <ElectricCar2 ref={electricCar2Ref} />
+                    <Jacuzzi ref={jacuzziRef} />
                   </div>
                 </div>
               </div>
@@ -685,50 +677,15 @@ const Demo = () => {
                   height="auto"
                   overflow="hidden"
                 >
-                  <Box>
-                    <div
-                      style={{
-                        position: "relative",
-                        marginTop: "15px",
-                        paddingBottom: "26%",
-                        width: "100%",
-                        height: 0,
-                      }}
-                    >
-                      <div
-                        className="overlay-content"
-                        style={{
-                          position: "absolute",
-                          top: 0,
-                          left: 0,
-                          width: "100%",
-                          height: "100%",
-                          display: "flex",
-                          flexDirection: "column",
-                          justifyContent: "space-between",
-                        }}
-                      >
-                        <img
-                          src={Orchestrator}
-                          alt="Orchestrator"
-                          ref={orchestratorRef}
-                          style={{
-                            position: "absolute",
-                            top: "4%",
-                            left: "35%",
-                            width: "25%",
-                            height: "80%",
-                            zIndex: 2,
-                          }}
-                        />
-                      </div>
-                    </div>
-                  </Box>
-                  <ServiceProvider
+                  <div style={{marginBottom: "5%"}}>
+                    <DemoControlls onLogAdd={(log) => addLog(log)} queryingAnimationRun={queryAnimation}/>
+                  </div>
+                  <DemoDataVisualize logs={logs}/>
+                  {/* <ServiceProvider
                     ref={serviceProviderRef}
                     onClick={handleQueryClick}
-                  />
-                  <ElectricityPrice consumptionData={consumptionData}/>
+                  /> */}
+                  <ElectricityPrice consumptionData={consumptionData} />
                 </Box>
               </Grid>
             </Grid>

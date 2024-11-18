@@ -41,12 +41,18 @@ fn write_energy_usage_to_csv(data: &EnergyUsageData) -> Result<(), Box<dyn Error
     );
 
     let mut file = OpenOptions::new()
+        .read(true)
         .write(true)
         .append(true)
         .create(true)
         .open(CSV_FILE_PATH)?;
 
-    file.write_all(format!("{}\n", output_line).as_bytes())?;
+    let metadata = file.metadata()?;
+    if metadata.len() == 0 {
+        writeln!(file, "year;month;day;day_of_week;hour;minute;duration_in_minutes;power_usage")?;
+    }
+
+    writeln!(file, "{}", output_line)?;
     file.flush()?;
     Ok(())
 }
