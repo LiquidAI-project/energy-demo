@@ -27,9 +27,10 @@ import Query_Icon from "./../assets/query_icon.png";
 import Result_Icon_Blue from "./../assets/result_icon.png";
 import Result_Icon_Red from "./../assets/result_icon_with_warning.png";
 import roadImage from "./../assets/road.png";
+import IntelligentControlIcon from "./../assets/intelligent_control.jpg";
 import ServiceProvider from "./serviceProvider/ServiceProvider";
 import ElectricityPrice from "./serviceProvider/energyQuery/ElectricityConsumption";
-import { fetchData, fetchPostData } from '../services/apiService';
+import { fetchData } from '../services/apiService';
 import DemoControlls from "./DemoControlls";
 import DemoDataVisualize from "./DemoDataVisualize";
 
@@ -51,6 +52,7 @@ const Demo = () => {
   const electricCar1Ref = useRef(null);
   const jacuzziRef = useRef(null);
   const electricCar2Ref = useRef(null);
+  const intelligentControlRef = useRef(null);
   const logsQueueRef = useRef([]);
   const healthLogTimerRef = useRef(null);
 
@@ -86,6 +88,7 @@ const Demo = () => {
     "washing-machine": washingMachineRef,
     "orchestrator": orchestratorRef,
     "service-provider": serviceProviderRef,
+    "intelligent-control": intelligentControlRef,
     // Add more device names and their references here
   }), []);
 
@@ -462,14 +465,17 @@ const Demo = () => {
     drawLines(orchestratorRef, "orchestrator", freezerRef, "freezer");
     drawLines(orchestratorRef, "orchestrator", washingMachineRef, "washingMachine");
     drawLines(orchestratorRef, "orchestrator", serviceProviderRef, "serviceProvider");
+    drawLines(orchestratorRef, "orchestrator", intelligentControlRef, "intelligentControl");
     window.addEventListener('resize', () => drawLines(orchestratorRef, "orchestrator", freezerRef, "freezer"));
     window.addEventListener('resize', () => drawLines(orchestratorRef, "orchestrator", washingMachineRef, "washingMachine"));
     window.addEventListener('resize', () => drawLines(orchestratorRef, "orchestrator", serviceProviderRef, "serviceProvider"));
+    window.addEventListener('resize', () => drawLines(orchestratorRef, "orchestrator", intelligentControlRef, "intelligentControl"));
 
     return () => {
       window.removeEventListener('resize', () => drawLines(orchestratorRef, "orchestrator", freezerRef, "freezer"));
       window.removeEventListener('resize', () => drawLines(orchestratorRef, "orchestrator", washingMachineRef, "washingMachine"));
-      window.addEventListener('resize', () => drawLines(orchestratorRef, "orchestrator", serviceProviderRef, "serviceProvider"));
+      window.removeEventListener('resize', () => drawLines(orchestratorRef, "orchestrator", serviceProviderRef, "serviceProvider"));
+      window.removeEventListener('resize', () => drawLines(orchestratorRef, "orchestrator", intelligentControlRef, "intelligentControl"));
     };
   }, []);
 
@@ -502,6 +508,7 @@ const Demo = () => {
           <div id="orchestrator-freezer-line" />
           <div id="orchestrator-washingMachine-line" />
           <div id="orchestrator-serviceProvider-line" />
+          <div id="orchestrator-intelligentControl-line" />
           {movingDeployments.map((deployment, index) => (
             <MovingIcon key={index} deployment={deployment} />
           ))}
@@ -624,6 +631,19 @@ const Demo = () => {
                       top: "57%",
                       left: "25%",
                       width: "7%",
+                      height: "7%",
+                      zIndex: 2,
+                    }}
+                  />
+                  <img
+                    src={IntelligentControlIcon}
+                    alt="intelligentControl"
+                    ref={intelligentControlRef}
+                    style={{
+                      position: "absolute",
+                      top: "57%",
+                      left: "45%",
+                      width: "6%",
                       height: "7%",
                       zIndex: 2,
                     }}
