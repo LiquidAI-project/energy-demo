@@ -43,6 +43,12 @@ const DEVICE_CHECK_INTERVAL = process.env.DEVICE_CHECK_INTERVAL;
 // eslint-disable-next-line no-undef
 const ANIMATION_MOVING_TIME = process.env.ANIMATION_MOVING_TIME;
 
+const ORCHESTRATOR = "orchestrator";
+const FREEZER = "freezer";
+const WASHING_MACHINE = "washingMachine";
+const SERVICE_PROVIDER = "serviceProvider";
+const INTELLIGENT_CONTROL = "intelligentControl";
+
 const Demo = () => {
 
   const orchestratorRef = useRef(null);
@@ -84,11 +90,11 @@ const Demo = () => {
 
   // Store reference for each devices if needs to get the device location in UI
   const deviceReferences = useMemo(() => ({
-    "freezer": freezerRef,
-    "washing-machine": washingMachineRef,
-    "orchestrator": orchestratorRef,
-    "service-provider": serviceProviderRef,
-    "intelligent-control": intelligentControlRef,
+    [FREEZER]: freezerRef,
+    [WASHING_MACHINE]: washingMachineRef,
+    [ORCHESTRATOR]: orchestratorRef,
+    [SERVICE_PROVIDER]: serviceProviderRef,
+    [INTELLIGENT_CONTROL]: intelligentControlRef,
     // Add more device names and their references here
   }), []);
 
@@ -205,12 +211,12 @@ const Demo = () => {
       (device) => device.deploymentId && device.isModuleActive
     );
 
-    await moveCodeAnimation("service-provider", "orchestrator", Query_Icon);
+    await moveCodeAnimation(SERVICE_PROVIDER, ORCHESTRATOR, Query_Icon);
     await delay(100);
 
     // Prepare an array of moveCodeAnimation promises for devices with valid deploymentId
     const moveToDevicesPromises = devicesWithDeployment.map((device) =>
-      moveCodeAnimation("orchestrator", device.name, Query_Icon)
+      moveCodeAnimation(ORCHESTRATOR, device.name, Query_Icon)
     );
 
     await Promise.all(moveToDevicesPromises);
@@ -218,7 +224,7 @@ const Demo = () => {
 
     // Prepare an array of moveCodeAnimation promises for responses from valid devices
     const moveFromDevicesPromises = devicesWithDeployment.map((device) =>
-      moveCodeAnimation(device.name, "orchestrator", Result_Icon_Blue)
+      moveCodeAnimation(device.name, ORCHESTRATOR, Result_Icon_Blue)
     );
 
     // Execute moveCodeAnimation from valid devices in parallel
@@ -231,7 +237,7 @@ const Demo = () => {
         }, 700);
     }
 
-    await moveCodeAnimation("orchestrator", "service-provider", Result_Icon_Blue, Result_Icon_Red);
+    await moveCodeAnimation(ORCHESTRATOR, SERVICE_PROVIDER, Result_Icon_Blue, Result_Icon_Red);
     await delay(100);
   };
   
@@ -334,7 +340,7 @@ const Demo = () => {
         }
         // Added log time and current time difference check to prevent to create multiple moving object for old logs when refreshing the page
       } else if (log.funcName === "deployment_create" && ((now - logReceivedTime) < 5000)) {
-        await moveCodeAnimation("orchestrator", log.deviceName, WebAssembly_Icon);
+        await moveCodeAnimation(ORCHESTRATOR, log.deviceName, WebAssembly_Icon);
         updatePromises.push(updateDeployment(deviceMap.get(log.deviceName), log.deviceName, deployments));
       }
     }
@@ -462,20 +468,20 @@ const Demo = () => {
       }
     };
 
-    drawLines(orchestratorRef, "orchestrator", freezerRef, "freezer");
-    drawLines(orchestratorRef, "orchestrator", washingMachineRef, "washingMachine");
-    drawLines(orchestratorRef, "orchestrator", serviceProviderRef, "serviceProvider");
-    drawLines(orchestratorRef, "orchestrator", intelligentControlRef, "intelligentControl");
-    window.addEventListener('resize', () => drawLines(orchestratorRef, "orchestrator", freezerRef, "freezer"));
-    window.addEventListener('resize', () => drawLines(orchestratorRef, "orchestrator", washingMachineRef, "washingMachine"));
-    window.addEventListener('resize', () => drawLines(orchestratorRef, "orchestrator", serviceProviderRef, "serviceProvider"));
-    window.addEventListener('resize', () => drawLines(orchestratorRef, "orchestrator", intelligentControlRef, "intelligentControl"));
+    drawLines(orchestratorRef, ORCHESTRATOR, freezerRef, FREEZER);
+    drawLines(orchestratorRef, ORCHESTRATOR, washingMachineRef, WASHING_MACHINE);
+    drawLines(orchestratorRef, ORCHESTRATOR, serviceProviderRef, SERVICE_PROVIDER);
+    drawLines(orchestratorRef, ORCHESTRATOR, intelligentControlRef, INTELLIGENT_CONTROL);
+    window.addEventListener('resize', () => drawLines(orchestratorRef, ORCHESTRATOR, freezerRef, FREEZER));
+    window.addEventListener('resize', () => drawLines(orchestratorRef, ORCHESTRATOR, washingMachineRef, WASHING_MACHINE));
+    window.addEventListener('resize', () => drawLines(orchestratorRef, ORCHESTRATOR, serviceProviderRef, SERVICE_PROVIDER));
+    window.addEventListener('resize', () => drawLines(orchestratorRef, ORCHESTRATOR, intelligentControlRef, INTELLIGENT_CONTROL));
 
     return () => {
-      window.removeEventListener('resize', () => drawLines(orchestratorRef, "orchestrator", freezerRef, "freezer"));
-      window.removeEventListener('resize', () => drawLines(orchestratorRef, "orchestrator", washingMachineRef, "washingMachine"));
-      window.removeEventListener('resize', () => drawLines(orchestratorRef, "orchestrator", serviceProviderRef, "serviceProvider"));
-      window.removeEventListener('resize', () => drawLines(orchestratorRef, "orchestrator", intelligentControlRef, "intelligentControl"));
+      window.removeEventListener('resize', () => drawLines(orchestratorRef, ORCHESTRATOR, freezerRef, FREEZER));
+      window.removeEventListener('resize', () => drawLines(orchestratorRef, ORCHESTRATOR, washingMachineRef, WASHING_MACHINE));
+      window.removeEventListener('resize', () => drawLines(orchestratorRef, ORCHESTRATOR, serviceProviderRef, SERVICE_PROVIDER));
+      window.removeEventListener('resize', () => drawLines(orchestratorRef, ORCHESTRATOR, intelligentControlRef, INTELLIGENT_CONTROL));
     };
   }, []);
 
@@ -637,7 +643,7 @@ const Demo = () => {
                   />
                   <img
                     src={IntelligentControlIcon}
-                    alt="intelligentControl"
+                    alt="IntelligentControl"
                     ref={intelligentControlRef}
                     style={{
                       position: "absolute",
