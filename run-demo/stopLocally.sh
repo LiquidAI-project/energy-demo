@@ -25,4 +25,7 @@ stop_service_by_port 3000
 # Stop the service running on port 5173 (Frontend service)
 stop_service_by_port 5173
 
+# Stop the service running on port 3001 (Intelligent controller service)
+stop_service_by_port 3001
+
 echo "Both services stopped."
