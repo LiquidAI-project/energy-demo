@@ -11,9 +11,9 @@ function convertDateToFinnishTime(dateString) {
   return date.toLocaleString("fi-FI", { timeZone: "Europe/Helsinki" });
 }
 
-async function convertJsonToFinnishTime(priceFileName) {
+async function convertJsonToFinnishTime(orignalPriceFileName, newPriceFileName) {
   try {
-    const data = await fs.readFile(priceFileName, "utf-8");
+    const data = await fs.readFile(orignalPriceFileName, "utf-8");
     const prices = JSON.parse(data);
 
     prices.forEach((entry) => {
@@ -21,7 +21,7 @@ async function convertJsonToFinnishTime(priceFileName) {
       entry.endDate = convertDateToFinnishTime(entry.endDate);
     });
 
-    await fs.writeFile(priceFileName, JSON.stringify(prices, null, 2));
+    await fs.writeFile(newPriceFileName, JSON.stringify(prices, null, 2));
   } catch (err) {
     console.error("Error converting and saving the data:", err);
   }

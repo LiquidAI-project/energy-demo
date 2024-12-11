@@ -13,7 +13,7 @@ const WashingMachine = React.forwardRef((props, ref) => {
   const [deviceInfo, setDeviceInfo] = useState({});
 
   const component = {
-    id: "washing-machine",
+    id: "washingMachine",
     name: "WashingMachine",
     type: "consumer",
     description: "Washing machine turns dirty laundry clean in just a moment.",

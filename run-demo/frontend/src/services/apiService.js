@@ -5,6 +5,10 @@ import axios from 'axios';
 const PUBLIC_HOST = process.env.PUBLIC_HOST;
 // eslint-disable-next-line no-undef
 const PUBLIC_PORT = process.env.PUBLIC_PORT;
+// eslint-disable-next-line no-undef
+const INTELLIGENT_CONTROLLER_HOST = process.env.INTELLIGENT_CONTROLLER_HOST;
+// eslint-disable-next-line no-undef
+const INTELLIGENT_CONTROLLER_PORT = process.env.INTELLIGENT_CONTROLLER_PORT;
 
 // Function to fetch data
 export const fetchData = async (param) => {
@@ -36,4 +40,20 @@ export const fetchPostData = async (endpoint, data = {}) => {
     console.error('Error fetching POST data:', error);
     throw error;
   }
+};
+
+export const fetchIntelligentControllerData = async (endpoint, data = {}) => {
+    try {
+      const url = `${INTELLIGENT_CONTROLLER_HOST}:${INTELLIGENT_CONTROLLER_PORT}${endpoint}`;
+      const response = await axios.post(url, data, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+  
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching POST data:', error);
+      throw error;
+    }
 };
