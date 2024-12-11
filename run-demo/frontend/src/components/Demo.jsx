@@ -27,9 +27,10 @@ import Query_Icon from "./../assets/query_icon.png";
 import Result_Icon_Blue from "./../assets/result_icon.png";
 import Result_Icon_Red from "./../assets/result_icon_with_warning.png";
 import roadImage from "./../assets/road.png";
+import IntelligentControlIcon from "./../assets/intelligent_control.jpg";
 import ServiceProvider from "./serviceProvider/ServiceProvider";
 import ElectricityPrice from "./serviceProvider/energyQuery/ElectricityConsumption";
-import { fetchData, fetchPostData } from '../services/apiService';
+import { fetchData } from '../services/apiService';
 import DemoControlls from "./DemoControlls";
 import DemoDataVisualize from "./DemoDataVisualize";
 
@@ -42,6 +43,12 @@ const DEVICE_CHECK_INTERVAL = process.env.DEVICE_CHECK_INTERVAL;
 // eslint-disable-next-line no-undef
 const ANIMATION_MOVING_TIME = process.env.ANIMATION_MOVING_TIME;
 
+const ORCHESTRATOR = "orchestrator";
+const FREEZER = "freezer";
+const WASHING_MACHINE = "washingMachine";
+const SERVICE_PROVIDER = "serviceProvider";
+const INTELLIGENT_CONTROL = "intelligentControl";
+
 const Demo = () => {
 
   const orchestratorRef = useRef(null);
@@ -51,6 +58,7 @@ const Demo = () => {
   const electricCar1Ref = useRef(null);
   const jacuzziRef = useRef(null);
   const electricCar2Ref = useRef(null);
+  const intelligentControlRef = useRef(null);
   const logsQueueRef = useRef([]);
   const healthLogTimerRef = useRef(null);
 
@@ -82,10 +90,11 @@ const Demo = () => {
 
   // Store reference for each devices if needs to get the device location in UI
   const deviceReferences = useMemo(() => ({
-    "freezer": freezerRef,
-    "washing-machine": washingMachineRef,
-    "orchestrator": orchestratorRef,
-    "service-provider": serviceProviderRef,
+    [FREEZER]: freezerRef,
+    [WASHING_MACHINE]: washingMachineRef,
+    [ORCHESTRATOR]: orchestratorRef,
+    [SERVICE_PROVIDER]: serviceProviderRef,
+    [INTELLIGENT_CONTROL]: intelligentControlRef,
     // Add more device names and their references here
   }), []);
 
@@ -202,12 +211,12 @@ const Demo = () => {
       (device) => device.deploymentId && device.isModuleActive
     );
 
-    await moveCodeAnimation("service-provider", "orchestrator", Query_Icon);
+    await moveCodeAnimation(SERVICE_PROVIDER, ORCHESTRATOR, Query_Icon);
     await delay(100);
 
     // Prepare an array of moveCodeAnimation promises for devices with valid deploymentId
     const moveToDevicesPromises = devicesWithDeployment.map((device) =>
-      moveCodeAnimation("orchestrator", device.name, Query_Icon)
+      moveCodeAnimation(ORCHESTRATOR, device.name, Query_Icon)
     );
 
     await Promise.all(moveToDevicesPromises);
@@ -215,7 +224,7 @@ const Demo = () => {
 
     // Prepare an array of moveCodeAnimation promises for responses from valid devices
     const moveFromDevicesPromises = devicesWithDeployment.map((device) =>
-      moveCodeAnimation(device.name, "orchestrator", Result_Icon_Blue)
+      moveCodeAnimation(device.name, ORCHESTRATOR, Result_Icon_Blue)
     );
 
     // Execute moveCodeAnimation from valid devices in parallel
@@ -228,7 +237,7 @@ const Demo = () => {
         }, 700);
     }
 
-    await moveCodeAnimation("orchestrator", "service-provider", Result_Icon_Blue, Result_Icon_Red);
+    await moveCodeAnimation(ORCHESTRATOR, SERVICE_PROVIDER, Result_Icon_Blue, Result_Icon_Red);
     await delay(100);
   };
   
@@ -331,7 +340,7 @@ const Demo = () => {
         }
         // Added log time and current time difference check to prevent to create multiple moving object for old logs when refreshing the page
       } else if (log.funcName === "deployment_create" && ((now - logReceivedTime) < 5000)) {
-        await moveCodeAnimation("orchestrator", log.deviceName, WebAssembly_Icon);
+        await moveCodeAnimation(ORCHESTRATOR, log.deviceName, WebAssembly_Icon);
         updatePromises.push(updateDeployment(deviceMap.get(log.deviceName), log.deviceName, deployments));
       }
     }
@@ -459,17 +468,20 @@ const Demo = () => {
       }
     };
 
-    drawLines(orchestratorRef, "orchestrator", freezerRef, "freezer");
-    drawLines(orchestratorRef, "orchestrator", washingMachineRef, "washingMachine");
-    drawLines(orchestratorRef, "orchestrator", serviceProviderRef, "serviceProvider");
-    window.addEventListener('resize', () => drawLines(orchestratorRef, "orchestrator", freezerRef, "freezer"));
-    window.addEventListener('resize', () => drawLines(orchestratorRef, "orchestrator", washingMachineRef, "washingMachine"));
-    window.addEventListener('resize', () => drawLines(orchestratorRef, "orchestrator", serviceProviderRef, "serviceProvider"));
+    drawLines(orchestratorRef, ORCHESTRATOR, freezerRef, FREEZER);
+    drawLines(orchestratorRef, ORCHESTRATOR, washingMachineRef, WASHING_MACHINE);
+    drawLines(orchestratorRef, ORCHESTRATOR, serviceProviderRef, SERVICE_PROVIDER);
+    drawLines(orchestratorRef, ORCHESTRATOR, intelligentControlRef, INTELLIGENT_CONTROL);
+    window.addEventListener('resize', () => drawLines(orchestratorRef, ORCHESTRATOR, freezerRef, FREEZER));
+    window.addEventListener('resize', () => drawLines(orchestratorRef, ORCHESTRATOR, washingMachineRef, WASHING_MACHINE));
+    window.addEventListener('resize', () => drawLines(orchestratorRef, ORCHESTRATOR, serviceProviderRef, SERVICE_PROVIDER));
+    window.addEventListener('resize', () => drawLines(orchestratorRef, ORCHESTRATOR, intelligentControlRef, INTELLIGENT_CONTROL));
 
     return () => {
-      window.removeEventListener('resize', () => drawLines(orchestratorRef, "orchestrator", freezerRef, "freezer"));
-      window.removeEventListener('resize', () => drawLines(orchestratorRef, "orchestrator", washingMachineRef, "washingMachine"));
-      window.addEventListener('resize', () => drawLines(orchestratorRef, "orchestrator", serviceProviderRef, "serviceProvider"));
+      window.removeEventListener('resize', () => drawLines(orchestratorRef, ORCHESTRATOR, freezerRef, FREEZER));
+      window.removeEventListener('resize', () => drawLines(orchestratorRef, ORCHESTRATOR, washingMachineRef, WASHING_MACHINE));
+      window.removeEventListener('resize', () => drawLines(orchestratorRef, ORCHESTRATOR, serviceProviderRef, SERVICE_PROVIDER));
+      window.removeEventListener('resize', () => drawLines(orchestratorRef, ORCHESTRATOR, intelligentControlRef, INTELLIGENT_CONTROL));
     };
   }, []);
 
@@ -502,6 +514,7 @@ const Demo = () => {
           <div id="orchestrator-freezer-line" />
           <div id="orchestrator-washingMachine-line" />
           <div id="orchestrator-serviceProvider-line" />
+          <div id="orchestrator-intelligentControl-line" />
           {movingDeployments.map((deployment, index) => (
             <MovingIcon key={index} deployment={deployment} />
           ))}
@@ -624,6 +637,19 @@ const Demo = () => {
                       top: "57%",
                       left: "25%",
                       width: "7%",
+                      height: "7%",
+                      zIndex: 2,
+                    }}
+                  />
+                  <img
+                    src={IntelligentControlIcon}
+                    alt="IntelligentControl"
+                    ref={intelligentControlRef}
+                    style={{
+                      position: "absolute",
+                      top: "57%",
+                      left: "45%",
+                      width: "6%",
                       height: "7%",
                       zIndex: 2,
                     }}

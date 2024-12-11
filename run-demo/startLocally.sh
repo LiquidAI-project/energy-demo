@@ -19,4 +19,9 @@ echo "Starting the frontend service..."
 cd ../../frontend || { echo "Failed to navigate to ./frontend"; exit 1; }
 nohup bash -c "npm install && npm start" > frontend.log 2>&1 &
 
-echo "Both projects started in background."
+# Start Intelligent controller (Node.js) on port 3001 in background with nohup
+echo "Starting the backend service on port 3001..."
+cd ../intelligentController || { echo "Failed to navigate to ./backend"; exit 1; }
+nohup bash -c "npm start" > intelligentController.log 2>&1 &
+
+echo "All services started in the background."
