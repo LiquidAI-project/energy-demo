@@ -66,7 +66,7 @@ app.post("/cheapestHour", async (req, res) => {
     const { startDateTime, endDateTime } = req.body;
 
     if (!startDateTime || !endDateTime) {
-        return res.status(400).send("startData and endData are required.");
+        return res.status(400).send("startDateTime and endDateTime are required.");
     }
 
     try {
