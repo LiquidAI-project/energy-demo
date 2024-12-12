@@ -5,17 +5,19 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Button } from "@mui/material";
-import { fetchData,fetchPostData } from "../services/apiService";
+import { fetchData,fetchPostData, fetchIntelligentControllerData } from "../services/apiService";
 import RealtimeClock from "./RealtimeClock";
 import DemoClock from "./DemoClock";
 import PropTypes from "prop-types";
+import { WASHING_MACHINE } from "../../constants";
 
 // eslint-disable-next-line no-undef
 const ANIMATION_MOVING_TIME = process.env.ANIMATION_MOVING_TIME;
 
-const DemoControlls = ({ onLogAdd, queryingAnimationRun }) => {
+const DemoControlls = ({ onLogAdd, queryingAnimationRun, userRequirement }) => {
     const [demoRunning, setDemoRunning] = useState(false);
     const [demoTime, setDemoTime] = useState(new Date().setMinutes(0, 0));
+    const [optimezedTimeSlots, setOptimezedTimeSlots] = useState({});
     const [hourlyQueryCompleted, setHourlyQueryCompleted] = useState(false);
 
     /**
@@ -106,6 +108,46 @@ const DemoControlls = ({ onLogAdd, queryingAnimationRun }) => {
     };
 
     /**
+     * This function calculates and sets the optimized running time slots for the washing machine.
+     * It makes an API request to fetch the most optimized time slots for a given time range.
+     * 
+     * @param {number} startDateTime - The start date and time in UNIX timestamp format for the optimized time calculation.
+     * @param {number} endDateTime - The end date and time in UNIX timestamp format for the optimized time calculation.
+     * 
+     */
+    const setWashingMachineRunningTime = async (startDateTime, endDateTime) => {
+        try {
+            const endpoint = `/cheapestHour`;
+            const postData = {
+                startDateTime: startDateTime,
+                endDateTime: endDateTime,
+            };  
+            const res = await fetchIntelligentControllerData(endpoint, postData);
+            updateEquipmentOptimizedTimeSlots(WASHING_MACHINE, res);
+            console.log(`Response :`, res);
+            return res
+        } catch (error) {
+            console.error("Error deploying module:", error);
+            return {};
+        }
+    };
+
+    /**
+     * This function updates the state with the optimized time slots for a specific piece of equipment.
+     * It takes the new data and updates the state corresponding to the specified equipment key.
+     * 
+     * @param {string} key - The key representing the equipment (e.g., `WASHING_MACHINE`).
+     * @param {Object} newData - The new optimized time slots data to update the state with.
+     * 
+     */
+    const updateEquipmentOptimizedTimeSlots = (key, newData) => {
+        setOptimezedTimeSlots(prevState => ({
+          ...prevState,
+          [key]: newData
+        }));
+      };
+
+    /**
      * Start of the demo.
      */
     const handleStart = useCallback(async () => {
@@ -120,6 +162,21 @@ const DemoControlls = ({ onLogAdd, queryingAnimationRun }) => {
             handleStart();
         }
     }, [hourlyQueryCompleted]);
+
+    useEffect(() => {
+        const keys = Object.keys(userRequirement);
+        if (keys.length !== 0) {
+            for (const key of keys) {
+                switch (key) {
+                    case WASHING_MACHINE:
+                        setWashingMachineRunningTime(Math.floor(demoTime / 1000), userRequirement[key].completeBefore);
+                        break;
+                    default:
+                        console.error("Invalid key");
+                }
+            }
+        }
+    }, [userRequirement]);
 
     return (
         <div>
@@ -148,6 +205,7 @@ const DemoControlls = ({ onLogAdd, queryingAnimationRun }) => {
 DemoControlls.propTypes = {
     onLogAdd: PropTypes.func.isRequired,
     queryingAnimationRun: PropTypes.func.isRequired,
+    userRequirement: PropTypes.object.isRequired,
 };
 
 export default DemoControlls;
