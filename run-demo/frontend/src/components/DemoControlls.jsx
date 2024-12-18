@@ -14,7 +14,7 @@ import { WASHING_MACHINE } from "../../constants";
 // eslint-disable-next-line no-undef
 const ANIMATION_MOVING_TIME = process.env.ANIMATION_MOVING_TIME;
 
-const DemoControlls = ({ onLogAdd, queryingAnimationRun, userRequirement }) => {
+const DemoControlls = ({ onLogAdd, queryingAnimationRun, userRequirement, onUpdateOptimizedTimeSlots }) => {
     const [demoRunning, setDemoRunning] = useState(false);
     const [demoTime, setDemoTime] = useState(new Date().setMinutes(0, 0));
     const [optimezedTimeSlots, setOptimezedTimeSlots] = useState({});
@@ -62,17 +62,17 @@ const DemoControlls = ({ onLogAdd, queryingAnimationRun, userRequirement }) => {
                         onLogAdd(`Running washing-machine....`);
                         setDemoRunning(true);
                     } else {
-                        await queryingAnimationRun();
+                        // await queryingAnimationRun();
                     }
 
                     const res = await runFunction(deploymentObj._id, 3600, Math.floor(demoTime / 1000));
 
-                    if (moduleName.includes("energy-query")) {
-                        const newTime = new Date(demoTime);
-                        newTime.setHours(newTime.getHours() + 1);
-                        onLogAdd(`Energy usage between (${new Date(demoTime).toLocaleTimeString()} - ${newTime.toLocaleTimeString()}) : ${res[0]}`);
-                        setHourlyQueryCompleted(true);
-                    }
+                    // if (moduleName.includes("energy-query")) {
+                    //     const newTime = new Date(demoTime);
+                    //     newTime.setHours(newTime.getHours() + 1);
+                    //     onLogAdd(`Energy usage between (${new Date(demoTime).toLocaleTimeString()} - ${newTime.toLocaleTimeString()}) : ${res[0]}`);
+                    //     setHourlyQueryCompleted(true);
+                    // }
                 } else {
                     console.error("Device response status is not 200");
                 }
@@ -98,7 +98,7 @@ const DemoControlls = ({ onLogAdd, queryingAnimationRun, userRequirement }) => {
                 param1: timeDuration,
             };
             const res = await fetchPostData(endpoint, postData);
-            setDemoRunning(false);
+            // setDemoRunning(false);
             console.log(`Response from the wasm module:`, res);
             return res
         } catch (error) {
@@ -124,7 +124,6 @@ const DemoControlls = ({ onLogAdd, queryingAnimationRun, userRequirement }) => {
             };  
             const res = await fetchIntelligentControllerData(endpoint, postData);
             updateEquipmentOptimizedTimeSlots(WASHING_MACHINE, res);
-            console.log(`Response :`, res);
             return res
         } catch (error) {
             console.error("Error deploying module:", error);
@@ -143,25 +142,27 @@ const DemoControlls = ({ onLogAdd, queryingAnimationRun, userRequirement }) => {
     const updateEquipmentOptimizedTimeSlots = (key, newData) => {
         setOptimezedTimeSlots(prevState => ({
           ...prevState,
-          [key]: newData
+          [key]: [newData]
         }));
+        onUpdateOptimizedTimeSlots(newData, key);
       };
 
     /**
      * Start of the demo.
      */
     const handleStart = useCallback(async () => {
-        await wasmModuleDeployment("wm-run");
-        await wasmModuleDeployment("wm-energy-query");
+        setDemoRunning(true);
+        // await wasmModuleDeployment("wm-run");
+        // await wasmModuleDeployment("wm-energy-query");
 
     }, [wasmModuleDeployment]);
 
-    useEffect(() => {
-        if (hourlyQueryCompleted) {
-            setHourlyQueryCompleted(false);
-            handleStart();
-        }
-    }, [hourlyQueryCompleted]);
+    // useEffect(() => {
+    //     if (hourlyQueryCompleted) {
+    //         setHourlyQueryCompleted(false);
+    //         handleStart();
+    //     }
+    // }, [hourlyQueryCompleted]);
 
     useEffect(() => {
         const keys = Object.keys(userRequirement);
@@ -177,6 +178,35 @@ const DemoControlls = ({ onLogAdd, queryingAnimationRun, userRequirement }) => {
             }
         }
     }, [userRequirement]);
+
+    useEffect(() => {
+
+        const checkStartTimes = () => {
+            Object.keys(optimezedTimeSlots).forEach((key) => {
+                handleEquipmentStartTime(key);
+            });
+        };
+
+        const handleEquipmentStartTime = (key) => {
+            switch (key) {
+                case WASHING_MACHINE:
+                    optimezedTimeSlots[key].forEach((equipment) => {
+                        const startDate = equipment.startDate;
+                        const demoTimeInSeconds = Math.floor(demoTime / 1000);
+                        if (startDate - demoTimeInSeconds === 0) {
+                            setDemoRunning(false);
+                            wasmModuleDeployment("wm-run");
+                        }
+                    });
+                    break;
+
+                default:
+                    console.error("Invalid key");
+            }
+        };
+        checkStartTimes();
+
+      }, [demoTime, optimezedTimeSlots]);
 
     return (
         <div>
@@ -206,6 +236,7 @@ DemoControlls.propTypes = {
     onLogAdd: PropTypes.func.isRequired,
     queryingAnimationRun: PropTypes.func.isRequired,
     userRequirement: PropTypes.object.isRequired,
+    onUpdateOptimizedTimeSlots: PropTypes.func.isRequired,
 };
 
 export default DemoControlls;

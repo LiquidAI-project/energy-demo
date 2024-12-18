@@ -7,11 +7,16 @@ import { useState } from 'react';
 import PropTypes from 'prop-types';
 import { WASHING_MACHINE } from '../../constants';
 
-const UserControlUI = ({ onUserRequirementChange }) => {
+const UserControlUI = ({ onUserRequirementChange, optimezedTimeSlots }) => {
     const [datetime, setDatetime] = useState('');
 
     const handleInputChange = (event) => {
         setDatetime(event.target.value);
+    };
+
+    const convertToLocalTime = (unixTime) => {
+        const date = new Date(unixTime * 1000);
+        return date.toLocaleString('en-GB', { hour12: false });
     };
 
     const handleWashingMachineSet = () => {
@@ -29,7 +34,7 @@ const UserControlUI = ({ onUserRequirementChange }) => {
             <h2>User Control UI</h2>
             <h3>Washing machine</h3>
             <div>
-                <label htmlFor="datetime">Enter Date and Time:</label>
+                <label htmlFor="datetime">Washing should completed before : </label>
                 <input
                     type="datetime-local"
                     id="datetime"
@@ -38,7 +43,7 @@ const UserControlUI = ({ onUserRequirementChange }) => {
                 />
             </div>
             
-            {datetime && <p>Selected Date and Time: {datetime}</p>}
+            {optimezedTimeSlots[WASHING_MACHINE] && <p>Optimized Schedule: {convertToLocalTime(optimezedTimeSlots[WASHING_MACHINE].startDate)} - {convertToLocalTime(optimezedTimeSlots[WASHING_MACHINE].endDate)}</p>}
             <button onClick={handleWashingMachineSet}>Set</button>
         </div>
     );
@@ -46,6 +51,7 @@ const UserControlUI = ({ onUserRequirementChange }) => {
 
 UserControlUI.propTypes = {
     onUserRequirementChange: PropTypes.func.isRequired,
+    optimezedTimeSlots: PropTypes.object.isRequired,
 };
 
 export default UserControlUI;

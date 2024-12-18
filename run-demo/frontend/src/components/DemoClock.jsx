@@ -47,10 +47,13 @@ function DemoClock({ demoRunning, setDemoRunning, onDemoTimeChange }) {
                         setDemoTime(
                             newDemoTime.setHours(newDemoTime.getHours() + 1)
                         );
+                        setDemoTime(newDemoTime.setMinutes(0));
                         onDemoTimeChange(newDemoTime);
                     } else {
                         // Increase passed minutes by ten
                         const newPassedMinutes = demoPassedMinutes + 10;
+                        setDemoTime(newDemoTime.setMinutes(newPassedMinutes));
+                        onDemoTimeChange(newDemoTime);
                         setDemoPassedMinutes(newPassedMinutes);
                     }
                 } else {

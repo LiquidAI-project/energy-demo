@@ -64,6 +64,7 @@ const Demo = () => {
   const [shouldBlink, setShouldBlink] = useState(false);
   const [logs, setLogs] = useState([]);
   const [userRequirements, setUserRequirements] = useState({});
+  const [optimizedTimeSlots, setOptimizedTimeSlots] = useState({});
   const [consumptionData, setConsumptionData] = useState([]); 
 
   // This function will make the house border blink in order to indicate the warning state when data is going outside
@@ -496,6 +497,20 @@ const Demo = () => {
       }));
   };
 
+  /**
+ * This function updates the optimal time of an equipment to operate.
+ * 
+ * @param {Object} optimezedTimeSlots - The new optimized data to be set for the specified equipment.
+ * @param {string} equipment - The key for the equipment whose user requirements are being updated (e.g., 'washingMachine', 'freezer').
+ * 
+ */
+  const handleOptimizedTimeSlots = (optimezedTimeSlots, equipment) => {
+    setOptimizedTimeSlots((prevTimeSlots) => ({
+        ...prevTimeSlots,
+        [equipment]: optimezedTimeSlots,
+    }));
+};
+
   return (
     <div>
       <div
@@ -715,7 +730,7 @@ const Demo = () => {
                   overflow="hidden"
                 >
                   <div style={{marginBottom: "5%"}}>
-                    <DemoControlls onLogAdd={(log) => addLog(log)} queryingAnimationRun={queryAnimation} userRequirement={userRequirements}/>
+                    <DemoControlls onLogAdd={(log) => addLog(log)} queryingAnimationRun={queryAnimation} userRequirement={userRequirements} onUpdateOptimizedTimeSlots={(optimezedTimeSlots, equipment) => handleOptimizedTimeSlots(optimezedTimeSlots, equipment)}/>
                   </div>
                   <DemoDataVisualize logs={logs}/>
                   {/* <ServiceProvider
@@ -723,7 +738,7 @@ const Demo = () => {
                     onClick={handleQueryClick}
                   /> */}
                   {/* <ElectricityPrice consumptionData={consumptionData} /> */}
-                  <UserControlUI onUserRequirementChange={(userRequirement, equipment) => handleUserRequirements(userRequirement, equipment)}/>
+                  <UserControlUI onUserRequirementChange={(userRequirement, equipment) => handleUserRequirements(userRequirement, equipment)} optimezedTimeSlots={optimizedTimeSlots}/>
                 </Box>
               </Grid>
             </Grid>
