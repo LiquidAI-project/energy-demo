@@ -5,16 +5,17 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Button } from "@mui/material";
-import { fetchData,fetchPostData, fetchIntelligentControllerData } from "../services/apiService";
-import RealtimeClock from "./RealtimeClock";
-import DemoClock from "./DemoClock";
+import { fetchData,fetchPostData, fetchIntelligentControllerData } from "../../services/apiService";
+import RealtimeClock from "../RealtimeClock";
+import DemoClock from "../DemoClock";
 import PropTypes from "prop-types";
-import { WASHING_MACHINE } from "../../constants";
+import { WASHING_MACHINE } from "../../../constants";
+import DropdownMenu from "./DropdownMenu";
 
 // eslint-disable-next-line no-undef
 const ANIMATION_MOVING_TIME = process.env.ANIMATION_MOVING_TIME;
 
-const DemoControlls = ({ onLogAdd, queryingAnimationRun, userRequirement, onUpdateOptimizedTimeSlots }) => {
+const DemoControlls = ({ onLogAdd, queryingAnimationRun, userRequirement, onUpdateOptimizedTimeSlots, onRunMethodSelect }) => {
     const [demoRunning, setDemoRunning] = useState(false);
     const [demoTime, setDemoTime] = useState(new Date().setMinutes(0, 0));
     const [optimezedTimeSlots, setOptimezedTimeSlots] = useState({});
@@ -211,10 +212,11 @@ const DemoControlls = ({ onLogAdd, queryingAnimationRun, userRequirement, onUpda
     return (
         <div>
             <div>
+                <DropdownMenu onRunMethodSelect={(value) => onRunMethodSelect(value)} />
                 <Button
                     variant="contained"
                     color="primary"
-                    sx={{ mr: 4 }}
+                    sx={{ mr: 4, mt: 4 }}
                     onClick={handleStart}
                 >
                     Start
@@ -237,6 +239,7 @@ DemoControlls.propTypes = {
     queryingAnimationRun: PropTypes.func.isRequired,
     userRequirement: PropTypes.object.isRequired,
     onUpdateOptimizedTimeSlots: PropTypes.func.isRequired,
+    onRunMethodSelect: PropTypes.func.isRequired,
 };
 
 export default DemoControlls;
