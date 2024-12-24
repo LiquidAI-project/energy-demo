@@ -12,7 +12,8 @@ import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { motion } from "framer-motion";
 import backgroundImage from "./../assets/yard.png";
 import controlHub from "./../assets/controlHub.png";
-import Service_Provider from "./../assets/service_provider.png";
+import Service_Provider1 from "./../assets/service_provider.png";
+import Service_Provider2 from "./../assets/service_provider.png";
 import houseImage from "./../assets/house.png";
 import House_Warning_Border from "./../assets/house_warning_border.png";
 import Freezer from "./visual_components/Freezer";
@@ -28,13 +29,27 @@ import Result_Icon_Blue from "./../assets/result_icon.png";
 import Result_Icon_Red from "./../assets/result_icon_with_warning.png";
 import roadImage from "./../assets/road.png";
 import IntelligentControlIcon from "./../assets/intelligent_control.jpg";
+import EVChargerEnergyIcon from "../assets/ev_charger_energy.png";
+import EVChargerIcon from "../assets/ev_charger.png";
+import Energy_Company_Icon from "../assets/spot_price.png";
 import ServiceProvider from "./serviceProvider/ServiceProvider";
 import ElectricityPrice from "./serviceProvider/energyQuery/ElectricityConsumption";
 import UserControlUI from "./UserControlUI";
 import { fetchData } from '../services/apiService';
 import DemoControlls from "./demoControll/DemoControlls";
 import DemoDataVisualize from "./DemoDataVisualize";
-import { ORCHESTRATOR, FREEZER, WASHING_MACHINE, SERVICE_PROVIDER, INTELLIGENT_CONTROL, WITHOUT_LIQUID_AI, WITH_LIQUID_AI } from "../../constants";
+import {
+  ORCHESTRATOR,
+  FREEZER,
+  WASHING_MACHINE,
+  SERVICE_PROVIDER1,
+  SERVICE_PROVIDER2,
+  ENERGY_COMPANY,
+  INTELLIGENT_CONTROL,
+  EV_CHARGER,
+  WITHOUT_LIQUID_AI,
+  WITH_LIQUID_AI,
+} from "../../constants";
 
 // eslint-disable-next-line no-undef
 const PUBLIC_HOST = process.env.PUBLIC_HOST;
@@ -47,13 +62,16 @@ const ANIMATION_MOVING_TIME = process.env.ANIMATION_MOVING_TIME;
 
 const Demo = () => {
   const orchestratorRef = useRef(null);
-  const serviceProviderRef = useRef(null);
+  const serviceProviderRef1 = useRef(null);
+  const serviceProviderRef2 = useRef(null);
   const freezerRef = useRef(null);
   const washingMachineRef = useRef(null);
   const electricCar1Ref = useRef(null);
   const jacuzziRef = useRef(null);
   const electricCar2Ref = useRef(null);
   const intelligentControlRef = useRef(null);
+  const energyCompanyRef = useRef(null);
+  const evChargerRef = useRef(null);
   const logsQueueRef = useRef([]);
   const healthLogTimerRef = useRef(null);
 
@@ -92,8 +110,11 @@ const Demo = () => {
       [FREEZER]: freezerRef,
       [WASHING_MACHINE]: washingMachineRef,
       [ORCHESTRATOR]: orchestratorRef,
-      [SERVICE_PROVIDER]: serviceProviderRef,
+      [SERVICE_PROVIDER1]: serviceProviderRef1,
+      [SERVICE_PROVIDER2]: serviceProviderRef2,
       [INTELLIGENT_CONTROL]: intelligentControlRef,
+      [EV_CHARGER]: evChargerRef,
+      [ENERGY_COMPANY]: energyCompanyRef,
       // Add more device names and their references here
     }),
     []
@@ -224,7 +245,7 @@ const Demo = () => {
       (device) => device.deploymentId && device.isModuleActive
     );
 
-    await moveCodeAnimation(SERVICE_PROVIDER, ORCHESTRATOR, Query_Icon);
+    await moveCodeAnimation(SERVICE_PROVIDER1, ORCHESTRATOR, Query_Icon);
     await delay(100);
 
     // Prepare an array of moveCodeAnimation promises for devices with valid deploymentId
@@ -252,7 +273,7 @@ const Demo = () => {
 
     await moveCodeAnimation(
       ORCHESTRATOR,
-      SERVICE_PROVIDER,
+      SERVICE_PROVIDER1,
       Result_Icon_Blue,
       Result_Icon_Red
     );
@@ -538,8 +559,15 @@ const Demo = () => {
       drawLines(
         orchestratorRef,
         ORCHESTRATOR,
-        serviceProviderRef,
-        SERVICE_PROVIDER
+        serviceProviderRef1,
+        SERVICE_PROVIDER1
+      );
+      drawLines(orchestratorRef, ORCHESTRATOR, evChargerRef, EV_CHARGER);
+      drawLines(
+        energyCompanyRef,
+        ENERGY_COMPANY,
+        intelligentControlRef,
+        INTELLIGENT_CONTROL
       );
 
       window.addEventListener("resize", () =>
@@ -565,28 +593,53 @@ const Demo = () => {
         drawLines(
           orchestratorRef,
           ORCHESTRATOR,
-          serviceProviderRef,
-          SERVICE_PROVIDER
+          serviceProviderRef1,
+          SERVICE_PROVIDER1
         )
       );
-    } else {
-      drawLines(serviceProviderRef, SERVICE_PROVIDER, freezerRef, FREEZER);
-      drawLines(
-        serviceProviderRef,
-        SERVICE_PROVIDER,
-        washingMachineRef,
-        WASHING_MACHINE
-      );
-
       window.addEventListener("resize", () =>
-        drawLines(serviceProviderRef, SERVICE_PROVIDER, freezerRef, FREEZER)
+        drawLines(orchestratorRef, ORCHESTRATOR, evChargerRef, EV_CHARGER)
       );
       window.addEventListener("resize", () =>
         drawLines(
-          serviceProviderRef,
-          SERVICE_PROVIDER,
+          energyCompanyRef,
+          ENERGY_COMPANY,
+          intelligentControlRef,
+          INTELLIGENT_CONTROL
+        )
+      );
+    } else {
+      drawLines(serviceProviderRef1, SERVICE_PROVIDER1, freezerRef, FREEZER);
+      drawLines(
+        serviceProviderRef1,
+        SERVICE_PROVIDER1,
+        washingMachineRef,
+        WASHING_MACHINE
+      );
+      drawLines(
+        serviceProviderRef2,
+        SERVICE_PROVIDER2,
+        evChargerRef,
+        EV_CHARGER
+      );
+
+      window.addEventListener("resize", () =>
+        drawLines(serviceProviderRef1, SERVICE_PROVIDER1, freezerRef, FREEZER)
+      );
+      window.addEventListener("resize", () =>
+        drawLines(
+          serviceProviderRef1,
+          SERVICE_PROVIDER1,
           washingMachineRef,
           WASHING_MACHINE
+        )
+      );
+      window.addEventListener("resize", () =>
+        drawLines(
+          serviceProviderRef2,
+          SERVICE_PROVIDER2,
+          evChargerRef,
+          EV_CHARGER
         )
       );
     }
@@ -616,21 +669,40 @@ const Demo = () => {
             drawLines(
               orchestratorRef,
               ORCHESTRATOR,
-              serviceProviderRef,
-              SERVICE_PROVIDER
+              serviceProviderRef1,
+              SERVICE_PROVIDER1
+            )
+          );
+          window.removeEventListener("resize", () =>
+            drawLines(orchestratorRef, ORCHESTRATOR, evChargerRef, EV_CHARGER)
+          );
+          window.removeEventListener("resize", () =>
+            drawLines(
+              energyCompanyRef,
+              ENERGY_COMPANY,
+              intelligentControlRef,
+              INTELLIGENT_CONTROL
             )
           );
       } else {
         window.removeEventListener("resize", () =>
           drawLines(
-            serviceProviderRef,
-            SERVICE_PROVIDER,
+            serviceProviderRef1,
+            SERVICE_PROVIDER1,
             washingMachineRef,
             WASHING_MACHINE
           )
         );
         window.removeEventListener("resize", () =>
-          drawLines(serviceProviderRef, SERVICE_PROVIDER, freezerRef, FREEZER)
+          drawLines(serviceProviderRef1, SERVICE_PROVIDER1, freezerRef, FREEZER)
+        );
+        window.removeEventListener("resize", () =>
+          drawLines(
+            serviceProviderRef2,
+            SERVICE_PROVIDER2,
+            evChargerRef,
+            EV_CHARGER
+          )
         );
       }
     };
@@ -704,50 +776,53 @@ const Demo = () => {
             <>
               <div id="orchestrator-freezer-line" />
               <div id="orchestrator-washingMachine-line" />
-              <div id="orchestrator-serviceProvider-line" />
               <div id="orchestrator-intelligentControl-line" />
+              <div id="energyCompany-intelligentControl-line" />
+              <div id="orchestrator-evCharger-line" />
             </>
           )}
           {selectedRunMethod === WITHOUT_LIQUID_AI && (
             <>
-              <div id="serviceProvider-freezer-line" />
-              <div id="serviceProvider-washingMachine-line" />
+              <div id="serviceProvider1-freezer-line" />
+              <div id="serviceProvider1-washingMachine-line" />
+              <div id="serviceProvider2-evCharger-line" />
             </>
           )}
           {movingDeployments.map((deployment, index) => (
             <MovingIcon key={index} deployment={deployment} />
           ))}
-          {activeDeployments.map((deployment, index) => (
-            <motion.div
-              key={index}
-              initial={{
-                x: deployment.wasmModuleIconPosition.x - 25,
-                y: deployment.wasmModuleIconPosition.y - 25,
-                width: "50px", // Set initial width
-                height: "50px", // Set initial height
-              }}
-              animate={{
-                x: deployment.wasmModuleIconPosition.x - 25,
-                y: deployment.wasmModuleIconPosition.y - 25,
-                width: "20px", // Animate to smaller width
-                height: "20px", // Animate to smaller height
-              }}
-              transition={{ type: "spring", duration: 5 }}
-              style={{
-                position: "absolute",
-                zIndex: 1,
-              }}
-            >
-              <img
-                src={WebAssembly_Icon}
-                alt="Moving object"
-                style={{
-                  width: "100%",
-                  height: "100%",
+          {selectedRunMethod === WITH_LIQUID_AI &&
+            activeDeployments.map((deployment, index) => (
+              <motion.div
+                key={index}
+                initial={{
+                  x: deployment.wasmModuleIconPosition.x - 25,
+                  y: deployment.wasmModuleIconPosition.y - 25,
+                  width: "50px", // Set initial width
+                  height: "50px", // Set initial height
                 }}
-              />
-            </motion.div>
-          ))}
+                animate={{
+                  x: deployment.wasmModuleIconPosition.x - 25,
+                  y: deployment.wasmModuleIconPosition.y - 25,
+                  width: "20px", // Animate to smaller width
+                  height: "20px", // Animate to smaller height
+                }}
+                transition={{ type: "spring", duration: 5 }}
+                style={{
+                  position: "absolute",
+                  zIndex: 1,
+                }}
+              >
+                <img
+                  src={WebAssembly_Icon}
+                  alt="Moving object"
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                  }}
+                />
+              </motion.div>
+            ))}
           <Grid item xs={12} sm={3} minWidth={"77vh"}>
             <Box>
               <div
@@ -835,7 +910,7 @@ const Demo = () => {
                       style={{
                         position: "absolute",
                         top: "57%",
-                        left: "25%",
+                        left: "45%",
                         width: "7%",
                         height: "7%",
                         zIndex: 2,
@@ -850,26 +925,55 @@ const Demo = () => {
                       style={{
                         position: "absolute",
                         top: "57%",
-                        left: "45%",
+                        left: "25%",
                         width: "6%",
                         height: "7%",
                         zIndex: 2,
                       }}
                     />
                   )}
-                  {selectedRunMethod === WITHOUT_LIQUID_AI && (
+                  {selectedRunMethod === WITH_LIQUID_AI && (
                     <img
-                      src={Service_Provider}
-                      alt="Service_Provider"
-                      ref={serviceProviderRef}
+                      src={Energy_Company_Icon}
+                      alt="energyCompany"
+                      ref={energyCompanyRef}
                       style={{
                         position: "absolute",
                         top: "90%",
-                        left: "21.2%",
-                        width: "10%",
+                        left: "20.2%",
+                        width: "15%",
+                        height: "10%",
                         zIndex: 2,
                       }}
                     />
+                  )}
+                  {selectedRunMethod === WITHOUT_LIQUID_AI && (
+                    <>
+                      <img
+                        src={Service_Provider1}
+                        alt="Service_Provider1"
+                        ref={serviceProviderRef1}
+                        style={{
+                          position: "absolute",
+                          top: "90%",
+                          left: "21.2%",
+                          width: "10%",
+                          zIndex: 2,
+                        }}
+                      />
+                      <img
+                        src={Service_Provider2}
+                        alt="Service_Provider2"
+                        ref={serviceProviderRef2}
+                        style={{
+                          position: "absolute",
+                          top: "90%",
+                          left: "51.2%",
+                          width: "10%",
+                          zIndex: 2,
+                        }}
+                      />
+                    </>
                   )}
                   <img
                     src={houseImage}
@@ -890,6 +994,43 @@ const Demo = () => {
                     <ElectricCar1 ref={electricCar1Ref} />
                     <ElectricCar2 ref={electricCar2Ref} />
                     <Jacuzzi ref={jacuzziRef} />
+                    {/*TEMP add of EV charger TODO: Add proper component for this later*/}
+                    <img
+                      id="ev-charger-energy"
+                      src={EVChargerEnergyIcon}
+                      alt="energy"
+                      className="washing-machine-energy-border"
+                      style={{
+                        position: "absolute",
+                        top: "51.8%",
+                        left: "80%",
+                        width: "4.8%",
+                        height: "4.8%",
+                      }}
+                    />
+                    <button
+                      style={{
+                        position: "absolute",
+                        top: "52.2%",
+                        left: "80.35%",
+                        width: "4%",
+                        height: "4%",
+                        backgroundColor: "transparent",
+                        border: "none",
+                        padding: "0%",
+                      }}
+                    >
+                      <img
+                        id="washing-machine"
+                        src={EVChargerIcon}
+                        alt="washingMachine"
+                        ref={evChargerRef}
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                        }}
+                      />
+                    </button>
                   </div>
                 </div>
               </div>

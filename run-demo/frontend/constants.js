@@ -10,7 +10,10 @@
 export const ORCHESTRATOR = "orchestrator";
 export const FREEZER = "freezer";
 export const WASHING_MACHINE = "washingMachine";
-export const SERVICE_PROVIDER = "serviceProvider";
+export const SERVICE_PROVIDER1 = "serviceProvider1";
+export const SERVICE_PROVIDER2 = "serviceProvider2";
 export const INTELLIGENT_CONTROL = "intelligentControl";
+export const EV_CHARGER = "evCharger";
+export const ENERGY_COMPANY = "energyCompany";
 export const WITH_LIQUID_AI = "With Liquid AI";
 export const WITHOUT_LIQUID_AI = "Without Liquid AI";

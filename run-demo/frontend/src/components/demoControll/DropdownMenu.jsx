@@ -19,8 +19,8 @@ const DropdownMenu = ({ onRunMethodSelect }) => {
   return (
     <div>
       <select value={selectedOption} onChange={handleChange}>
-        <option value={WITH_LIQUID_AI}>{WITH_LIQUID_AI}</option>
         <option value={WITHOUT_LIQUID_AI}>{WITHOUT_LIQUID_AI}</option>
+        <option value={WITH_LIQUID_AI}>{WITH_LIQUID_AI}</option>
       </select>
     </div>
   );
