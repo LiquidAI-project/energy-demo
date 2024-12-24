@@ -30,9 +30,11 @@ import roadImage from "./../assets/road.png";
 import IntelligentControlIcon from "./../assets/intelligent_control.jpg";
 import ServiceProvider from "./serviceProvider/ServiceProvider";
 import ElectricityPrice from "./serviceProvider/energyQuery/ElectricityConsumption";
+import UserControlUI from "./UserControlUI";
 import { fetchData } from '../services/apiService';
 import DemoControlls from "./DemoControlls";
 import DemoDataVisualize from "./DemoDataVisualize";
+import { ORCHESTRATOR, FREEZER, WASHING_MACHINE, SERVICE_PROVIDER, INTELLIGENT_CONTROL } from "../../constants";
 
 // eslint-disable-next-line no-undef
 const PUBLIC_HOST = process.env.PUBLIC_HOST;
@@ -42,12 +44,6 @@ const PUBLIC_PORT = process.env.PUBLIC_PORT;
 const DEVICE_CHECK_INTERVAL = process.env.DEVICE_CHECK_INTERVAL;
 // eslint-disable-next-line no-undef
 const ANIMATION_MOVING_TIME = process.env.ANIMATION_MOVING_TIME;
-
-const ORCHESTRATOR = "orchestrator";
-const FREEZER = "freezer";
-const WASHING_MACHINE = "washingMachine";
-const SERVICE_PROVIDER = "serviceProvider";
-const INTELLIGENT_CONTROL = "intelligentControl";
 
 const Demo = () => {
 
@@ -67,6 +63,8 @@ const Demo = () => {
   const [warningBorderVisible, setWarningBorderVisible] = useState(false);
   const [shouldBlink, setShouldBlink] = useState(false);
   const [logs, setLogs] = useState([]);
+  const [userRequirements, setUserRequirements] = useState({});
+  const [optimizedTimeSlots, setOptimizedTimeSlots] = useState({});
   const [consumptionData, setConsumptionData] = useState([]); 
 
   // This function will make the house border blink in order to indicate the warning state when data is going outside
@@ -485,6 +483,34 @@ const Demo = () => {
     };
   }, []);
 
+/**
+ * This function updates the user requirements for a specific piece of equipment in the state.
+ * 
+ * @param {Object} userRequirement - The new data or requirement to be set for the specified equipment.
+ * @param {string} equipment - The key for the equipment whose user requirements are being updated (e.g., 'washingMachine', 'freezer').
+ * 
+ */
+  const handleUserRequirements = (userRequirement, equipment) => {
+      setUserRequirements((prevRequirements) => ({
+          ...prevRequirements,
+          [equipment]: userRequirement,
+      }));
+  };
+
+  /**
+ * This function updates the optimal time of an equipment to operate.
+ * 
+ * @param {Object} optimezedTimeSlots - The new optimized data to be set for the specified equipment.
+ * @param {string} equipment - The key for the equipment whose user requirements are being updated (e.g., 'washingMachine', 'freezer').
+ * 
+ */
+  const handleOptimizedTimeSlots = (optimezedTimeSlots, equipment) => {
+    setOptimizedTimeSlots((prevTimeSlots) => ({
+        ...prevTimeSlots,
+        [equipment]: optimezedTimeSlots,
+    }));
+};
+
   return (
     <div>
       <div
@@ -704,14 +730,15 @@ const Demo = () => {
                   overflow="hidden"
                 >
                   <div style={{marginBottom: "5%"}}>
-                    <DemoControlls onLogAdd={(log) => addLog(log)} queryingAnimationRun={queryAnimation}/>
+                    <DemoControlls onLogAdd={(log) => addLog(log)} queryingAnimationRun={queryAnimation} userRequirement={userRequirements} onUpdateOptimizedTimeSlots={(optimezedTimeSlots, equipment) => handleOptimizedTimeSlots(optimezedTimeSlots, equipment)}/>
                   </div>
                   <DemoDataVisualize logs={logs}/>
                   {/* <ServiceProvider
                     ref={serviceProviderRef}
                     onClick={handleQueryClick}
                   /> */}
-                  <ElectricityPrice consumptionData={consumptionData} />
+                  {/* <ElectricityPrice consumptionData={consumptionData} /> */}
+                  <UserControlUI onUserRequirementChange={(userRequirement, equipment) => handleUserRequirements(userRequirement, equipment)} optimezedTimeSlots={optimizedTimeSlots}/>
                 </Box>
               </Grid>
             </Grid>

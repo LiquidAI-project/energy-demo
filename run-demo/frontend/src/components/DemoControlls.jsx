@@ -5,17 +5,19 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Button } from "@mui/material";
-import { fetchData,fetchPostData } from "../services/apiService";
+import { fetchData,fetchPostData, fetchIntelligentControllerData } from "../services/apiService";
 import RealtimeClock from "./RealtimeClock";
 import DemoClock from "./DemoClock";
 import PropTypes from "prop-types";
+import { WASHING_MACHINE } from "../../constants";
 
 // eslint-disable-next-line no-undef
 const ANIMATION_MOVING_TIME = process.env.ANIMATION_MOVING_TIME;
 
-const DemoControlls = ({ onLogAdd, queryingAnimationRun }) => {
+const DemoControlls = ({ onLogAdd, queryingAnimationRun, userRequirement, onUpdateOptimizedTimeSlots }) => {
     const [demoRunning, setDemoRunning] = useState(false);
     const [demoTime, setDemoTime] = useState(new Date().setMinutes(0, 0));
+    const [optimezedTimeSlots, setOptimezedTimeSlots] = useState({});
     const [hourlyQueryCompleted, setHourlyQueryCompleted] = useState(false);
 
     /**
@@ -60,17 +62,17 @@ const DemoControlls = ({ onLogAdd, queryingAnimationRun }) => {
                         onLogAdd(`Running washing-machine....`);
                         setDemoRunning(true);
                     } else {
-                        await queryingAnimationRun();
+                        // await queryingAnimationRun();
                     }
 
                     const res = await runFunction(deploymentObj._id, 3600, Math.floor(demoTime / 1000));
 
-                    if (moduleName.includes("energy-query")) {
-                        const newTime = new Date(demoTime);
-                        newTime.setHours(newTime.getHours() + 1);
-                        onLogAdd(`Energy usage between (${new Date(demoTime).toLocaleTimeString()} - ${newTime.toLocaleTimeString()}) : ${res[0]}`);
-                        setHourlyQueryCompleted(true);
-                    }
+                    // if (moduleName.includes("energy-query")) {
+                    //     const newTime = new Date(demoTime);
+                    //     newTime.setHours(newTime.getHours() + 1);
+                    //     onLogAdd(`Energy usage between (${new Date(demoTime).toLocaleTimeString()} - ${newTime.toLocaleTimeString()}) : ${res[0]}`);
+                    //     setHourlyQueryCompleted(true);
+                    // }
                 } else {
                     console.error("Device response status is not 200");
                 }
@@ -96,7 +98,7 @@ const DemoControlls = ({ onLogAdd, queryingAnimationRun }) => {
                 param1: timeDuration,
             };
             const res = await fetchPostData(endpoint, postData);
-            setDemoRunning(false);
+            // setDemoRunning(false);
             console.log(`Response from the wasm module:`, res);
             return res
         } catch (error) {
@@ -106,20 +108,105 @@ const DemoControlls = ({ onLogAdd, queryingAnimationRun }) => {
     };
 
     /**
+     * This function calculates and sets the optimized running time slots for the washing machine.
+     * It makes an API request to fetch the most optimized time slots for a given time range.
+     * 
+     * @param {number} startDateTime - The start date and time in UNIX timestamp format for the optimized time calculation.
+     * @param {number} endDateTime - The end date and time in UNIX timestamp format for the optimized time calculation.
+     * 
+     */
+    const setWashingMachineRunningTime = async (startDateTime, endDateTime) => {
+        try {
+            const endpoint = `/cheapestHour`;
+            const postData = {
+                startDateTime: startDateTime,
+                endDateTime: endDateTime,
+            };  
+            const res = await fetchIntelligentControllerData(endpoint, postData);
+            updateEquipmentOptimizedTimeSlots(WASHING_MACHINE, res);
+            return res
+        } catch (error) {
+            console.error("Error deploying module:", error);
+            return {};
+        }
+    };
+
+    /**
+     * This function updates the state with the optimized time slots for a specific piece of equipment.
+     * It takes the new data and updates the state corresponding to the specified equipment key.
+     * 
+     * @param {string} key - The key representing the equipment (e.g., `WASHING_MACHINE`).
+     * @param {Object} newData - The new optimized time slots data to update the state with.
+     * 
+     */
+    const updateEquipmentOptimizedTimeSlots = (key, newData) => {
+        setOptimezedTimeSlots(prevState => ({
+          ...prevState,
+          [key]: [newData]
+        }));
+        onUpdateOptimizedTimeSlots(newData, key);
+      };
+
+    /**
      * Start of the demo.
      */
     const handleStart = useCallback(async () => {
-        await wasmModuleDeployment("wm-run");
-        await wasmModuleDeployment("wm-energy-query");
+        setDemoRunning(true);
+        // await wasmModuleDeployment("wm-run");
+        // await wasmModuleDeployment("wm-energy-query");
 
     }, [wasmModuleDeployment]);
 
+    // useEffect(() => {
+    //     if (hourlyQueryCompleted) {
+    //         setHourlyQueryCompleted(false);
+    //         handleStart();
+    //     }
+    // }, [hourlyQueryCompleted]);
+
     useEffect(() => {
-        if (hourlyQueryCompleted) {
-            setHourlyQueryCompleted(false);
-            handleStart();
+        const keys = Object.keys(userRequirement);
+        if (keys.length !== 0) {
+            for (const key of keys) {
+                switch (key) {
+                    case WASHING_MACHINE:
+                        setWashingMachineRunningTime(Math.floor(demoTime / 1000), userRequirement[key].completeBefore);
+                        break;
+                    default:
+                        console.error("Invalid key");
+                }
+            }
         }
-    }, [hourlyQueryCompleted]);
+    }, [userRequirement]);
+
+    useEffect(() => {
+
+        const checkStartTimes = () => {
+            Object.keys(optimezedTimeSlots).forEach((key) => {
+                handleEquipmentStartTime(key);
+            });
+        };
+
+        const handleEquipmentStartTime = (key) => {
+            switch (key) {
+                case WASHING_MACHINE:
+                    optimezedTimeSlots[key].forEach((equipment) => {
+                        const startDate = equipment.startDate;
+                        const demoTimeInSeconds = Math.floor(demoTime / 1000);
+                        if (startDate - demoTimeInSeconds === 0) {
+                            setDemoRunning(false);
+                            wasmModuleDeployment("wm-run");
+                        }
+                    });
+                    break;
+
+                default:
+                    console.error("Invalid key");
+            }
+        };
+        checkStartTimes();
+
+      }, [demoTime, optimezedTimeSlots]);
 
     return (
         <div>
@@ -148,6 +235,8 @@ const DemoControlls = ({ onLogAdd, queryingAnimationRun }) => {
 DemoControlls.propTypes = {
     onLogAdd: PropTypes.func.isRequired,
     queryingAnimationRun: PropTypes.func.isRequired,
+    userRequirement: PropTypes.object.isRequired,
+    onUpdateOptimizedTimeSlots: PropTypes.func.isRequired,
 };
 
 export default DemoControlls;

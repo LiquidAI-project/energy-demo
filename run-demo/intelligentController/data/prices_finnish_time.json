@@ -1,0 +1,368 @@
+[
+  {
+    "price": 0.492,
+    "startDate": "10.12.2024 klo 12.00.00",
+    "endDate": "10.12.2024 klo 13.00.00",
+    "type": "api"
+  },
+  {
+    "price": 0.434,
+    "startDate": "10.12.2024 klo 13.00.00",
+    "endDate": "10.12.2024 klo 14.00.00",
+    "type": "api"
+  },
+  {
+    "price": 0.449,
+    "startDate": "10.12.2024 klo 14.00.00",
+    "endDate": "10.12.2024 klo 15.00.00",
+    "type": "api"
+  },
+  {
+    "price": 0.41,
+    "startDate": "10.12.2024 klo 15.00.00",
+    "endDate": "10.12.2024 klo 16.00.00",
+    "type": "api"
+  },
+  {
+    "price": 0.37,
+    "startDate": "10.12.2024 klo 16.00.00",
+    "endDate": "10.12.2024 klo 17.00.00",
+    "type": "api"
+  },
+  {
+    "price": 0.326,
+    "startDate": "10.12.2024 klo 17.00.00",
+    "endDate": "10.12.2024 klo 18.00.00",
+    "type": "api"
+  },
+  {
+    "price": 0.419,
+    "startDate": "10.12.2024 klo 18.00.00",
+    "endDate": "10.12.2024 klo 19.00.00",
+    "type": "api"
+  },
+  {
+    "price": 0.33,
+    "startDate": "10.12.2024 klo 19.00.00",
+    "endDate": "10.12.2024 klo 20.00.00",
+    "type": "api"
+  },
+  {
+    "price": 0.269,
+    "startDate": "10.12.2024 klo 20.00.00",
+    "endDate": "10.12.2024 klo 21.00.00",
+    "type": "api"
+  },
+  {
+    "price": 0.184,
+    "startDate": "10.12.2024 klo 21.00.00",
+    "endDate": "10.12.2024 klo 22.00.00",
+    "type": "api"
+  },
+  {
+    "price": 0.148,
+    "startDate": "10.12.2024 klo 22.00.00",
+    "endDate": "10.12.2024 klo 23.00.00",
+    "type": "api"
+  },
+  {
+    "price": 0.138,
+    "startDate": "10.12.2024 klo 23.00.00",
+    "endDate": "11.12.2024 klo 0.00.00",
+    "type": "api"
+  },
+  {
+    "price": 0,
+    "startDate": "11.12.2024 klo 0.00.00",
+    "endDate": "11.12.2024 klo 1.00.00",
+    "type": "api"
+  },
+  {
+    "price": -0.01,
+    "startDate": "11.12.2024 klo 1.00.00",
+    "endDate": "11.12.2024 klo 2.00.00",
+    "type": "api"
+  },
+  {
+    "price": -0.011,
+    "startDate": "11.12.2024 klo 2.00.00",
+    "endDate": "11.12.2024 klo 3.00.00",
+    "type": "api"
+  },
+  {
+    "price": -0.03,
+    "startDate": "11.12.2024 klo 3.00.00",
+    "endDate": "11.12.2024 klo 4.00.00",
+    "type": "api"
+  },
+  {
+    "price": -0.011,
+    "startDate": "11.12.2024 klo 4.00.00",
+    "endDate": "11.12.2024 klo 5.00.00",
+    "type": "api"
+  },
+  {
+    "price": -0.005,
+    "startDate": "11.12.2024 klo 5.00.00",
+    "endDate": "11.12.2024 klo 6.00.00",
+    "type": "api"
+  },
+  {
+    "price": 0.001,
+    "startDate": "11.12.2024 klo 6.00.00",
+    "endDate": "11.12.2024 klo 7.00.00",
+    "type": "api"
+  },
+  {
+    "price": 0.188,
+    "startDate": "11.12.2024 klo 7.00.00",
+    "endDate": "11.12.2024 klo 8.00.00",
+    "type": "api"
+  },
+  {
+    "price": 0.394,
+    "startDate": "11.12.2024 klo 8.00.00",
+    "endDate": "11.12.2024 klo 9.00.00",
+    "type": "api"
+  },
+  {
+    "price": 0.423,
+    "startDate": "11.12.2024 klo 9.00.00",
+    "endDate": "11.12.2024 klo 10.00.00",
+    "type": "api"
+  },
+  {
+    "price": 0.675,
+    "startDate": "11.12.2024 klo 10.00.00",
+    "endDate": "11.12.2024 klo 11.00.00",
+    "type": "api"
+  },
+  {
+    "price": 0.63,
+    "startDate": "11.12.2024 klo 11.00.00",
+    "endDate": "11.12.2024 klo 12.00.00",
+    "type": "api"
+  },
+  {
+    "price": 0.535,
+    "startDate": "11.12.2024 klo 12.00.00",
+    "endDate": "11.12.2024 klo 13.00.00",
+    "type": "api"
+  },
+  {
+    "price": 0.452,
+    "startDate": "11.12.2024 klo 13.00.00",
+    "endDate": "11.12.2024 klo 14.00.00",
+    "type": "api"
+  },
+  {
+    "price": 0.375,
+    "startDate": "11.12.2024 klo 14.00.00",
+    "endDate": "11.12.2024 klo 15.00.00",
+    "type": "api"
+  },
+  {
+    "price": 0.346,
+    "startDate": "11.12.2024 klo 15.00.00",
+    "endDate": "11.12.2024 klo 16.00.00",
+    "type": "api"
+  },
+  {
+    "price": 0.351,
+    "startDate": "11.12.2024 klo 16.00.00",
+    "endDate": "11.12.2024 klo 17.00.00",
+    "type": "api"
+  },
+  {
+    "price": 0.314,
+    "startDate": "11.12.2024 klo 17.00.00",
+    "endDate": "11.12.2024 klo 18.00.00",
+    "type": "api"
+  },
+  {
+    "price": 0.292,
+    "startDate": "11.12.2024 klo 18.00.00",
+    "endDate": "11.12.2024 klo 19.00.00",
+    "type": "api"
+  },
+  {
+    "price": 0.383,
+    "startDate": "11.12.2024 klo 19.00.00",
+    "endDate": "11.12.2024 klo 20.00.00",
+    "type": "api"
+  },
+  {
+    "price": 0.382,
+    "startDate": "11.12.2024 klo 20.00.00",
+    "endDate": "11.12.2024 klo 21.00.00",
+    "type": "api"
+  },
+  {
+    "price": 0.408,
+    "startDate": "11.12.2024 klo 21.00.00",
+    "endDate": "11.12.2024 klo 22.00.00",
+    "type": "api"
+  },
+  {
+    "price": 0.469,
+    "startDate": "11.12.2024 klo 22.00.00",
+    "endDate": "11.12.2024 klo 23.00.00",
+    "type": "api"
+  },
+  {
+    "price": 0.452,
+    "startDate": "11.12.2024 klo 23.00.00",
+    "endDate": "12.12.2024 klo 0.00.00",
+    "type": "api"
+  },
+  {
+    "price": 0.42,
+    "startDate": "12.12.2024 klo 0.00.00",
+    "endDate": "12.12.2024 klo 1.00.00",
+    "type": "api"
+  },
+  {
+    "price": 0.188,
+    "startDate": "12.12.2024 klo 1.00.00",
+    "endDate": "12.12.2024 klo 2.00.00",
+    "type": "api"
+  },
+  {
+    "price": 0.023,
+    "startDate": "12.12.2024 klo 2.00.00",
+    "endDate": "12.12.2024 klo 3.00.00",
+    "type": "api"
+  },
+  {
+    "price": 0.011,
+    "startDate": "12.12.2024 klo 3.00.00",
+    "endDate": "12.12.2024 klo 4.00.00",
+    "type": "api"
+  },
+  {
+    "price": 0.001,
+    "startDate": "12.12.2024 klo 4.00.00",
+    "endDate": "12.12.2024 klo 5.00.00",
+    "type": "api"
+  },
+  {
+    "price": 0.006,
+    "startDate": "12.12.2024 klo 5.00.00",
+    "endDate": "12.12.2024 klo 6.00.00",
+    "type": "api"
+  },
+  {
+    "price": 0.191,
+    "startDate": "12.12.2024 klo 6.00.00",
+    "endDate": "12.12.2024 klo 7.00.00",
+    "type": "api"
+  },
+  {
+    "price": 0.447,
+    "startDate": "12.12.2024 klo 7.00.00",
+    "endDate": "12.12.2024 klo 8.00.00",
+    "type": "api"
+  },
+  {
+    "price": 1.096,
+    "startDate": "12.12.2024 klo 8.00.00",
+    "endDate": "12.12.2024 klo 9.00.00",
+    "type": "api"
+  },
+  {
+    "price": 0.949,
+    "startDate": "12.12.2024 klo 9.00.00",
+    "endDate": "12.12.2024 klo 10.00.00",
+    "type": "api"
+  },
+  {
+    "price": 0.94,
+    "startDate": "12.12.2024 klo 10.00.00",
+    "endDate": "12.12.2024 klo 11.00.00",
+    "type": "api"
+  },
+  {
+    "price": 1.254,
+    "startDate": "12.12.2024 klo 11.00.00",
+    "endDate": "12.12.2024 klo 12.00.00",
+    "type": "api"
+  },
+  {
+    "price": 1.254,
+    "startDate": "12.12.2024 klo 12.00.00",
+    "endDate": "12.12.2024 klo 13.00.00",
+    "type": "api"
+  },
+  {
+    "price": 1.24,
+    "startDate": "12.12.2024 klo 13.00.00",
+    "endDate": "12.12.2024 klo 14.00.00",
+    "type": "api"
+  },
+  {
+    "price": 1.255,
+    "startDate": "12.12.2024 klo 14.00.00",
+    "endDate": "12.12.2024 klo 15.00.00",
+    "type": "api"
+  },
+  {
+    "price": 1.431,
+    "startDate": "12.12.2024 klo 15.00.00",
+    "endDate": "12.12.2024 klo 16.00.00",
+    "type": "api"
+  },
+  {
+    "price": 2.51,
+    "startDate": "12.12.2024 klo 16.00.00",
+    "endDate": "12.12.2024 klo 17.00.00",
+    "type": "api"
+  },
+  {
+    "price": 4.408,
+    "startDate": "12.12.2024 klo 17.00.00",
+    "endDate": "12.12.2024 klo 18.00.00",
+    "type": "api"
+  },
+  {
+    "price": 5.055,
+    "startDate": "12.12.2024 klo 18.00.00",
+    "endDate": "12.12.2024 klo 19.00.00",
+    "type": "api"
+  },
+  {
+    "price": 7.682,
+    "startDate": "12.12.2024 klo 19.00.00",
+    "endDate": "12.12.2024 klo 20.00.00",
+    "type": "api"
+  },
+  {
+    "price": 7.865,
+    "startDate": "12.12.2024 klo 20.00.00",
+    "endDate": "12.12.2024 klo 21.00.00",
+    "type": "api"
+  },
+  {
+    "price": 5.017,
+    "startDate": "12.12.2024 klo 21.00.00",
+    "endDate": "12.12.2024 klo 22.00.00",
+    "type": "api"
+  },
+  {
+    "price": 3.151,
+    "startDate": "12.12.2024 klo 22.00.00",
+    "endDate": "12.12.2024 klo 23.00.00",
+    "type": "api"
+  },
+  {
+    "price": 3.067,
+    "startDate": "12.12.2024 klo 23.00.00",
+    "endDate": "13.12.2024 klo 0.00.00",
+    "type": "api"
+  },
+  {
+    "price": 5.814,
+    "startDate": "13.12.2024 klo 0.00.00",
+    "endDate": "13.12.2024 klo 1.00.00",
+    "type": "api"
+  }
+]
