@@ -12,3 +12,5 @@ export const FREEZER = "freezer";
 export const WASHING_MACHINE = "washingMachine";
 export const SERVICE_PROVIDER = "serviceProvider";
 export const INTELLIGENT_CONTROL = "intelligentControl";
+export const WITH_LIQUID_AI = "With Liquid AI";
+export const WITHOUT_LIQUID_AI = "Without Liquid AI";

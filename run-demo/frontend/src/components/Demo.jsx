@@ -521,74 +521,28 @@ const Demo = () => {
       }
     };
 
-    drawLines(orchestratorRef, ORCHESTRATOR, freezerRef, FREEZER);
-    drawLines(
-      orchestratorRef,
-      ORCHESTRATOR,
-      washingMachineRef,
-      WASHING_MACHINE
-    );
-    drawLines(
-      orchestratorRef,
-      ORCHESTRATOR,
-      serviceProviderRef,
-      SERVICE_PROVIDER
-    );
-    drawLines(
-      orchestratorRef,
-      ORCHESTRATOR,
-      intelligentControlRef,
-      INTELLIGENT_CONTROL
-    );
-    window.addEventListener("resize", () =>
-      drawLines(orchestratorRef, ORCHESTRATOR, freezerRef, FREEZER)
-    );
-    window.addEventListener("resize", () =>
-      drawLines(
-        orchestratorRef,
-        ORCHESTRATOR,
-        washingMachineRef,
-        WASHING_MACHINE
-      )
-    );
-    window.addEventListener("resize", () =>
-      drawLines(
-        orchestratorRef,
-        ORCHESTRATOR,
-        serviceProviderRef,
-        SERVICE_PROVIDER
-      )
-    );
-    window.addEventListener("resize", () =>
+    if (selectedRunMethod === WITH_LIQUID_AI) {
       drawLines(
         orchestratorRef,
         ORCHESTRATOR,
         intelligentControlRef,
         INTELLIGENT_CONTROL
-      )
-    );
+      );
+      drawLines(orchestratorRef, ORCHESTRATOR, freezerRef, FREEZER);
+      drawLines(
+        orchestratorRef,
+        ORCHESTRATOR,
+        washingMachineRef,
+        WASHING_MACHINE
+      );
+      drawLines(
+        orchestratorRef,
+        ORCHESTRATOR,
+        serviceProviderRef,
+        SERVICE_PROVIDER
+      );
 
-    return () => {
-      window.removeEventListener("resize", () =>
-        drawLines(orchestratorRef, ORCHESTRATOR, freezerRef, FREEZER)
-      );
-      window.removeEventListener("resize", () =>
-        drawLines(
-          orchestratorRef,
-          ORCHESTRATOR,
-          washingMachineRef,
-          WASHING_MACHINE
-        )
-      );
-      window.removeEventListener("resize", () =>
-        drawLines(
-          orchestratorRef,
-          ORCHESTRATOR,
-          serviceProviderRef,
-          SERVICE_PROVIDER
-        )
-      );
-      window.removeEventListener("resize", () =>
+      window.addEventListener("resize", () =>
         drawLines(
           orchestratorRef,
           ORCHESTRATOR,
@@ -596,8 +550,91 @@ const Demo = () => {
           INTELLIGENT_CONTROL
         )
       );
+      window.addEventListener("resize", () =>
+        drawLines(orchestratorRef, ORCHESTRATOR, freezerRef, FREEZER)
+      );
+      window.addEventListener("resize", () =>
+        drawLines(
+          orchestratorRef,
+          ORCHESTRATOR,
+          washingMachineRef,
+          WASHING_MACHINE
+        )
+      );
+      window.addEventListener("resize", () =>
+        drawLines(
+          orchestratorRef,
+          ORCHESTRATOR,
+          serviceProviderRef,
+          SERVICE_PROVIDER
+        )
+      );
+    } else {
+      drawLines(serviceProviderRef, SERVICE_PROVIDER, freezerRef, FREEZER);
+      drawLines(
+        serviceProviderRef,
+        SERVICE_PROVIDER,
+        washingMachineRef,
+        WASHING_MACHINE
+      );
+
+      window.addEventListener("resize", () =>
+        drawLines(serviceProviderRef, SERVICE_PROVIDER, freezerRef, FREEZER)
+      );
+      window.addEventListener("resize", () =>
+        drawLines(
+          serviceProviderRef,
+          SERVICE_PROVIDER,
+          washingMachineRef,
+          WASHING_MACHINE
+        )
+      );
+    }
+
+    return () => {
+    if (selectedRunMethod === WITH_LIQUID_AI) {
+        window.removeEventListener("resize", () =>
+            drawLines(
+              orchestratorRef,
+              ORCHESTRATOR,
+              intelligentControlRef,
+              INTELLIGENT_CONTROL
+            )
+          );
+          window.removeEventListener("resize", () =>
+            drawLines(orchestratorRef, ORCHESTRATOR, freezerRef, FREEZER)
+          );
+          window.removeEventListener("resize", () =>
+            drawLines(
+              orchestratorRef,
+              ORCHESTRATOR,
+              washingMachineRef,
+              WASHING_MACHINE
+            )
+          );
+          window.removeEventListener("resize", () =>
+            drawLines(
+              orchestratorRef,
+              ORCHESTRATOR,
+              serviceProviderRef,
+              SERVICE_PROVIDER
+            )
+          );
+      } else {
+        window.removeEventListener("resize", () =>
+          drawLines(
+            serviceProviderRef,
+            SERVICE_PROVIDER,
+            washingMachineRef,
+            WASHING_MACHINE
+          )
+        );
+        window.removeEventListener("resize", () =>
+          drawLines(serviceProviderRef, SERVICE_PROVIDER, freezerRef, FREEZER)
+        );
+      }
     };
-  }, []);
+  }, [selectedRunMethod]);
 
   /**
    * This function updates the user requirements for a specific piece of equipment in the state.
@@ -635,7 +672,6 @@ const Demo = () => {
    */
   const onRunMethodSelect = (method) => {
     setSelectedRunMethod(method);
-    console.log("Selected run method: ", method);
   };
 
   return (
@@ -664,10 +700,20 @@ const Demo = () => {
           columns={5}
           style={{ paddingRight: "3vh", paddingLeft: "3vh" }}
         >
-          <div id="orchestrator-freezer-line" />
-          <div id="orchestrator-washingMachine-line" />
-          <div id="orchestrator-serviceProvider-line" />
-          <div id="orchestrator-intelligentControl-line" />
+          {selectedRunMethod === WITH_LIQUID_AI && (
+            <>
+              <div id="orchestrator-freezer-line" />
+              <div id="orchestrator-washingMachine-line" />
+              <div id="orchestrator-serviceProvider-line" />
+              <div id="orchestrator-intelligentControl-line" />
+            </>
+          )}
+          {selectedRunMethod === WITHOUT_LIQUID_AI && (
+            <>
+              <div id="serviceProvider-freezer-line" />
+              <div id="serviceProvider-washingMachine-line" />
+            </>
+          )}
           {movingDeployments.map((deployment, index) => (
             <MovingIcon key={index} deployment={deployment} />
           ))}
@@ -781,44 +827,50 @@ const Demo = () => {
                       height: "29.2%",
                     }}
                   />
-                  <img
-                    src={Orchestrator}
-                    alt="Orchestrator"
-                    ref={orchestratorRef}
-                    style={{
-                      position: "absolute",
-                      top: "57%",
-                      left: "25%",
-                      width: "7%",
-                      height: "7%",
-                      zIndex: 2,
-                    }}
-                  />
-                  <img
-                    src={IntelligentControlIcon}
-                    alt="IntelligentControl"
-                    ref={intelligentControlRef}
-                    style={{
-                      position: "absolute",
-                      top: "57%",
-                      left: "45%",
-                      width: "6%",
-                      height: "7%",
-                      zIndex: 2,
-                    }}
-                  />
-                  <img
-                    src={Service_Provider}
-                    alt="Service_Provider"
-                    ref={serviceProviderRef}
-                    style={{
-                      position: "absolute",
-                      top: "90%",
-                      left: "21.2%",
-                      width: "15%",
-                      zIndex: 2,
-                    }}
-                  />
+                  {selectedRunMethod === WITH_LIQUID_AI && (
+                    <img
+                      src={Orchestrator}
+                      alt="Orchestrator"
+                      ref={orchestratorRef}
+                      style={{
+                        position: "absolute",
+                        top: "57%",
+                        left: "25%",
+                        width: "7%",
+                        height: "7%",
+                        zIndex: 2,
+                      }}
+                    />
+                  )}
+                  {selectedRunMethod === WITH_LIQUID_AI && (
+                    <img
+                      src={IntelligentControlIcon}
+                      alt="IntelligentControl"
+                      ref={intelligentControlRef}
+                      style={{
+                        position: "absolute",
+                        top: "57%",
+                        left: "45%",
+                        width: "6%",
+                        height: "7%",
+                        zIndex: 2,
+                      }}
+                    />
+                  )}
+                  {selectedRunMethod === WITHOUT_LIQUID_AI && (
+                    <img
+                      src={Service_Provider}
+                      alt="Service_Provider"
+                      ref={serviceProviderRef}
+                      style={{
+                        position: "absolute",
+                        top: "90%",
+                        left: "21.2%",
+                        width: "10%",
+                        zIndex: 2,
+                      }}
+                    />
+                  )}
                   <img
                     src={houseImage}
                     alt="House"
