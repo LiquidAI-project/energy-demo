@@ -13,7 +13,7 @@ function MovingIcon({ deployment }) {
     if (deployment.changingIconSource) {
       halfwayTimer = setTimeout(() => {
         setIcon(deployment.changingIconSource);
-      }, 800);
+      }, 1200);
     }
 
     return () => clearTimeout(halfwayTimer);

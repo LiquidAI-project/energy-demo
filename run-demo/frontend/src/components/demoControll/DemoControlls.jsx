@@ -209,6 +209,7 @@ const DemoControlls = ({ onLogAdd, queryingAnimationRun, userRequirement, onUpda
 
         if (selectedRunMethod === WITHOUT_LIQUID_AI &&  new Date(demoTime).getMinutes() === 0 &&  demoRunning) {
             queryingAnimationRun();
+            onLogAdd(`Device data leaking outside: ${new Date(demoTime).toLocaleTimeString()}`);
         } 
 
         if (selectedRunMethod === WITH_LIQUID_AI) {

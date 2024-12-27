@@ -282,28 +282,29 @@ const Demo = () => {
     await delay(100);
   };
 
-    // Animation for the whole process while querying the energy data from the devices to external service providers
-    const queryAnimationWithoutLiquidAI = async () => {
-        const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-    
-        // Prepare an array of moveCodeAnimation promises for devices with valid deploymentId
-        const moveFromDevicesPromises = houseHoldDevices.map((device) => {
-            if (device === EV_CHARGER) {
-                moveCodeAnimation(device, SERVICE_PROVIDER2, Result_Icon_Blue);
-            } else {
-                moveCodeAnimation(device, SERVICE_PROVIDER1, Result_Icon_Blue);
-            }
-        });
-    
-        await Promise.all(moveFromDevicesPromises);
-        await delay(100);
+  // Animation for the whole process while querying the energy data from the devices to external service providers
+  const queryAnimationWithoutLiquidAI = async () => {
+    const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-        if (houseHoldDevices.length !== 0) {
-            setTimeout(() => {
-              startBlinking(); // Start blinking the house border when data going outside the house
-            }, 700);
-          }
-      };
+    // Prepare an array of moveCodeAnimation promises for devices with valid deploymentId
+    const moveFromDevicesPromises = houseHoldDevices.map((device) => {
+      if (device === EV_CHARGER) {
+        moveCodeAnimation(device, SERVICE_PROVIDER2, Result_Icon_Blue, Result_Icon_Red);
+      } else {
+        moveCodeAnimation(device, SERVICE_PROVIDER1, Result_Icon_Blue, Result_Icon_Red);
+      }
+    });
+
+    await Promise.all(moveFromDevicesPromises);
+    await delay(100);
+
+    if (houseHoldDevices.length !== 0) {
+      setTimeout(() => {
+        startBlinking(); // Start blinking the house border when data going outside the house
+      }, 1200);
+    }
+    await delay(100);
+  };
 
   // Update the deployment details for the device
   const updateDeployment = useCallback(
@@ -670,45 +671,45 @@ const Demo = () => {
     }
 
     return () => {
-    if (selectedRunMethod === WITH_LIQUID_AI) {
+      if (selectedRunMethod === WITH_LIQUID_AI) {
         window.removeEventListener("resize", () =>
-            drawLines(
-              orchestratorRef,
-              ORCHESTRATOR,
-              intelligentControlRef,
-              INTELLIGENT_CONTROL
-            )
-          );
-          window.removeEventListener("resize", () =>
-            drawLines(orchestratorRef, ORCHESTRATOR, freezerRef, FREEZER)
-          );
-          window.removeEventListener("resize", () =>
-            drawLines(
-              orchestratorRef,
-              ORCHESTRATOR,
-              washingMachineRef,
-              WASHING_MACHINE
-            )
-          );
-          window.removeEventListener("resize", () =>
-            drawLines(
-              orchestratorRef,
-              ORCHESTRATOR,
-              serviceProviderRef1,
-              SERVICE_PROVIDER1
-            )
-          );
-          window.removeEventListener("resize", () =>
-            drawLines(orchestratorRef, ORCHESTRATOR, evChargerRef, EV_CHARGER)
-          );
-          window.removeEventListener("resize", () =>
-            drawLines(
-              energyCompanyRef,
-              ENERGY_COMPANY,
-              intelligentControlRef,
-              INTELLIGENT_CONTROL
-            )
-          );
+          drawLines(
+            orchestratorRef,
+            ORCHESTRATOR,
+            intelligentControlRef,
+            INTELLIGENT_CONTROL
+          )
+        );
+        window.removeEventListener("resize", () =>
+          drawLines(orchestratorRef, ORCHESTRATOR, freezerRef, FREEZER)
+        );
+        window.removeEventListener("resize", () =>
+          drawLines(
+            orchestratorRef,
+            ORCHESTRATOR,
+            washingMachineRef,
+            WASHING_MACHINE
+          )
+        );
+        window.removeEventListener("resize", () =>
+          drawLines(
+            orchestratorRef,
+            ORCHESTRATOR,
+            serviceProviderRef1,
+            SERVICE_PROVIDER1
+          )
+        );
+        window.removeEventListener("resize", () =>
+          drawLines(orchestratorRef, ORCHESTRATOR, evChargerRef, EV_CHARGER)
+        );
+        window.removeEventListener("resize", () =>
+          drawLines(
+            energyCompanyRef,
+            ENERGY_COMPANY,
+            intelligentControlRef,
+            INTELLIGENT_CONTROL
+          )
+        );
       } else {
         window.removeEventListener("resize", () =>
           drawLines(
