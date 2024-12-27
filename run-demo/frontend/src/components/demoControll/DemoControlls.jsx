@@ -149,16 +149,6 @@ const DemoControlls = ({ onLogAdd, queryingAnimationRun, userRequirement, onUpda
         onUpdateOptimizedTimeSlots(newData, key);
       };
 
-    /**
-     * Start of the demo.
-     */
-    const handleStart = useCallback(async () => {
-        setDemoRunning(true);
-        // await wasmModuleDeployment("wm-run");
-        // await wasmModuleDeployment("wm-energy-query");
-
-    }, [wasmModuleDeployment]);
-
     // useEffect(() => {
     //     if (hourlyQueryCompleted) {
     //         setHourlyQueryCompleted(false);
@@ -231,9 +221,17 @@ const DemoControlls = ({ onLogAdd, queryingAnimationRun, userRequirement, onUpda
             variant="contained"
             color="primary"
             sx={{ mr: 4, mt: 4 }}
-            onClick={handleStart}
+            onClick={() => setDemoRunning(true)}
           >
             Start
+          </Button>
+          <Button
+            variant="contained"
+            color="primary"
+            sx={{ mr: 4, mt: 4 }}
+            onClick={() => setDemoRunning(false)}
+          >
+            Pause
           </Button>
         </div>
         <div style={{ marginTop: "5%" }}>
