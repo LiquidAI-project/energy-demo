@@ -9,7 +9,7 @@ import { fetchData,fetchPostData, fetchIntelligentControllerData } from "../../s
 import RealtimeClock from "../RealtimeClock";
 import DemoClock from "../DemoClock";
 import PropTypes from "prop-types";
-import { WASHING_MACHINE } from "../../../constants";
+import { WASHING_MACHINE, WITHOUT_LIQUID_AI, WITH_LIQUID_AI } from "../../../constants";
 import DropdownMenu from "./DropdownMenu";
 
 // eslint-disable-next-line no-undef
@@ -19,6 +19,7 @@ const DemoControlls = ({ onLogAdd, queryingAnimationRun, userRequirement, onUpda
     const [demoRunning, setDemoRunning] = useState(false);
     const [demoTime, setDemoTime] = useState(new Date().setMinutes(0, 0));
     const [optimezedTimeSlots, setOptimezedTimeSlots] = useState({});
+    const [selectedRunMethod, setSelectedRunMethod] = useState(WITHOUT_LIQUID_AI);
     const [hourlyQueryCompleted, setHourlyQueryCompleted] = useState(false);
 
     /**
@@ -182,13 +183,13 @@ const DemoControlls = ({ onLogAdd, queryingAnimationRun, userRequirement, onUpda
 
     useEffect(() => {
 
-        const checkStartTimes = () => {
+        const runWithLiquidAI = () => {
             Object.keys(optimezedTimeSlots).forEach((key) => {
-                handleEquipmentStartTime(key);
+                handleWasmDeployments(key);
             });
         };
 
-        const handleEquipmentStartTime = (key) => {
+        const handleWasmDeployments = (key) => {
             switch (key) {
                 case WASHING_MACHINE:
                     optimezedTimeSlots[key].forEach((equipment) => {
@@ -205,32 +206,44 @@ const DemoControlls = ({ onLogAdd, queryingAnimationRun, userRequirement, onUpda
                     console.error("Invalid key");
             }
         };
-        checkStartTimes();
+
+        if (selectedRunMethod === WITHOUT_LIQUID_AI &&  new Date(demoTime).getMinutes() === 0 &&  demoRunning) {
+            queryingAnimationRun();
+        } 
+
+        if (selectedRunMethod === WITH_LIQUID_AI) {
+            runWithLiquidAI();
+        }
 
       }, [demoTime, optimezedTimeSlots]);
 
     return (
+      <div>
         <div>
-            <div>
-                <DropdownMenu onRunMethodSelect={(value) => onRunMethodSelect(value)} />
-                <Button
-                    variant="contained"
-                    color="primary"
-                    sx={{ mr: 4, mt: 4 }}
-                    onClick={handleStart}
-                >
-                    Start
-                </Button>
-            </div>
-            <div style={{ marginTop: "5%" }}>
-                <RealtimeClock />
-                <DemoClock
-                    demoRunning={demoRunning}
-                    setDemoRunning={(status) => setDemoRunning(status)}
-                    onDemoTimeChange={(newTime) => setDemoTime(newTime)}
-                />
-            </div>
+          <DropdownMenu
+            onRunMethodSelect={(value) => {
+              onRunMethodSelect(value); 
+              setSelectedRunMethod(value);
+            }}
+          />
+          <Button
+            variant="contained"
+            color="primary"
+            sx={{ mr: 4, mt: 4 }}
+            onClick={handleStart}
+          >
+            Start
+          </Button>
         </div>
+        <div style={{ marginTop: "5%" }}>
+          <RealtimeClock />
+          <DemoClock
+            demoRunning={demoRunning}
+            setDemoRunning={(status) => setDemoRunning(status)}
+            onDemoTimeChange={(newTime) => setDemoTime(newTime)}
+          />
+        </div>
+      </div>
     );
 };
 

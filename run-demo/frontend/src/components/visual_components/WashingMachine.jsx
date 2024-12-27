@@ -61,6 +61,7 @@ const WashingMachine = React.forwardRef((props, ref) => {
           left: "28.2%",
           width: "4.8%",
           height: "4.8%",
+          zIndex: 2,
         }}
       />
       <button
@@ -73,6 +74,7 @@ const WashingMachine = React.forwardRef((props, ref) => {
           backgroundColor: "transparent",
           border: "none",
           padding: "0%",
+          zIndex: 2,
         }}
         onMouseEnter={handleHoverOn}
         onMouseLeave={handleHoverAway}
@@ -98,6 +100,7 @@ const WashingMachine = React.forwardRef((props, ref) => {
           width: "8%",
           height: "10%",
           transform: "scale(0.2)",
+          zIndex: 2,
         }}
       />
       <Popover

@@ -120,6 +120,8 @@ const Demo = () => {
     []
   );
 
+  const houseHoldDevices = [FREEZER, WASHING_MACHINE, EV_CHARGER];
+
   // Get the reference of the device
   const getDeviceReference = useCallback(
     (deviceName) => {
@@ -279,6 +281,29 @@ const Demo = () => {
     );
     await delay(100);
   };
+
+    // Animation for the whole process while querying the energy data from the devices to external service providers
+    const queryAnimationWithoutLiquidAI = async () => {
+        const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+    
+        // Prepare an array of moveCodeAnimation promises for devices with valid deploymentId
+        const moveFromDevicesPromises = houseHoldDevices.map((device) => {
+            if (device === EV_CHARGER) {
+                moveCodeAnimation(device, SERVICE_PROVIDER2, Result_Icon_Blue);
+            } else {
+                moveCodeAnimation(device, SERVICE_PROVIDER1, Result_Icon_Blue);
+            }
+        });
+    
+        await Promise.all(moveFromDevicesPromises);
+        await delay(100);
+
+        if (houseHoldDevices.length !== 0) {
+            setTimeout(() => {
+              startBlinking(); // Start blinking the house border when data going outside the house
+            }, 700);
+          }
+      };
 
   // Update the deployment details for the device
   const updateDeployment = useCallback(
@@ -810,7 +835,7 @@ const Demo = () => {
                 transition={{ type: "spring", duration: 5 }}
                 style={{
                   position: "absolute",
-                  zIndex: 1,
+                  zIndex: 3,
                 }}
               >
                 <img
@@ -1006,6 +1031,7 @@ const Demo = () => {
                         left: "80%",
                         width: "4.8%",
                         height: "4.8%",
+                        zIndex: 2,
                       }}
                     />
                     <button
@@ -1018,6 +1044,7 @@ const Demo = () => {
                         backgroundColor: "transparent",
                         border: "none",
                         padding: "0%",
+                        zIndex: 2,
                       }}
                     >
                       <img
@@ -1052,7 +1079,7 @@ const Demo = () => {
                   <div style={{ marginBottom: "5%" }}>
                     <DemoControlls
                       onLogAdd={(log) => addLog(log)}
-                      queryingAnimationRun={queryAnimation}
+                      queryingAnimationRun={queryAnimationWithoutLiquidAI}
                       userRequirement={userRequirements}
                       onUpdateOptimizedTimeSlots={(
                         optimezedTimeSlots,
@@ -1069,12 +1096,14 @@ const Demo = () => {
                     onClick={handleQueryClick}
                   /> */}
                   {/* <ElectricityPrice consumptionData={consumptionData} /> */}
-                  <UserControlUI
-                    onUserRequirementChange={(userRequirement, equipment) =>
-                      handleUserRequirements(userRequirement, equipment)
-                    }
-                    optimezedTimeSlots={optimizedTimeSlots}
-                  />
+                  {selectedRunMethod === WITH_LIQUID_AI && (
+                    <UserControlUI
+                      onUserRequirementChange={(userRequirement, equipment) =>
+                        handleUserRequirements(userRequirement, equipment)
+                      }
+                      optimezedTimeSlots={optimizedTimeSlots}
+                    />
+                  )}
                 </Box>
               </Grid>
             </Grid>
