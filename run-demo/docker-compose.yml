@@ -139,9 +139,9 @@ services:
     depends_on:
       - orchestrator
 
-  intelligentController:
+  intelligentcontroller:
     build: ./intelligentController
-    container_name: intelligentController
+    container_name: intelligentcontroller
     ports: 
       - ${INTELLIGENT_CONTROLLER_PORT-3001}:3001
 
