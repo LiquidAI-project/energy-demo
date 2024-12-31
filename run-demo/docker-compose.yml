@@ -131,6 +131,9 @@ services:
       PUBLIC_HOST: ${ORCHESTRATOR_HOST}
       PUBLIC_PORT: ${ORCHESTRATOR_PORT}
       DEVICE_CHECK_INTERVAL: ${DEVICE_CHECK_INTERVAL}
+      INTELLIGENT_CONTROLLER_HOST: ${INTELLIGENT_CONTROLLER_HOST}
+      INTELLIGENT_CONTROLLER_PORT: ${INTELLIGENT_CONTROLLER_PORT}
+      ANIMATION_MOVING_TIME: ${ANIMATION_MOVING_TIME}
     volumes:
     # the volumes included here to allow interactive development
     # for final version, they should be removed
