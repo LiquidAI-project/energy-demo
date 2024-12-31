@@ -56,7 +56,7 @@
     },
     {
         "_id": "66d855bcdf5773ad1b05d17d",
-        "name": "washing-machine",
+        "name": "washingMachine",
         "communication": {
             "addresses": [
                 "172.15.0.22"

@@ -11,7 +11,7 @@ import convertJsonToFinnishTime from "./src/convertToFinnishTime.js";
 import getCheapestHour from "./src/fetchOptimizedTime.js";
 
 const app = express();
-const PORT = process.env.BACKEND_PORT || 3001;
+const PORT = process.env.INTELLIGENT_CONTROLLER_PORT || 3001;
 
 app.use(cors());
 app.use(express.json());

@@ -101,13 +101,13 @@ services:
         ipv4_address: 172.15.0.21
 
 
-  washing-machine:
+  washingMachine:
     extends: device-base
     profiles:
       - device
     environment:
       - DEVICE_TYPE=equipment
-      - FLASK_APP=washing-machine
+      - FLASK_APP=washingMachine
       - WASMIOT_SUPERVISOR_IP=172.15.0.22
     privileged: true
     volumes:
@@ -139,11 +139,11 @@ services:
     depends_on:
       - orchestrator
 
-  backend:
-    build: ./backend
-    container_name: backend
+  intelligentController:
+    build: ./intelligentController
+    container_name: intelligentController
     ports: 
-      - ${BACKEND_PORT-3001}:3001
+      - ${INTELLIGENT_CONTROLLER_PORT-3001}:3001
 
 volumes:
   mongo-config:
