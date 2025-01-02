@@ -1098,6 +1098,14 @@ const Demo = () => {
                   /> */}
                   {/* <ElectricityPrice consumptionData={consumptionData} /> */}
                   {selectedRunMethod === WITH_LIQUID_AI && (
+                    <a
+                      href="https://www.helen.fi/en/electricity/electricity-products-and-prices/exchange-electricity"
+                      target="_blank"
+                    >
+                      Spot price check
+                    </a>
+                  )}
+                  {selectedRunMethod === WITH_LIQUID_AI && (
                     <UserControlUI
                       onUserRequirementChange={(userRequirement, equipment) =>
                         handleUserRequirements(userRequirement, equipment)
