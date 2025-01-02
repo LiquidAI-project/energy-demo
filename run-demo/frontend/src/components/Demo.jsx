@@ -32,6 +32,7 @@ import IntelligentControlIcon from "./../assets/intelligent_control.jpg";
 import EVChargerEnergyIcon from "../assets/ev_charger_energy.png";
 import EVChargerIcon from "../assets/ev_charger.png";
 import Energy_Company_Icon from "../assets/spot_price.png";
+import userControlIcon from "./../assets/userControl.png";
 import ServiceProvider from "./serviceProvider/ServiceProvider";
 import ElectricityPrice from "./serviceProvider/energyQuery/ElectricityConsumption";
 import UserControlUI from "./UserControlUI";
@@ -47,6 +48,7 @@ import {
   SERVICE_PROVIDER2,
   ENERGY_COMPANY,
   INTELLIGENT_CONTROL,
+  USER_CONTROL,
   EV_CHARGER,
   WITHOUT_LIQUID_AI,
   WITH_LIQUID_AI,
@@ -71,6 +73,7 @@ const Demo = () => {
   const jacuzziRef = useRef(null);
   const electricCar2Ref = useRef(null);
   const intelligentControlRef = useRef(null);
+  const userControlRef = useRef(null);
   const energyCompanyRef = useRef(null);
   const evChargerRef = useRef(null);
   const logsQueueRef = useRef([]);
@@ -114,6 +117,7 @@ const Demo = () => {
       [SERVICE_PROVIDER1]: serviceProviderRef1,
       [SERVICE_PROVIDER2]: serviceProviderRef2,
       [INTELLIGENT_CONTROL]: intelligentControlRef,
+      [USER_CONTROL]: userControlRef,
       [EV_CHARGER]: evChargerRef,
       [ENERGY_COMPANY]: energyCompanyRef,
       // Add more device names and their references here
@@ -556,6 +560,12 @@ const Demo = () => {
         intelligentControlRef,
         INTELLIGENT_CONTROL
       );
+      drawLines(
+        userControlRef,
+        USER_CONTROL,
+        intelligentControlRef,
+        INTELLIGENT_CONTROL
+      );
       drawLines(orchestratorRef, ORCHESTRATOR, freezerRef, FREEZER);
       drawLines(
         orchestratorRef,
@@ -581,6 +591,14 @@ const Demo = () => {
         drawLines(
           orchestratorRef,
           ORCHESTRATOR,
+          intelligentControlRef,
+          INTELLIGENT_CONTROL
+        )
+      );
+      window.addEventListener("resize", () =>
+        drawLines(
+          userControlRef,
+          USER_CONTROL,
           intelligentControlRef,
           INTELLIGENT_CONTROL
         )
@@ -657,6 +675,14 @@ const Demo = () => {
           drawLines(
             orchestratorRef,
             ORCHESTRATOR,
+            intelligentControlRef,
+            INTELLIGENT_CONTROL
+          )
+        );
+        window.removeEventListener("resize", () =>
+          drawLines(
+            userControlRef,
+            USER_CONTROL,
             intelligentControlRef,
             INTELLIGENT_CONTROL
           )
@@ -784,6 +810,7 @@ const Demo = () => {
               <div id="orchestrator-washingMachine-line" />
               <div id="orchestrator-intelligentControl-line" />
               <div id="energyCompany-intelligentControl-line" />
+              <div id="userControl-intelligentControl-line" />
               <div id="orchestrator-evCharger-line" />
             </>
           )}
@@ -932,6 +959,21 @@ const Demo = () => {
                         position: "absolute",
                         top: "57%",
                         left: "25%",
+                        width: "6%",
+                        height: "7%",
+                        zIndex: 2,
+                      }}
+                    />
+                  )}
+                  {selectedRunMethod === WITH_LIQUID_AI && (
+                    <img
+                      src={userControlIcon}
+                      alt="userControl"
+                      ref={userControlRef}
+                      style={{
+                        position: "absolute",
+                        top: "37%",
+                        left: "20%",
                         width: "6%",
                         height: "7%",
                         zIndex: 2,
