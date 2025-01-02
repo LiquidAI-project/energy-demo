@@ -75,17 +75,24 @@ function DemoClock({ demoRunning, setDemoRunning, onDemoTimeChange }) {
     ]);
 
     return (
+      <Box>
         <Box>
-            <Box>
-                <Box id="demotimebox">
-                    <b style={{ fontWeight: "normal" }}>Demo time:</b>{" "}
-                    {String(demoTimeDateObj.getHours()).padStart(2, "0")}:
-                    {String(demoPassedMinutes).padStart(2, "0")},{" "}
-                    {getDayName(demoTimeDateObj)} {demoTimeDateObj.getDate()}.
-                    {demoTimeDateObj.getMonth() + 1}. &#x1F4C5;
-                </Box>
-            </Box>
+          <Box id="demotimebox">
+            <b style={{ fontWeight: "normal" }}>Demo time:</b>{" "}
+            <span
+              style={{
+                border: demoRunning ? "7px solid red" : "none",
+                padding: "2px",
+              }}
+            >
+              {String(demoTimeDateObj.getHours()).padStart(2, "0")}:
+              {String(demoPassedMinutes).padStart(2, "0")},{" "}
+              {getDayName(demoTimeDateObj)} {demoTimeDateObj.getDate()}.
+              {demoTimeDateObj.getMonth() + 1}. &#x1F4C5;
+            </span>
+          </Box>
         </Box>
+      </Box>
     );
 }
 DemoClock.propTypes = {

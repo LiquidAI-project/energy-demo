@@ -62,6 +62,7 @@ const Freezer = React.forwardRef((props, ref) => {
           width: "4.5%",
           height: "11%",
           opacity: window.sessionStorage.getItem(component.id),
+          zIndex: 2,
         }}
       />
       <button
@@ -74,6 +75,7 @@ const Freezer = React.forwardRef((props, ref) => {
           backgroundColor: "transparent",
           border: "none",
           padding: "0%",
+          zIndex: 2,
         }}
         onMouseEnter={handleHoverOn}
         onMouseLeave={handleHoverAway}
@@ -99,6 +101,7 @@ const Freezer = React.forwardRef((props, ref) => {
           width: "8%",
           height: "10%",
           transform: "scale(0.2)",
+          zIndex: 2,
         }}
       />
       <Popover

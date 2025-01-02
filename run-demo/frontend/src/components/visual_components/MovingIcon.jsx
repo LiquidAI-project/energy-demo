@@ -13,7 +13,7 @@ function MovingIcon({ deployment }) {
     if (deployment.changingIconSource) {
       halfwayTimer = setTimeout(() => {
         setIcon(deployment.changingIconSource);
-      }, 800);
+      }, 1200);
     }
 
     return () => clearTimeout(halfwayTimer);
@@ -23,12 +23,12 @@ function MovingIcon({ deployment }) {
     <motion.div
       key={deployment.id}
       initial={{
-        x: deployment.startPos.x - 25,
-        y: deployment.startPos.y - 25,
+        x: deployment.startPos.x - 20,
+        y: deployment.startPos.y - 20,
       }} // Center the animation object
       animate={{
-        x: deployment.endPos.x - 25,
-        y: deployment.endPos.y - 25,
+        x: deployment.endPos.x - 20,
+        y: deployment.endPos.y - 20,
       }}
       transition={{ type: "spring", duration: 5 }}
       style={{
@@ -40,8 +40,8 @@ function MovingIcon({ deployment }) {
         src={icon}
         alt="Moving object"
         style={{
-          width: "50px",
-          height: "50px",
+          width: "40px",
+          height: "40px",
         }}
       />
     </motion.div>
