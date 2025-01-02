@@ -11,6 +11,8 @@ import DemoClock from "../DemoClock";
 import PropTypes from "prop-types";
 import { WASHING_MACHINE, WITHOUT_LIQUID_AI, WITH_LIQUID_AI } from "../../../constants";
 import DropdownMenu from "./DropdownMenu";
+import { getDeviceNameById } from "../../utils/deviceUtils";
+import { convertToLocalTime } from "../../utils/timeUtils";
 
 // eslint-disable-next-line no-undef
 const ANIMATION_MOVING_TIME = process.env.ANIMATION_MOVING_TIME;
@@ -18,7 +20,7 @@ const ANIMATION_MOVING_TIME = process.env.ANIMATION_MOVING_TIME;
 const DemoControlls = ({ onLogAdd, queryingAnimationRun, userRequirement, onUpdateOptimizedTimeSlots, onRunMethodSelect }) => {
     const [demoRunning, setDemoRunning] = useState(false);
     const [demoTime, setDemoTime] = useState(new Date().setMinutes(0, 0));
-    const [optimezedTimeSlots, setOptimezedTimeSlots] = useState({});
+    const [optimizedTimeSlots, setOptimizedTimeSlots] = useState({});
     const [selectedRunMethod, setSelectedRunMethod] = useState(WITHOUT_LIQUID_AI);
     const [hourlyQueryCompleted, setHourlyQueryCompleted] = useState(false);
 
@@ -54,6 +56,9 @@ const DemoControlls = ({ onLogAdd, queryingAnimationRun, userRequirement, onUpda
                 );
 
                 if (res.deviceResponses?.[deviceId]?.status === 200) {
+
+                    const deviceName = getDeviceNameById(deviceId);
+
                     // Wait for animation to complete before running the function
                     await new Promise((resolve) =>
                         setTimeout(resolve, ANIMATION_MOVING_TIME)
@@ -61,13 +66,15 @@ const DemoControlls = ({ onLogAdd, queryingAnimationRun, userRequirement, onUpda
 
                     // Allow to run the demo time only for device running functions for simulating the device running.
                     if (moduleName.includes("run")) {
-                        onLogAdd(`Running washing-machine....`);
+                        onLogAdd(`${convertToLocalTime(optimizedTimeSlots[deviceName].startDate)} - Running ${deviceName} - ${optimizedTimeSlots[deviceName].price}c/kWh`);
                         setDemoRunning(true);
                     } else {
                         // await queryingAnimationRun();
                     }
 
                     const res = await runFunction(deploymentObj._id, 3600, Math.floor(demoTime / 1000));
+
+                    onLogAdd(`${deviceName} consumed Energy: ${res[0]}kWh, Cost: ${((parseFloat(res[0])*parseFloat(optimizedTimeSlots[deviceName].price)) / 100).toFixed(2)}€`);
 
                     // if (moduleName.includes("energy-query")) {
                     //     const newTime = new Date(demoTime);
@@ -125,7 +132,7 @@ const DemoControlls = ({ onLogAdd, queryingAnimationRun, userRequirement, onUpda
                 endDateTime: endDateTime,
             };  
             const res = await fetchIntelligentControllerData(endpoint, postData);
-            updateEquipmentOptimizedTimeSlots(WASHING_MACHINE, res);
+            updateEquipmentOptimizedTimeSlots(res, WASHING_MACHINE);
             return res
         } catch (error) {
             console.error("Error deploying module:", error);
@@ -137,17 +144,19 @@ const DemoControlls = ({ onLogAdd, queryingAnimationRun, userRequirement, onUpda
      * This function updates the state with the optimized time slots for a specific piece of equipment.
      * It takes the new data and updates the state corresponding to the specified equipment key.
      * 
-     * @param {string} key - The key representing the equipment (e.g., `WASHING_MACHINE`).
-     * @param {Object} newData - The new optimized time slots data to update the state with.
+     * @param {Object} newOptimizedTimeSlots - The new optimized time slots data to update the state with.
+     * @param {string} deviceName - The deviceName representing the equipment (e.g., `WASHING_MACHINE`).
      * 
      */
-    const updateEquipmentOptimizedTimeSlots = (key, newData) => {
-        setOptimezedTimeSlots(prevState => ({
-          ...prevState,
-          [key]: [newData]
-        }));
-        onUpdateOptimizedTimeSlots(newData, key);
-      };
+    const updateEquipmentOptimizedTimeSlots = (
+      newOptimizedTimeSlots,
+      deviceName
+    ) => {
+      setOptimizedTimeSlots({
+        [deviceName]: newOptimizedTimeSlots,
+      });
+      onUpdateOptimizedTimeSlots(newOptimizedTimeSlots, deviceName);
+    };
 
     // useEffect(() => {
     //     if (hourlyQueryCompleted) {
@@ -174,22 +183,22 @@ const DemoControlls = ({ onLogAdd, queryingAnimationRun, userRequirement, onUpda
     useEffect(() => {
 
         const runWithLiquidAI = () => {
-            Object.keys(optimezedTimeSlots).forEach((key) => {
+            Object.keys(optimizedTimeSlots).forEach((key) => {
                 handleWasmDeployments(key);
             });
         };
 
         const handleWasmDeployments = (key) => {
+            let startDate;
+            let demoTimeInSeconds;
             switch (key) {
                 case WASHING_MACHINE:
-                    optimezedTimeSlots[key].forEach((equipment) => {
-                        const startDate = equipment.startDate;
-                        const demoTimeInSeconds = Math.floor(demoTime / 1000);
-                        if (startDate - demoTimeInSeconds === 0) {
-                            setDemoRunning(false);
-                            wasmModuleDeployment("wm-run");
-                        }
-                    });
+                    startDate = optimizedTimeSlots[key].startDate;
+                    demoTimeInSeconds = Math.floor(demoTime / 1000);
+                    if (startDate - demoTimeInSeconds === 0) {
+                        setDemoRunning(false);
+                        wasmModuleDeployment("wm-run");
+                    }
                     break;
 
                 default:
@@ -206,7 +215,7 @@ const DemoControlls = ({ onLogAdd, queryingAnimationRun, userRequirement, onUpda
             runWithLiquidAI();
         }
 
-      }, [demoTime, optimezedTimeSlots]);
+      }, [demoTime, optimizedTimeSlots]);
 
     return (
       <div>

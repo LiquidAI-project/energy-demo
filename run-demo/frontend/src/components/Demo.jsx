@@ -38,6 +38,7 @@ import UserControlUI from "./UserControlUI";
 import { fetchData } from '../services/apiService';
 import DemoControlls from "./demoControll/DemoControlls";
 import DemoDataVisualize from "./DemoDataVisualize";
+import { getDeviceIdMap, getDeviceIdByName } from "../utils/deviceUtils";
 import {
   ORCHESTRATOR,
   FREEZER,
@@ -215,26 +216,6 @@ const Demo = () => {
       resetHealthLogTimer();
     }, parseInt(DEVICE_CHECK_INTERVAL));
   }, []);
-
-  // Get the device ID map from local storage
-  const getDeviceIdMap = useCallback(() => {
-    const storedDeviceMap = localStorage.getItem("deviceIdMap");
-    if (!storedDeviceMap) {
-      return null;
-    }
-    const deviceArray = JSON.parse(storedDeviceMap);
-    return new Map(deviceArray);
-  }, []);
-
-  // Get the device ID by name
-  const getDeviceIdByName = useCallback(
-    (deviceName) => {
-      const deviceIdMap = getDeviceIdMap();
-      const deviceId = deviceIdMap.get(deviceName);
-      return deviceId || null;
-    },
-    [getDeviceIdMap]
-  );
 
   // Animation for the whole process while querying the devices for energy usage
   const queryAnimation = async () => {
@@ -751,15 +732,14 @@ const Demo = () => {
   /**
    * This function updates the optimal time of an equipment to operate.
    *
-   * @param {Object} optimezedTimeSlots - The new optimized data to be set for the specified equipment.
+   * @param {Object} optimizedTimeSlots - The new optimized data to be set for the specified equipment.
    * @param {string} equipment - The key for the equipment whose user requirements are being updated (e.g., 'washingMachine', 'freezer').
    *
    */
-  const handleOptimizedTimeSlots = (optimezedTimeSlots, equipment) => {
-    setOptimizedTimeSlots((prevTimeSlots) => ({
-      ...prevTimeSlots,
-      [equipment]: optimezedTimeSlots,
-    }));
+  const handleOptimizedTimeSlots = (optimizedTimeSlots, equipment) => {
+    setOptimizedTimeSlots({
+      [equipment]: optimizedTimeSlots,
+    });
   };
 
   /**
@@ -1083,10 +1063,10 @@ const Demo = () => {
                       queryingAnimationRun={queryAnimationWithoutLiquidAI}
                       userRequirement={userRequirements}
                       onUpdateOptimizedTimeSlots={(
-                        optimezedTimeSlots,
+                        optimizedTimeSlots,
                         equipment
                       ) =>
-                        handleOptimizedTimeSlots(optimezedTimeSlots, equipment)
+                        handleOptimizedTimeSlots(optimizedTimeSlots, equipment)
                       }
                       onRunMethodSelect={(value) => onRunMethodSelect(value)}
                     />
@@ -1110,7 +1090,7 @@ const Demo = () => {
                       onUserRequirementChange={(userRequirement, equipment) =>
                         handleUserRequirements(userRequirement, equipment)
                       }
-                      optimezedTimeSlots={optimizedTimeSlots}
+                      optimizedTimeSlots={optimizedTimeSlots}
                     />
                   )}
                 </Box>
