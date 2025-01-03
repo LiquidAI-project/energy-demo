@@ -32,10 +32,9 @@ import IntelligentControlIcon from "./../assets/intelligent_control.jpg";
 import EVChargerEnergyIcon from "../assets/ev_charger_energy.png";
 import EVChargerIcon from "../assets/ev_charger.png";
 import Energy_Company_Icon from "../assets/spot_price.png";
-import userControlIcon from "./../assets/userControl.png";
 import ServiceProvider from "./serviceProvider/ServiceProvider";
 import ElectricityPrice from "./serviceProvider/energyQuery/ElectricityConsumption";
-import UserControlUI from "./UserControlUI";
+import UserControlUI from "./userControl/UserControlUI";
 import { fetchData } from '../services/apiService';
 import DemoControlls from "./demoControll/DemoControlls";
 import DemoDataVisualize from "./DemoDataVisualize";
@@ -966,18 +965,12 @@ const Demo = () => {
                     />
                   )}
                   {selectedRunMethod === WITH_LIQUID_AI && (
-                    <img
-                      src={userControlIcon}
-                      alt="userControl"
+                    <UserControlUI
                       ref={userControlRef}
-                      style={{
-                        position: "absolute",
-                        top: "37%",
-                        left: "20%",
-                        width: "6%",
-                        height: "7%",
-                        zIndex: 2,
-                      }}
+                      onUserRequirementChange={(userRequirement, equipment) =>
+                        handleUserRequirements(userRequirement, equipment)
+                      }
+                      optimizedTimeSlots={optimizedTimeSlots}
                     />
                   )}
                   {selectedRunMethod === WITH_LIQUID_AI && (
@@ -1126,14 +1119,6 @@ const Demo = () => {
                     >
                       Spot price check
                     </a>
-                  )}
-                  {selectedRunMethod === WITH_LIQUID_AI && (
-                    <UserControlUI
-                      onUserRequirementChange={(userRequirement, equipment) =>
-                        handleUserRequirements(userRequirement, equipment)
-                      }
-                      optimizedTimeSlots={optimizedTimeSlots}
-                    />
                   )}
                 </Box>
               </Grid>
