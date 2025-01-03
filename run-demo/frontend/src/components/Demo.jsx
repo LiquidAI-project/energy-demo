@@ -24,6 +24,7 @@ import ElectricCar2 from "./visual_components/ElectricCar2";
 import Jacuzzi from "./visual_components/Jacuzzi";
 import Orchestrator from "./../assets/orchestrator.png";
 import WebAssembly_Icon from "./../assets/WebAssembly_Logo.png";
+import ConfigurationIcon from "./../assets/configurationIcon.png";
 import Query_Icon from "./../assets/query_icon.png";
 import Result_Icon_Blue from "./../assets/result_icon.png";
 import Result_Icon_Red from "./../assets/result_icon_with_warning.png";
@@ -752,6 +753,7 @@ const Demo = () => {
       ...prevRequirements,
       [equipment]: userRequirement,
     }));
+    moveCodeAnimation(USER_CONTROL, INTELLIGENT_CONTROL, ConfigurationIcon);
   };
 
   /**
