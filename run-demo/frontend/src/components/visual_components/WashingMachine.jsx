@@ -50,27 +50,13 @@ const WashingMachine = React.forwardRef((props, ref) => {
 
   return (
     <div>
-      <img
-        id="washing-machine-energy"
-        src={energyBorder}
-        alt="energy"
-        className="washing-machine-energy-border"
-        style={{
-          position: "absolute",
-          top: "22.8%",
-          left: "28.2%",
-          width: "4.8%",
-          height: "4.8%",
-          zIndex: 2,
-        }}
-      />
       <button
         style={{
           position: "absolute",
           top: "23.1%",
           left: "28.6%",
-          width: "4%",
-          height: "4%",
+          width: "5%",
+          height: "6%",
           backgroundColor: "transparent",
           border: "none",
           padding: "0%",
@@ -87,6 +73,8 @@ const WashingMachine = React.forwardRef((props, ref) => {
           style={{
             width: "100%",
             height: "100%",
+            border: "5px solid green",
+            borderRadius: "8px",
           }}
         />
       </button>

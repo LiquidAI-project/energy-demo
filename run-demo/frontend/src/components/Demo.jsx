@@ -26,7 +26,7 @@ import Orchestrator from "./../assets/orchestrator.png";
 import WebAssembly_Icon from "./../assets/WebAssembly_Logo.png";
 import ConfigurationIcon from "./../assets/configurationIcon.png";
 import Query_Icon from "./../assets/query_icon.png";
-import Result_Icon_Blue from "./../assets/result_icon.png";
+import EnergyUsageIcon from "./../assets/energy_usage_icon.png";
 import Result_Icon_Red from "./../assets/result_icon_with_warning.png";
 import roadImage from "./../assets/road.png";
 import IntelligentControlIcon from "./../assets/intelligent_control.jpg";
@@ -34,6 +34,9 @@ import EVChargerEnergyIcon from "../assets/ev_charger_energy.png";
 import EVChargerIcon from "../assets/ev_charger.png";
 import Energy_Company_Icon from "../assets/spot_price.png";
 import SpotPriceDataIcon from "../assets/spotPriceDataIcon.png";
+import TemperatureDataIcon from "../assets/temperature_data_icon.png";
+import DangerIcon from "../assets/danger_icon.png";
+import userPreferenceIcon from "../assets/user_preference_icon.png";
 import ServiceProvider from "./serviceProvider/ServiceProvider";
 import ElectricityPrice from "./serviceProvider/energyQuery/ElectricityConsumption";
 import UserControlUI from "./userControl/UserControlUI";
@@ -64,6 +67,10 @@ const PUBLIC_PORT = process.env.PUBLIC_PORT;
 const DEVICE_CHECK_INTERVAL = process.env.DEVICE_CHECK_INTERVAL;
 // eslint-disable-next-line no-undef
 const ANIMATION_MOVING_TIME = process.env.ANIMATION_MOVING_TIME;
+
+const DATA_ICONS_MOVING_FROM_WM = [EnergyUsageIcon, userPreferenceIcon];
+const DATA_ICONS_MOVING_FROM_FREEZER = [EnergyUsageIcon, userPreferenceIcon, TemperatureDataIcon];
+const DATA_ICONS_MOVING_FROM_EV = [EnergyUsageIcon, userPreferenceIcon];
 
 const Demo = () => {
   const orchestratorRef = useRef(null);
@@ -228,74 +235,43 @@ const Demo = () => {
     }, parseInt(DEVICE_CHECK_INTERVAL));
   }, []);
 
-  // Animation for the whole process while querying the devices for energy usage
-  const queryAnimation = async () => {
-    const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
-    await delay(5000);
-
-    let existingDevices = JSON.parse(localStorage.getItem("devices")) || [];
-    const devicesWithDeployment = existingDevices.filter(
-      (device) => device.deploymentId && device.isModuleActive
-    );
-
-    await moveCodeAnimation(SERVICE_PROVIDER1, ORCHESTRATOR, Query_Icon);
-    await delay(100);
-
-    // Prepare an array of moveCodeAnimation promises for devices with valid deploymentId
-    const moveToDevicesPromises = devicesWithDeployment.map((device) =>
-      moveCodeAnimation(ORCHESTRATOR, device.name, Query_Icon)
-    );
-
-    await Promise.all(moveToDevicesPromises);
-    await delay(100);
-
-    // Prepare an array of moveCodeAnimation promises for responses from valid devices
-    const moveFromDevicesPromises = devicesWithDeployment.map((device) =>
-      moveCodeAnimation(device.name, ORCHESTRATOR, Result_Icon_Blue)
-    );
-
-    // Execute moveCodeAnimation from valid devices in parallel
-    await Promise.all(moveFromDevicesPromises);
-    await delay(100);
-
-    if (devicesWithDeployment.length !== 0) {
-      setTimeout(() => {
-        startBlinking(); // Start blinking the house border when data going outside the house
-      }, 700);
-    }
-
-    await moveCodeAnimation(
-      ORCHESTRATOR,
-      SERVICE_PROVIDER1,
-      Result_Icon_Blue,
-      Result_Icon_Red
-    );
-    await delay(100);
-  };
-
-  // Handle hourly animation run
-  const hourlyAnimationRun = async () => {
+  // Handle animation of icon movements
+  const continousAnimationRun = async () => {
     const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
     if (selectedRunMethod === WITH_LIQUID_AI) {
       moveCodeAnimation(ENERGY_COMPANY, INTELLIGENT_CONTROL, SpotPriceDataIcon);
     } else {
+
+        // Randomly pick an icon from each set
+        const randomIconsFromWM = DATA_ICONS_MOVING_FROM_WM[Math.floor(Math.random() * DATA_ICONS_MOVING_FROM_WM.length)];
+        const randomIconsFromFreezer = DATA_ICONS_MOVING_FROM_FREEZER[Math.floor(Math.random() * DATA_ICONS_MOVING_FROM_FREEZER.length)];
+        const randomIconsFromEV = DATA_ICONS_MOVING_FROM_EV[Math.floor(Math.random() * DATA_ICONS_MOVING_FROM_EV.length)];
+
       // Animation for the whole process while querying the energy data from the devices to external service providers
       const moveFromDevicesPromises = houseHoldDevices.map((device) => {
         if (device === EV_CHARGER) {
           moveCodeAnimation(
             device,
             SERVICE_PROVIDER2,
-            Result_Icon_Blue,
-            Result_Icon_Red
+            randomIconsFromEV,
+            DangerIcon
           );
-        } else {
+        } 
+        if (device === FREEZER) {
           moveCodeAnimation(
             device,
             SERVICE_PROVIDER1,
-            Result_Icon_Blue,
-            Result_Icon_Red
+            randomIconsFromFreezer,
+            DangerIcon
+          );
+        } 
+        if (device === WASHING_MACHINE) {
+          moveCodeAnimation(
+            device,
+            SERVICE_PROVIDER1,
+            randomIconsFromWM,
+            DangerIcon
           );
         }
       });
@@ -1117,7 +1093,7 @@ const Demo = () => {
                   <div style={{ marginBottom: "5%" }}>
                     <DemoControlls
                       onLogAdd={(log) => addLog(log)}
-                      hourlyAnimationRun={hourlyAnimationRun}
+                      continousAnimationRun={continousAnimationRun}
                       runMoveCodeAnimation = {(from, to, icon) => moveCodeAnimation(from, to, icon)}
                       userRequirement={userRequirements}
                       onUpdateOptimizedTimeSlots={(

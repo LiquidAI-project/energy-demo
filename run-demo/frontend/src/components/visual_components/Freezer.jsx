@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Popover } from '@mui/material';
 import freezerImage from '../../assets/freezer.png';
-import energyBorder from "../../assets/freezer_energy.png";
 import activeIcon from '../../assets/active.png';
 import inactiveIcon from '../../assets/inactive.png';
 import EnergyComponent from '../EnergyComponent';
@@ -50,27 +49,12 @@ const Freezer = React.forwardRef((props, ref) => {
 
   return (
     <div>
-      <img
-        id="freezer-energy"
-        src={energyBorder}
-        alt="energy"
-        className="freezer-energy-border"
-        style={{
-          position: "absolute",
-          top: "9%",
-          left: "63.6%",
-          width: "4.5%",
-          height: "11%",
-          opacity: window.sessionStorage.getItem(component.id),
-          zIndex: 2,
-        }}
-      />
       <button
         style={{
           position: "absolute",
           top: "9.5%",
           left: "63.8%",
-          width: "4%",
+          width: "6%",
           height: "10%",
           backgroundColor: "transparent",
           border: "none",
@@ -88,6 +72,8 @@ const Freezer = React.forwardRef((props, ref) => {
           style={{
             width: "100%",
             height: "100%",
+            border: "5px solid green",
+            borderRadius: "8px",
           }}
         />
       </button>
@@ -97,7 +83,7 @@ const Freezer = React.forwardRef((props, ref) => {
         style={{
           position: "absolute",
           top: "5%",
-          left: "63.8%",
+          left: "65.8%",
           width: "8%",
           height: "10%",
           transform: "scale(0.2)",

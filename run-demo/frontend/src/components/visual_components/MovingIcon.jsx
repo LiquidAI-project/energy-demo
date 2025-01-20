@@ -23,12 +23,12 @@ function MovingIcon({ deployment }) {
     <motion.div
       key={deployment.id}
       initial={{
-        x: deployment.startPos.x - 20,
-        y: deployment.startPos.y - 20,
+        x: deployment.startPos.x - 30,
+        y: deployment.startPos.y - 30,
       }} // Center the animation object
       animate={{
-        x: deployment.endPos.x - 20,
-        y: deployment.endPos.y - 20,
+        x: deployment.endPos.x - 30,
+        y: deployment.endPos.y - 30,
       }}
       transition={{ type: "spring", duration: 5 }}
       style={{
@@ -40,8 +40,8 @@ function MovingIcon({ deployment }) {
         src={icon}
         alt="Moving object"
         style={{
-          width: "40px",
-          height: "40px",
+          width: "60px",
+          height: "60px",
         }}
       />
     </motion.div>

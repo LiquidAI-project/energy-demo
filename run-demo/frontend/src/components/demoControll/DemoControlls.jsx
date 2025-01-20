@@ -20,7 +20,7 @@ const ANIMATION_MOVING_TIME = process.env.ANIMATION_MOVING_TIME;
 
 const DemoControlls = ({
   onLogAdd,
-  hourlyAnimationRun,
+  continousAnimationRun,
   runMoveCodeAnimation,
   userRequirement,
   onUpdateOptimizedTimeSlots,
@@ -84,7 +84,7 @@ const DemoControlls = ({
                         onLogAdd(`${convertToLocalTime(optimizedTimeSlots[deviceName].startDate)} - Running ${deviceName} - ${optimizedTimeSlots[deviceName].price}c/kWh`);
                         setDemoRunning(true);
                     } else {
-                        // await queryingAnimationRun();
+                        // await queryingcontinousAnimationRun();
                     }
 
                     const res = await runFunction(deploymentObj._id, 3600, Math.floor(demoTime / 1000));
@@ -240,14 +240,14 @@ const DemoControlls = ({
             }
         };
 
-        if (selectedRunMethod === WITHOUT_LIQUID_AI &&  new Date(demoTime).getMinutes() === 0 &&  demoRunning) {
-            hourlyAnimationRun();
-            onLogAdd(`Device data leaking outside: ${new Date(demoTime).toLocaleTimeString()}`);
+        if (selectedRunMethod === WITHOUT_LIQUID_AI &&  demoRunning) {
+            continousAnimationRun();
+            // onLogAdd(`Device data leaking outside: ${new Date(demoTime).toLocaleTimeString()}`);
         } 
 
         if (selectedRunMethod === WITH_LIQUID_AI &&  demoRunning) {
             if (new Date(demoTime).getMinutes() === 0) {
-                hourlyAnimationRun();
+                continousAnimationRun();
                 onLogAdd(`Spot price request`);
             }
             runWithLiquidAI();
@@ -295,7 +295,7 @@ const DemoControlls = ({
 
 DemoControlls.propTypes = {
     onLogAdd: PropTypes.func.isRequired,
-    hourlyAnimationRun: PropTypes.func.isRequired,
+    continousAnimationRun: PropTypes.func.isRequired,
     runMoveCodeAnimation: PropTypes.func.isRequired,
     userRequirement: PropTypes.object.isRequired,
     onUpdateOptimizedTimeSlots: PropTypes.func.isRequired,
