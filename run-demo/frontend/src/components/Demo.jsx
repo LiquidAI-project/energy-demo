@@ -33,6 +33,7 @@ import IntelligentControlIcon from "./../assets/intelligent_control.jpg";
 import EVChargerEnergyIcon from "../assets/ev_charger_energy.png";
 import EVChargerIcon from "../assets/ev_charger.png";
 import Energy_Company_Icon from "../assets/spot_price.png";
+import SpotPriceDataIcon from "../assets/spotPriceDataIcon.png";
 import ServiceProvider from "./serviceProvider/ServiceProvider";
 import ElectricityPrice from "./serviceProvider/energyQuery/ElectricityConsumption";
 import UserControlUI from "./userControl/UserControlUI";
@@ -53,6 +54,7 @@ import {
   WITHOUT_LIQUID_AI,
   WITH_LIQUID_AI,
 } from "../../constants";
+import { v4 as uuidv4 } from 'uuid';
 
 // eslint-disable-next-line no-undef
 const PUBLIC_HOST = process.env.PUBLIC_HOST;
@@ -151,48 +153,53 @@ const Demo = () => {
       return new Promise((resolve) => {
         const startDeviceRef = getDeviceReference(startDeviceName);
         const endDeviceRef = getDeviceReference(endDeviceName);
-        if (endDeviceRef.current) {
+  
+        if (endDeviceRef.current && startDeviceRef.current) {
           const startDevice = startDeviceRef.current.getBoundingClientRect();
           const endDevice = endDeviceRef.current.getBoundingClientRect();
-
+  
           const startPosition = {
             x: startDevice.left + startDevice.width / 2,
             y: startDevice.top + startDevice.height / 2,
           };
-
+  
           const endPosition = {
             x: endDevice.left + endDevice.width / 2,
             y: endDevice.top + endDevice.height / 2,
           };
-
+  
+          // Generate a unique ID using UUID v4
+          const uniqueId = uuidv4();
+  
+          const animationDuration = ANIMATION_MOVING_TIME; // duration of the movement in milliseconds
+  
+          const newMovingDeployments = {
+            id: uniqueId, // Use the UUID as a unique identifier
+            startPos: startPosition,
+            endPos: endPosition,
+            iconSource: iconSource,
+            changingIconSource: changingIconSource,
+            startTime: Date.now(), // Track start time for the animation
+            endTime: Date.now() + animationDuration, // Calculate the end time
+          };
+  
           setMovingDeployments((prevDeployments) => {
-            const newMovingDeployments = [
-              ...prevDeployments,
-              {
-                id: prevDeployments.length,
-                startPos: startPosition,
-                endPos: endPosition,
-                iconSource: iconSource,
-                changingIconSource: changingIconSource, // Optional new icon
-              },
-            ];
-
-            // Remove the deployment after 5 seconds
+            // Add the new deployment to the state
+            const updatedDeployments = [...prevDeployments, newMovingDeployments];
+  
+            // Set timeout to remove the animation from state after its duration
             setTimeout(() => {
-              setMovingDeployments((currentMovingDeployments) =>
-                currentMovingDeployments.filter(
-                  (dep) =>
-                    dep.id !==
-                    newMovingDeployments[newMovingDeployments.length - 1].id
-                )
+              // Remove the animation once the movement duration ends
+              setMovingDeployments((currentDeployments) => 
+                currentDeployments.filter(dep => dep.id !== uniqueId)
               );
-              resolve(); // Resolve the promise after the setTimeout is complete
-            }, ANIMATION_MOVING_TIME);
-
-            return newMovingDeployments;
+              resolve(); // Resolve once the animation is complete
+            }, animationDuration);
+  
+            return updatedDeployments;
           });
         } else {
-          resolve();
+          resolve(); // Resolve immediately if the end device is not found
         }
       });
     },
@@ -267,28 +274,42 @@ const Demo = () => {
     await delay(100);
   };
 
-  // Animation for the whole process while querying the energy data from the devices to external service providers
-  const queryAnimationWithoutLiquidAI = async () => {
+  // Handle hourly animation run
+  const hourlyAnimationRun = async () => {
     const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-    // Prepare an array of moveCodeAnimation promises for devices with valid deploymentId
-    const moveFromDevicesPromises = houseHoldDevices.map((device) => {
-      if (device === EV_CHARGER) {
-        moveCodeAnimation(device, SERVICE_PROVIDER2, Result_Icon_Blue, Result_Icon_Red);
-      } else {
-        moveCodeAnimation(device, SERVICE_PROVIDER1, Result_Icon_Blue, Result_Icon_Red);
+    if (selectedRunMethod === WITH_LIQUID_AI) {
+      moveCodeAnimation(ENERGY_COMPANY, INTELLIGENT_CONTROL, SpotPriceDataIcon);
+    } else {
+      // Animation for the whole process while querying the energy data from the devices to external service providers
+      const moveFromDevicesPromises = houseHoldDevices.map((device) => {
+        if (device === EV_CHARGER) {
+          moveCodeAnimation(
+            device,
+            SERVICE_PROVIDER2,
+            Result_Icon_Blue,
+            Result_Icon_Red
+          );
+        } else {
+          moveCodeAnimation(
+            device,
+            SERVICE_PROVIDER1,
+            Result_Icon_Blue,
+            Result_Icon_Red
+          );
+        }
+      });
+
+      await Promise.all(moveFromDevicesPromises);
+      await delay(100);
+
+      if (houseHoldDevices.length !== 0) {
+        setTimeout(() => {
+          startBlinking(); // Start blinking the house border when data going outside the house
+        }, 1200);
       }
-    });
-
-    await Promise.all(moveFromDevicesPromises);
-    await delay(100);
-
-    if (houseHoldDevices.length !== 0) {
-      setTimeout(() => {
-        startBlinking(); // Start blinking the house border when data going outside the house
-      }, 1200);
+      await delay(100);
     }
-    await delay(100);
   };
 
   // Update the deployment details for the device
@@ -753,7 +774,6 @@ const Demo = () => {
       ...prevRequirements,
       [equipment]: userRequirement,
     }));
-    moveCodeAnimation(USER_CONTROL, INTELLIGENT_CONTROL, ConfigurationIcon);
   };
 
   /**
@@ -822,8 +842,8 @@ const Demo = () => {
               <div id="serviceProvider2-evCharger-line" />
             </>
           )}
-          {movingDeployments.map((deployment, index) => (
-            <MovingIcon key={index} deployment={deployment} />
+          {movingDeployments.map((deployment) => (
+            <MovingIcon key={deployment.id} deployment={deployment} />
           ))}
           {selectedRunMethod === WITH_LIQUID_AI &&
             activeDeployments.map((deployment, index) => (
@@ -1097,7 +1117,8 @@ const Demo = () => {
                   <div style={{ marginBottom: "5%" }}>
                     <DemoControlls
                       onLogAdd={(log) => addLog(log)}
-                      queryingAnimationRun={queryAnimationWithoutLiquidAI}
+                      hourlyAnimationRun={hourlyAnimationRun}
+                      runMoveCodeAnimation = {(from, to, icon) => moveCodeAnimation(from, to, icon)}
                       userRequirement={userRequirements}
                       onUpdateOptimizedTimeSlots={(
                         optimizedTimeSlots,

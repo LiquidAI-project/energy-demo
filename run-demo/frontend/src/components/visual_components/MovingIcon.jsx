@@ -50,7 +50,7 @@ function MovingIcon({ deployment }) {
 
 MovingIcon.propTypes = {
   deployment: PropTypes.shape({
-    id: PropTypes.number.isRequired,
+    id: PropTypes.string.isRequired,
     iconSource: PropTypes.string.isRequired,
     changingIconSource: PropTypes.string,
     startPos: PropTypes.shape({

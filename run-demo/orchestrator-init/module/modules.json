@@ -509,7 +509,7 @@
     },
     {
         "_id": "672b59a20eccba03d47bb192",
-        "name": "washing-machine-run",
+        "name": "washingMachine",
         "exports": [
             {
                 "name": "_start",
@@ -580,7 +580,7 @@
         "description": {
             "openapi": "3.0.3",
             "info": {
-                "title": "washing-machine-run",
+                "title": "washingMachine",
                 "description": "Calling microservices defined as WebAssembly functions",
                 "version": "0.0.1"
             },
@@ -606,7 +606,7 @@
                 }
             ],
             "paths": {
-                "/{deployment}/modules/washing-machine-run/_start": {
+                "/{deployment}/modules/washingMachine/_start": {
                     "summary": "Auto-generated description of function",
                     "parameters": [
                         {
@@ -637,7 +637,7 @@
                         }
                     }
                 },
-                "/{deployment}/modules/washing-machine-run/__main_void": {
+                "/{deployment}/modules/washingMachine/__main_void": {
                     "summary": "Auto-generated description of function",
                     "parameters": [
                         {
@@ -668,7 +668,7 @@
                         }
                     }
                 },
-                "/{deployment}/modules/washing-machine-run/run_washing_machine": {
+                "/{deployment}/modules/washingMachine/run_washing_machine": {
                     "summary": "Auto-generated description of function",
                     "parameters": [
                         {
