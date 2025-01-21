@@ -37,6 +37,8 @@ import SpotPriceDataIcon from "../assets/spotPriceDataIcon.png";
 import TemperatureDataIcon from "../assets/temperature_data_icon.png";
 import DangerIcon from "../assets/danger_icon.png";
 import userPreferenceIcon from "../assets/user_preference_icon.png";
+import HackerIcon from "../assets/hacker_icon.png";
+import CloudIcon from "../assets/cloud_icon.png";
 import ServiceProvider from "./serviceProvider/ServiceProvider";
 import ElectricityPrice from "./serviceProvider/energyQuery/ElectricityConsumption";
 import UserControlUI from "./userControl/UserControlUI";
@@ -54,6 +56,7 @@ import {
   INTELLIGENT_CONTROL,
   USER_CONTROL,
   EV_CHARGER,
+  HACKER,
   WITHOUT_LIQUID_AI,
   WITH_LIQUID_AI,
 } from "../../constants";
@@ -85,6 +88,7 @@ const Demo = () => {
   const userControlRef = useRef(null);
   const energyCompanyRef = useRef(null);
   const evChargerRef = useRef(null);
+  const hackerRef = useRef(null);
   const logsQueueRef = useRef([]);
   const healthLogTimerRef = useRef(null);
 
@@ -129,6 +133,7 @@ const Demo = () => {
       [USER_CONTROL]: userControlRef,
       [EV_CHARGER]: evChargerRef,
       [ENERGY_COMPANY]: energyCompanyRef,
+      [HACKER]: hackerRef,
       // Add more device names and their references here
     }),
     []
@@ -518,7 +523,8 @@ const Demo = () => {
       point_A_ref,
       point_A_name,
       point_B_ref,
-      point_B_name
+      point_B_name,
+      lineColor = "green"
     ) => {
       if (point_A_ref.current && point_B_ref.current) {
         const point_A_bounds = point_A_ref.current.getBoundingClientRect();
@@ -539,7 +545,7 @@ const Demo = () => {
           width: `${length}px`,
           transform: `rotate(${angle}deg)`,
           transformOrigin: "0 0",
-          borderTop: "2px dashed red",
+          borderTop: `2px dashed ${lineColor}`,
           zIndex: 1,
         };
 
@@ -644,6 +650,8 @@ const Demo = () => {
         evChargerRef,
         EV_CHARGER
       );
+      drawLines(serviceProviderRef1, SERVICE_PROVIDER1, hackerRef, HACKER, "red");
+      drawLines(serviceProviderRef2, SERVICE_PROVIDER2, hackerRef, HACKER, "red");
 
       window.addEventListener("resize", () =>
         drawLines(serviceProviderRef1, SERVICE_PROVIDER1, freezerRef, FREEZER)
@@ -663,6 +671,12 @@ const Demo = () => {
           evChargerRef,
           EV_CHARGER
         )
+      );
+      window.addEventListener("resize", () =>
+        drawLines(serviceProviderRef1, SERVICE_PROVIDER1, hackerRef, HACKER, "red")
+      );
+      window.addEventListener("resize", () =>
+        drawLines(serviceProviderRef2, SERVICE_PROVIDER2, hackerRef, HACKER, "red")
       );
     }
 
@@ -733,6 +747,12 @@ const Demo = () => {
             evChargerRef,
             EV_CHARGER
           )
+        );
+        window.removeEventListener("resize", () =>
+          drawLines(serviceProviderRef1, SERVICE_PROVIDER1, hackerRef, HACKER, "red")
+        );
+        window.removeEventListener("resize", () =>
+          drawLines(serviceProviderRef2, SERVICE_PROVIDER2, hackerRef, HACKER, "red")
         );
       }
     };
@@ -816,6 +836,8 @@ const Demo = () => {
               <div id="serviceProvider1-freezer-line" />
               <div id="serviceProvider1-washingMachine-line" />
               <div id="serviceProvider2-evCharger-line" />
+              <div id="serviceProvider1-hacker-line" />
+              <div id="serviceProvider2-hacker-line" />
             </>
           )}
           {movingDeployments.map((deployment) => (
@@ -1012,6 +1034,31 @@ const Demo = () => {
                           zIndex: 2,
                         }}
                       />
+                      <img
+                        src={HackerIcon}
+                        alt="HackerIcon"
+                        ref={hackerRef}
+                        style={{
+                          position: "absolute",
+                          top: "50%",
+                          left: "130.2%",
+                          width: "20%",
+                          height: "27%",
+                          zIndex: 2,
+                        }}
+                      />
+                      <img
+                        src={CloudIcon}
+                        alt="CloudIcon"
+                        style={{
+                          position: "absolute",
+                          top: "87%",
+                          left: "11.2%",
+                          width: "65%",
+                          height: "19%",
+                          zIndex: 0,
+                        }}
+                      />
                     </>
                   )}
                   <img
@@ -1094,7 +1141,9 @@ const Demo = () => {
                     <DemoControlls
                       onLogAdd={(log) => addLog(log)}
                       continousAnimationRun={continousAnimationRun}
-                      runMoveCodeAnimation = {(from, to, icon) => moveCodeAnimation(from, to, icon)}
+                      runMoveCodeAnimation={(from, to, icon) =>
+                        moveCodeAnimation(from, to, icon)
+                      }
                       userRequirement={userRequirements}
                       onUpdateOptimizedTimeSlots={(
                         optimizedTimeSlots,
@@ -1105,7 +1154,9 @@ const Demo = () => {
                       onRunMethodSelect={(value) => onRunMethodSelect(value)}
                     />
                   </div>
-                  <DemoDataVisualize logs={logs} />
+                  {selectedRunMethod === WITH_LIQUID_AI && (
+                    <DemoDataVisualize logs={logs} />
+                  )}
                   {/* <ServiceProvider
                     ref={serviceProviderRef}
                     onClick={handleQueryClick}

@@ -9,8 +9,9 @@ import { fetchData,fetchPostData, fetchIntelligentControllerData } from "../../s
 import RealtimeClock from "../RealtimeClock";
 import DemoClock from "../DemoClock";
 import PropTypes from "prop-types";
-import { INTELLIGENT_CONTROL, ORCHESTRATOR, USER_CONTROL, WASHING_MACHINE, WITHOUT_LIQUID_AI, WITH_LIQUID_AI } from "../../../constants";
+import { HACKER, INTELLIGENT_CONTROL, ORCHESTRATOR, SERVICE_PROVIDER1, SERVICE_PROVIDER2, USER_CONTROL, WASHING_MACHINE, WITHOUT_LIQUID_AI, WITH_LIQUID_AI } from "../../../constants";
 import ConfigurationIcon from "../../assets/ConfigurationIcon.png";
+import UnsafeDataIcon from "../../assets/unsafe_data_icon.png";
 import DropdownMenu from "./DropdownMenu";
 import { getDeviceNameById } from "../../utils/deviceUtils";
 import { convertToLocalTime } from "../../utils/timeUtils";
@@ -242,7 +243,11 @@ const DemoControlls = ({
 
         if (selectedRunMethod === WITHOUT_LIQUID_AI &&  demoRunning) {
             continousAnimationRun();
-            // onLogAdd(`Device data leaking outside: ${new Date(demoTime).toLocaleTimeString()}`);
+
+            if (new Date(demoTime).getMinutes() === 0 || new Date(demoTime).getMinutes() === 30) {
+                runMoveCodeAnimation(SERVICE_PROVIDER1, HACKER, UnsafeDataIcon);
+                runMoveCodeAnimation(SERVICE_PROVIDER2, HACKER, UnsafeDataIcon);
+            }
         } 
 
         if (selectedRunMethod === WITH_LIQUID_AI &&  demoRunning) {
