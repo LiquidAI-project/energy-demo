@@ -26,6 +26,7 @@ const DemoControlls = ({
   userRequirement,
   onUpdateOptimizedTimeSlots,
   onRunMethodSelect,
+  setHackerVisibility,
 }) => {
     const [demoRunning, setDemoRunning] = useState(false);
     const [demoTime, setDemoTime] = useState(new Date().setMinutes(0, 0));
@@ -244,9 +245,17 @@ const DemoControlls = ({
         if (selectedRunMethod === WITHOUT_LIQUID_AI &&  demoRunning) {
             continousAnimationRun();
 
+            if (new Date(demoTime).getMinutes() === 20 || new Date(demoTime).getMinutes() === 50) {
+                setHackerVisibility(true);
+            }
+
             if (new Date(demoTime).getMinutes() === 0 || new Date(demoTime).getMinutes() === 30) {
                 runMoveCodeAnimation(SERVICE_PROVIDER1, HACKER, UnsafeDataIcon);
                 runMoveCodeAnimation(SERVICE_PROVIDER2, HACKER, UnsafeDataIcon);
+            }
+
+            if (new Date(demoTime).getMinutes() === 10 || new Date(demoTime).getMinutes() === 40) {
+                setHackerVisibility(false);
             }
         } 
 
@@ -305,6 +314,7 @@ DemoControlls.propTypes = {
     userRequirement: PropTypes.object.isRequired,
     onUpdateOptimizedTimeSlots: PropTypes.func.isRequired,
     onRunMethodSelect: PropTypes.func.isRequired,
+    setHackerVisibility: PropTypes.func.isRequired,
 };
 
 export default DemoControlls;
