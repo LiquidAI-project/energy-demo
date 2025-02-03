@@ -39,6 +39,7 @@ import DangerIcon from "../assets/danger_icon.png";
 import userPreferenceIcon from "../assets/user_preference_icon.png";
 import HackerIcon from "../assets/hacker_icon.png";
 import CloudIcon from "../assets/cloud_icon.png";
+import OptimizedSettingsIcon from "../assets/optimized_settings_icon.png";
 import ServiceProvider from "./serviceProvider/ServiceProvider";
 import ElectricityPrice from "./serviceProvider/energyQuery/ElectricityConsumption";
 import UserControlUI from "./userControl/UserControlUI";
@@ -138,8 +139,6 @@ const Demo = () => {
     }),
     []
   );
-
-  const houseHoldDevices = [FREEZER, WASHING_MACHINE, EV_CHARGER];
 
   // Get the reference of the device
   const getDeviceReference = useCallback(
@@ -254,42 +253,36 @@ const Demo = () => {
         const randomIconsFromEV = DATA_ICONS_MOVING_FROM_EV[Math.floor(Math.random() * DATA_ICONS_MOVING_FROM_EV.length)];
 
       // Animation for the whole process while querying the energy data from the devices to external service providers
-      const moveFromDevicesPromises = houseHoldDevices.map((device) => {
-        if (device === EV_CHARGER) {
-          moveCodeAnimation(
-            device,
-            SERVICE_PROVIDER2,
-            randomIconsFromEV,
-            DangerIcon
-          );
-        } 
-        if (device === FREEZER) {
-          moveCodeAnimation(
-            device,
-            SERVICE_PROVIDER1,
-            randomIconsFromFreezer,
-            DangerIcon
-          );
-        } 
-        if (device === WASHING_MACHINE) {
-          moveCodeAnimation(
-            device,
-            SERVICE_PROVIDER1,
-            randomIconsFromWM,
-            DangerIcon
-          );
-        }
-      });
-
-      await Promise.all(moveFromDevicesPromises);
+      moveCodeAnimation(
+        EV_CHARGER,
+        SERVICE_PROVIDER2,
+        randomIconsFromEV,
+        DangerIcon
+      );
+      moveCodeAnimation(
+        FREEZER,
+        SERVICE_PROVIDER1,
+        randomIconsFromFreezer,
+        DangerIcon
+      );
+      moveCodeAnimation(
+        WASHING_MACHINE,
+        SERVICE_PROVIDER1,
+        randomIconsFromWM,
+        DangerIcon
+      );
       await delay(100);
 
-      if (houseHoldDevices.length !== 0) {
-        setTimeout(() => {
-          startBlinking(); // Start blinking the house border when data going outside the house
-        }, 1200);
-      }
-      await delay(100);
+      setTimeout(() => {
+        startBlinking(); // Start blinking the house border when data going outside the house
+      }, 1200);
+
+      await delay(1500);
+
+      // Animation for the whole process while sending the optimized plan from the external service providers to devices
+      moveCodeAnimation(SERVICE_PROVIDER1, FREEZER, OptimizedSettingsIcon);
+      moveCodeAnimation(SERVICE_PROVIDER1, WASHING_MACHINE, OptimizedSettingsIcon);
+      moveCodeAnimation(SERVICE_PROVIDER2, EV_CHARGER, OptimizedSettingsIcon);
     }
   };
 
