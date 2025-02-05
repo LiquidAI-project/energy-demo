@@ -9,7 +9,9 @@ import { fetchData,fetchPostData, fetchIntelligentControllerData } from "../../s
 import RealtimeClock from "../RealtimeClock";
 import DemoClock from "../DemoClock";
 import PropTypes from "prop-types";
-import { WASHING_MACHINE, WITHOUT_LIQUID_AI, WITH_LIQUID_AI } from "../../../constants";
+import { HACKER, INTELLIGENT_CONTROL, ORCHESTRATOR, SERVICE_PROVIDER1, SERVICE_PROVIDER2, USER_CONTROL, WASHING_MACHINE, WITHOUT_LIQUID_AI, WITH_LIQUID_AI } from "../../../constants";
+import ConfigurationIcon from "../../assets/ConfigurationIcon.png";
+import UnsafeDataIcon from "../../assets/unsafe_data_icon.png";
 import DropdownMenu from "./DropdownMenu";
 import { getDeviceNameById } from "../../utils/deviceUtils";
 import { convertToLocalTime } from "../../utils/timeUtils";
@@ -17,7 +19,14 @@ import { convertToLocalTime } from "../../utils/timeUtils";
 // eslint-disable-next-line no-undef
 const ANIMATION_MOVING_TIME = process.env.ANIMATION_MOVING_TIME;
 
-const DemoControlls = ({ onLogAdd, queryingAnimationRun, userRequirement, onUpdateOptimizedTimeSlots, onRunMethodSelect }) => {
+const DemoControlls = ({
+  onLogAdd,
+  continousAnimationRun,
+  runMoveCodeAnimation,
+  userRequirement,
+  onUpdateOptimizedTimeSlots,
+  onRunMethodSelect,
+}) => {
     const [demoRunning, setDemoRunning] = useState(false);
     const [demoTime, setDemoTime] = useState(new Date().setMinutes(0, 0));
     const [optimizedTimeSlots, setOptimizedTimeSlots] = useState({});
@@ -34,6 +43,11 @@ const DemoControlls = ({ onLogAdd, queryingAnimationRun, userRequirement, onUpda
     const wasmModuleDeployment = useCallback(
         async (moduleName) => {
             try {
+
+                // Wait for other animation to complete 
+                await new Promise((resolve) =>
+                    setTimeout(resolve, ANIMATION_MOVING_TIME)
+                );
                 // Fetch manifest data
                 const response = await fetchData("/file/manifest");
 
@@ -46,6 +60,9 @@ const DemoControlls = ({ onLogAdd, queryingAnimationRun, userRequirement, onUpda
                     console.warn("No deployment found");
                     return;
                 }
+                runMoveCodeAnimation(INTELLIGENT_CONTROL, ORCHESTRATOR, ConfigurationIcon);
+                onLogAdd(`Send deployment configuration to orchestrator`);
+                
                 onLogAdd(`Deployment of ${deploymentObj.name} module`);
                 const deviceId = deploymentObj.sequence[0]?.device;
 
@@ -57,19 +74,18 @@ const DemoControlls = ({ onLogAdd, queryingAnimationRun, userRequirement, onUpda
 
                 if (res.deviceResponses?.[deviceId]?.status === 200) {
 
-                    const deviceName = getDeviceNameById(deviceId);
-
-                    // Wait for animation to complete before running the function
                     await new Promise((resolve) =>
                         setTimeout(resolve, ANIMATION_MOVING_TIME)
                     );
+
+                    const deviceName = getDeviceNameById(deviceId);
 
                     // Allow to run the demo time only for device running functions for simulating the device running.
                     if (moduleName.includes("run")) {
                         onLogAdd(`${convertToLocalTime(optimizedTimeSlots[deviceName].startDate)} - Running ${deviceName} - ${optimizedTimeSlots[deviceName].price}c/kWh`);
                         setDemoRunning(true);
                     } else {
-                        // await queryingAnimationRun();
+                        // await queryingcontinousAnimationRun();
                     }
 
                     const res = await runFunction(deploymentObj._id, 3600, Math.floor(demoTime / 1000));
@@ -132,7 +148,14 @@ const DemoControlls = ({ onLogAdd, queryingAnimationRun, userRequirement, onUpda
                 endDateTime: endDateTime,
             };  
             const res = await fetchIntelligentControllerData(endpoint, postData);
-            updateEquipmentOptimizedTimeSlots(res, WASHING_MACHINE);
+            if (res !== null) {
+                updateEquipmentOptimizedTimeSlots(res, WASHING_MACHINE);
+                runMoveCodeAnimation(USER_CONTROL, INTELLIGENT_CONTROL, ConfigurationIcon);
+                onLogAdd(`Send user requirement to intelligent control`);
+            } else {
+                console.error("Could not set the optimized time slots for the washing machine");
+                onLogAdd("Could not set the optimized time slots for the washing machine");
+            }
             return res
         } catch (error) {
             console.error("Error deploying module:", error);
@@ -155,6 +178,13 @@ const DemoControlls = ({ onLogAdd, queryingAnimationRun, userRequirement, onUpda
       setOptimizedTimeSlots({
         [deviceName]: newOptimizedTimeSlots,
       });
+      onLogAdd(
+        `Optimized schedule for ${deviceName} - ${convertToLocalTime(
+          newOptimizedTimeSlots.startDate
+        )} - ${convertToLocalTime(newOptimizedTimeSlots.endDate)} - ${
+          newOptimizedTimeSlots.price
+        }c/kWh`
+      );
       onUpdateOptimizedTimeSlots(newOptimizedTimeSlots, deviceName);
     };
 
@@ -167,11 +197,16 @@ const DemoControlls = ({ onLogAdd, queryingAnimationRun, userRequirement, onUpda
 
     useEffect(() => {
         const keys = Object.keys(userRequirement);
+        let tempDemoTime = new Date(demoTime);
+
+        // To avoid getting the same hour as the current time as start time
+        tempDemoTime.setHours(tempDemoTime.getHours() + 1);
+        tempDemoTime.setMinutes(0);
         if (keys.length !== 0) {
             for (const key of keys) {
                 switch (key) {
                     case WASHING_MACHINE:
-                        setWashingMachineRunningTime(Math.floor(demoTime / 1000), userRequirement[key].completeBefore);
+                        setWashingMachineRunningTime(Math.floor(tempDemoTime / 1000), userRequirement[key].completeBefore);
                         break;
                     default:
                         console.error("Invalid key");
@@ -206,12 +241,20 @@ const DemoControlls = ({ onLogAdd, queryingAnimationRun, userRequirement, onUpda
             }
         };
 
-        if (selectedRunMethod === WITHOUT_LIQUID_AI &&  new Date(demoTime).getMinutes() === 0 &&  demoRunning) {
-            queryingAnimationRun();
-            onLogAdd(`Device data leaking outside: ${new Date(demoTime).toLocaleTimeString()}`);
+        if (selectedRunMethod === WITHOUT_LIQUID_AI &&  demoRunning) {
+            continousAnimationRun();
+
+            if (new Date(demoTime).getMinutes() === 0 || new Date(demoTime).getMinutes() === 30) {
+                runMoveCodeAnimation(SERVICE_PROVIDER1, HACKER, UnsafeDataIcon);
+                runMoveCodeAnimation(SERVICE_PROVIDER2, HACKER, UnsafeDataIcon);
+            }
         } 
 
-        if (selectedRunMethod === WITH_LIQUID_AI) {
+        if (selectedRunMethod === WITH_LIQUID_AI &&  demoRunning) {
+            if (new Date(demoTime).getMinutes() === 0) {
+                continousAnimationRun();
+                onLogAdd(`Spot price request`);
+            }
             runWithLiquidAI();
         }
 
@@ -257,7 +300,8 @@ const DemoControlls = ({ onLogAdd, queryingAnimationRun, userRequirement, onUpda
 
 DemoControlls.propTypes = {
     onLogAdd: PropTypes.func.isRequired,
-    queryingAnimationRun: PropTypes.func.isRequired,
+    continousAnimationRun: PropTypes.func.isRequired,
+    runMoveCodeAnimation: PropTypes.func.isRequired,
     userRequirement: PropTypes.object.isRequired,
     onUpdateOptimizedTimeSlots: PropTypes.func.isRequired,
     onRunMethodSelect: PropTypes.func.isRequired,

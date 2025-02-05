@@ -24,17 +24,25 @@ import ElectricCar2 from "./visual_components/ElectricCar2";
 import Jacuzzi from "./visual_components/Jacuzzi";
 import Orchestrator from "./../assets/orchestrator.png";
 import WebAssembly_Icon from "./../assets/WebAssembly_Logo.png";
+import ConfigurationIcon from "./../assets/configurationIcon.png";
 import Query_Icon from "./../assets/query_icon.png";
-import Result_Icon_Blue from "./../assets/result_icon.png";
+import EnergyUsageIcon from "./../assets/energy_usage_icon.png";
 import Result_Icon_Red from "./../assets/result_icon_with_warning.png";
 import roadImage from "./../assets/road.png";
 import IntelligentControlIcon from "./../assets/intelligent_control.jpg";
 import EVChargerEnergyIcon from "../assets/ev_charger_energy.png";
 import EVChargerIcon from "../assets/ev_charger.png";
 import Energy_Company_Icon from "../assets/spot_price.png";
+import SpotPriceDataIcon from "../assets/spotPriceDataIcon.png";
+import TemperatureDataIcon from "../assets/temperature_data_icon.png";
+import DangerIcon from "../assets/danger_icon.png";
+import userPreferenceIcon from "../assets/user_preference_icon.png";
+import HackerIcon from "../assets/hacker_icon.png";
+import CloudIcon from "../assets/cloud_icon.png";
+import OptimizedSettingsIcon from "../assets/optimized_settings_icon.png";
 import ServiceProvider from "./serviceProvider/ServiceProvider";
 import ElectricityPrice from "./serviceProvider/energyQuery/ElectricityConsumption";
-import UserControlUI from "./UserControlUI";
+import UserControlUI from "./userControl/UserControlUI";
 import { fetchData } from '../services/apiService';
 import DemoControlls from "./demoControll/DemoControlls";
 import DemoDataVisualize from "./DemoDataVisualize";
@@ -47,10 +55,13 @@ import {
   SERVICE_PROVIDER2,
   ENERGY_COMPANY,
   INTELLIGENT_CONTROL,
+  USER_CONTROL,
   EV_CHARGER,
+  HACKER,
   WITHOUT_LIQUID_AI,
   WITH_LIQUID_AI,
 } from "../../constants";
+import { v4 as uuidv4 } from 'uuid';
 
 // eslint-disable-next-line no-undef
 const PUBLIC_HOST = process.env.PUBLIC_HOST;
@@ -60,6 +71,10 @@ const PUBLIC_PORT = process.env.PUBLIC_PORT;
 const DEVICE_CHECK_INTERVAL = process.env.DEVICE_CHECK_INTERVAL;
 // eslint-disable-next-line no-undef
 const ANIMATION_MOVING_TIME = process.env.ANIMATION_MOVING_TIME;
+
+const DATA_ICONS_MOVING_FROM_WM = [EnergyUsageIcon, userPreferenceIcon];
+const DATA_ICONS_MOVING_FROM_FREEZER = [EnergyUsageIcon, userPreferenceIcon, TemperatureDataIcon];
+const DATA_ICONS_MOVING_FROM_EV = [EnergyUsageIcon, userPreferenceIcon];
 
 const Demo = () => {
   const orchestratorRef = useRef(null);
@@ -71,8 +86,10 @@ const Demo = () => {
   const jacuzziRef = useRef(null);
   const electricCar2Ref = useRef(null);
   const intelligentControlRef = useRef(null);
+  const userControlRef = useRef(null);
   const energyCompanyRef = useRef(null);
   const evChargerRef = useRef(null);
+  const hackerRef = useRef(null);
   const logsQueueRef = useRef([]);
   const healthLogTimerRef = useRef(null);
 
@@ -114,14 +131,14 @@ const Demo = () => {
       [SERVICE_PROVIDER1]: serviceProviderRef1,
       [SERVICE_PROVIDER2]: serviceProviderRef2,
       [INTELLIGENT_CONTROL]: intelligentControlRef,
+      [USER_CONTROL]: userControlRef,
       [EV_CHARGER]: evChargerRef,
       [ENERGY_COMPANY]: energyCompanyRef,
+      [HACKER]: hackerRef,
       // Add more device names and their references here
     }),
     []
   );
-
-  const houseHoldDevices = [FREEZER, WASHING_MACHINE, EV_CHARGER];
 
   // Get the reference of the device
   const getDeviceReference = useCallback(
@@ -147,48 +164,53 @@ const Demo = () => {
       return new Promise((resolve) => {
         const startDeviceRef = getDeviceReference(startDeviceName);
         const endDeviceRef = getDeviceReference(endDeviceName);
-        if (endDeviceRef.current) {
+  
+        if (endDeviceRef.current && startDeviceRef.current) {
           const startDevice = startDeviceRef.current.getBoundingClientRect();
           const endDevice = endDeviceRef.current.getBoundingClientRect();
-
+  
           const startPosition = {
             x: startDevice.left + startDevice.width / 2,
             y: startDevice.top + startDevice.height / 2,
           };
-
+  
           const endPosition = {
             x: endDevice.left + endDevice.width / 2,
             y: endDevice.top + endDevice.height / 2,
           };
-
+  
+          // Generate a unique ID using UUID v4
+          const uniqueId = uuidv4();
+  
+          const animationDuration = ANIMATION_MOVING_TIME; // duration of the movement in milliseconds
+  
+          const newMovingDeployments = {
+            id: uniqueId, // Use the UUID as a unique identifier
+            startPos: startPosition,
+            endPos: endPosition,
+            iconSource: iconSource,
+            changingIconSource: changingIconSource,
+            startTime: Date.now(), // Track start time for the animation
+            endTime: Date.now() + animationDuration, // Calculate the end time
+          };
+  
           setMovingDeployments((prevDeployments) => {
-            const newMovingDeployments = [
-              ...prevDeployments,
-              {
-                id: prevDeployments.length,
-                startPos: startPosition,
-                endPos: endPosition,
-                iconSource: iconSource,
-                changingIconSource: changingIconSource, // Optional new icon
-              },
-            ];
-
-            // Remove the deployment after 5 seconds
+            // Add the new deployment to the state
+            const updatedDeployments = [...prevDeployments, newMovingDeployments];
+  
+            // Set timeout to remove the animation from state after its duration
             setTimeout(() => {
-              setMovingDeployments((currentMovingDeployments) =>
-                currentMovingDeployments.filter(
-                  (dep) =>
-                    dep.id !==
-                    newMovingDeployments[newMovingDeployments.length - 1].id
-                )
+              // Remove the animation once the movement duration ends
+              setMovingDeployments((currentDeployments) => 
+                currentDeployments.filter(dep => dep.id !== uniqueId)
               );
-              resolve(); // Resolve the promise after the setTimeout is complete
-            }, ANIMATION_MOVING_TIME);
-
-            return newMovingDeployments;
+              resolve(); // Resolve once the animation is complete
+            }, animationDuration);
+  
+            return updatedDeployments;
           });
         } else {
-          resolve();
+          resolve(); // Resolve immediately if the end device is not found
         }
       });
     },
@@ -217,74 +239,51 @@ const Demo = () => {
     }, parseInt(DEVICE_CHECK_INTERVAL));
   }, []);
 
-  // Animation for the whole process while querying the devices for energy usage
-  const queryAnimation = async () => {
+  // Handle animation of icon movements
+  const continousAnimationRun = async () => {
     const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-    await delay(5000);
+    if (selectedRunMethod === WITH_LIQUID_AI) {
+      moveCodeAnimation(ENERGY_COMPANY, INTELLIGENT_CONTROL, SpotPriceDataIcon);
+    } else {
 
-    let existingDevices = JSON.parse(localStorage.getItem("devices")) || [];
-    const devicesWithDeployment = existingDevices.filter(
-      (device) => device.deploymentId && device.isModuleActive
-    );
+        // Randomly pick an icon from each set
+        const randomIconsFromWM = DATA_ICONS_MOVING_FROM_WM[Math.floor(Math.random() * DATA_ICONS_MOVING_FROM_WM.length)];
+        const randomIconsFromFreezer = DATA_ICONS_MOVING_FROM_FREEZER[Math.floor(Math.random() * DATA_ICONS_MOVING_FROM_FREEZER.length)];
+        const randomIconsFromEV = DATA_ICONS_MOVING_FROM_EV[Math.floor(Math.random() * DATA_ICONS_MOVING_FROM_EV.length)];
 
-    await moveCodeAnimation(SERVICE_PROVIDER1, ORCHESTRATOR, Query_Icon);
-    await delay(100);
+      // Animation for the whole process while querying the energy data from the devices to external service providers
+      moveCodeAnimation(
+        EV_CHARGER,
+        SERVICE_PROVIDER2,
+        randomIconsFromEV,
+        DangerIcon
+      );
+      moveCodeAnimation(
+        FREEZER,
+        SERVICE_PROVIDER1,
+        randomIconsFromFreezer,
+        DangerIcon
+      );
+      moveCodeAnimation(
+        WASHING_MACHINE,
+        SERVICE_PROVIDER1,
+        randomIconsFromWM,
+        DangerIcon
+      );
+      await delay(100);
 
-    // Prepare an array of moveCodeAnimation promises for devices with valid deploymentId
-    const moveToDevicesPromises = devicesWithDeployment.map((device) =>
-      moveCodeAnimation(ORCHESTRATOR, device.name, Query_Icon)
-    );
-
-    await Promise.all(moveToDevicesPromises);
-    await delay(100);
-
-    // Prepare an array of moveCodeAnimation promises for responses from valid devices
-    const moveFromDevicesPromises = devicesWithDeployment.map((device) =>
-      moveCodeAnimation(device.name, ORCHESTRATOR, Result_Icon_Blue)
-    );
-
-    // Execute moveCodeAnimation from valid devices in parallel
-    await Promise.all(moveFromDevicesPromises);
-    await delay(100);
-
-    if (devicesWithDeployment.length !== 0) {
-      setTimeout(() => {
-        startBlinking(); // Start blinking the house border when data going outside the house
-      }, 700);
-    }
-
-    await moveCodeAnimation(
-      ORCHESTRATOR,
-      SERVICE_PROVIDER1,
-      Result_Icon_Blue,
-      Result_Icon_Red
-    );
-    await delay(100);
-  };
-
-  // Animation for the whole process while querying the energy data from the devices to external service providers
-  const queryAnimationWithoutLiquidAI = async () => {
-    const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
-    // Prepare an array of moveCodeAnimation promises for devices with valid deploymentId
-    const moveFromDevicesPromises = houseHoldDevices.map((device) => {
-      if (device === EV_CHARGER) {
-        moveCodeAnimation(device, SERVICE_PROVIDER2, Result_Icon_Blue, Result_Icon_Red);
-      } else {
-        moveCodeAnimation(device, SERVICE_PROVIDER1, Result_Icon_Blue, Result_Icon_Red);
-      }
-    });
-
-    await Promise.all(moveFromDevicesPromises);
-    await delay(100);
-
-    if (houseHoldDevices.length !== 0) {
       setTimeout(() => {
         startBlinking(); // Start blinking the house border when data going outside the house
       }, 1200);
+
+      await delay(1500);
+
+      // Animation for the whole process while sending the optimized plan from the external service providers to devices
+      moveCodeAnimation(SERVICE_PROVIDER1, FREEZER, OptimizedSettingsIcon);
+      moveCodeAnimation(SERVICE_PROVIDER1, WASHING_MACHINE, OptimizedSettingsIcon);
+      moveCodeAnimation(SERVICE_PROVIDER2, EV_CHARGER, OptimizedSettingsIcon);
     }
-    await delay(100);
   };
 
   // Update the deployment details for the device
@@ -517,7 +516,8 @@ const Demo = () => {
       point_A_ref,
       point_A_name,
       point_B_ref,
-      point_B_name
+      point_B_name,
+      lineColor = "green"
     ) => {
       if (point_A_ref.current && point_B_ref.current) {
         const point_A_bounds = point_A_ref.current.getBoundingClientRect();
@@ -538,7 +538,7 @@ const Demo = () => {
           width: `${length}px`,
           transform: `rotate(${angle}deg)`,
           transformOrigin: "0 0",
-          borderTop: "2px dashed red",
+          borderTop: `2px dashed ${lineColor}`,
           zIndex: 1,
         };
 
@@ -553,6 +553,12 @@ const Demo = () => {
       drawLines(
         orchestratorRef,
         ORCHESTRATOR,
+        intelligentControlRef,
+        INTELLIGENT_CONTROL
+      );
+      drawLines(
+        userControlRef,
+        USER_CONTROL,
         intelligentControlRef,
         INTELLIGENT_CONTROL
       );
@@ -581,6 +587,14 @@ const Demo = () => {
         drawLines(
           orchestratorRef,
           ORCHESTRATOR,
+          intelligentControlRef,
+          INTELLIGENT_CONTROL
+        )
+      );
+      window.addEventListener("resize", () =>
+        drawLines(
+          userControlRef,
+          USER_CONTROL,
           intelligentControlRef,
           INTELLIGENT_CONTROL
         )
@@ -629,6 +643,8 @@ const Demo = () => {
         evChargerRef,
         EV_CHARGER
       );
+      drawLines(serviceProviderRef1, SERVICE_PROVIDER1, hackerRef, HACKER, "red");
+      drawLines(serviceProviderRef2, SERVICE_PROVIDER2, hackerRef, HACKER, "red");
 
       window.addEventListener("resize", () =>
         drawLines(serviceProviderRef1, SERVICE_PROVIDER1, freezerRef, FREEZER)
@@ -649,6 +665,12 @@ const Demo = () => {
           EV_CHARGER
         )
       );
+      window.addEventListener("resize", () =>
+        drawLines(serviceProviderRef1, SERVICE_PROVIDER1, hackerRef, HACKER, "red")
+      );
+      window.addEventListener("resize", () =>
+        drawLines(serviceProviderRef2, SERVICE_PROVIDER2, hackerRef, HACKER, "red")
+      );
     }
 
     return () => {
@@ -657,6 +679,14 @@ const Demo = () => {
           drawLines(
             orchestratorRef,
             ORCHESTRATOR,
+            intelligentControlRef,
+            INTELLIGENT_CONTROL
+          )
+        );
+        window.removeEventListener("resize", () =>
+          drawLines(
+            userControlRef,
+            USER_CONTROL,
             intelligentControlRef,
             INTELLIGENT_CONTROL
           )
@@ -710,6 +740,12 @@ const Demo = () => {
             evChargerRef,
             EV_CHARGER
           )
+        );
+        window.removeEventListener("resize", () =>
+          drawLines(serviceProviderRef1, SERVICE_PROVIDER1, hackerRef, HACKER, "red")
+        );
+        window.removeEventListener("resize", () =>
+          drawLines(serviceProviderRef2, SERVICE_PROVIDER2, hackerRef, HACKER, "red")
         );
       }
     };
@@ -784,6 +820,7 @@ const Demo = () => {
               <div id="orchestrator-washingMachine-line" />
               <div id="orchestrator-intelligentControl-line" />
               <div id="energyCompany-intelligentControl-line" />
+              <div id="userControl-intelligentControl-line" />
               <div id="orchestrator-evCharger-line" />
             </>
           )}
@@ -792,10 +829,12 @@ const Demo = () => {
               <div id="serviceProvider1-freezer-line" />
               <div id="serviceProvider1-washingMachine-line" />
               <div id="serviceProvider2-evCharger-line" />
+              <div id="serviceProvider1-hacker-line" />
+              <div id="serviceProvider2-hacker-line" />
             </>
           )}
-          {movingDeployments.map((deployment, index) => (
-            <MovingIcon key={index} deployment={deployment} />
+          {movingDeployments.map((deployment) => (
+            <MovingIcon key={deployment.id} deployment={deployment} />
           ))}
           {selectedRunMethod === WITH_LIQUID_AI &&
             activeDeployments.map((deployment, index) => (
@@ -939,6 +978,15 @@ const Demo = () => {
                     />
                   )}
                   {selectedRunMethod === WITH_LIQUID_AI && (
+                    <UserControlUI
+                      ref={userControlRef}
+                      onUserRequirementChange={(userRequirement, equipment) =>
+                        handleUserRequirements(userRequirement, equipment)
+                      }
+                      optimizedTimeSlots={optimizedTimeSlots}
+                    />
+                  )}
+                  {selectedRunMethod === WITH_LIQUID_AI && (
                     <img
                       src={Energy_Company_Icon}
                       alt="energyCompany"
@@ -977,6 +1025,31 @@ const Demo = () => {
                           left: "51.2%",
                           width: "10%",
                           zIndex: 2,
+                        }}
+                      />
+                      <img
+                        src={HackerIcon}
+                        alt="HackerIcon"
+                        ref={hackerRef}
+                        style={{
+                          position: "absolute",
+                          top: "50%",
+                          left: "130.2%",
+                          width: "20%",
+                          height: "27%",
+                          zIndex: 2,
+                        }}
+                      />
+                      <img
+                        src={CloudIcon}
+                        alt="CloudIcon"
+                        style={{
+                          position: "absolute",
+                          top: "87%",
+                          left: "11.2%",
+                          width: "65%",
+                          height: "19%",
+                          zIndex: 0,
                         }}
                       />
                     </>
@@ -1060,7 +1133,10 @@ const Demo = () => {
                   <div style={{ marginBottom: "5%" }}>
                     <DemoControlls
                       onLogAdd={(log) => addLog(log)}
-                      queryingAnimationRun={queryAnimationWithoutLiquidAI}
+                      continousAnimationRun={continousAnimationRun}
+                      runMoveCodeAnimation={(from, to, icon) =>
+                        moveCodeAnimation(from, to, icon)
+                      }
                       userRequirement={userRequirements}
                       onUpdateOptimizedTimeSlots={(
                         optimizedTimeSlots,
@@ -1071,7 +1147,9 @@ const Demo = () => {
                       onRunMethodSelect={(value) => onRunMethodSelect(value)}
                     />
                   </div>
-                  <DemoDataVisualize logs={logs} />
+                  {selectedRunMethod === WITH_LIQUID_AI && (
+                    <DemoDataVisualize logs={logs} />
+                  )}
                   {/* <ServiceProvider
                     ref={serviceProviderRef}
                     onClick={handleQueryClick}
@@ -1084,14 +1162,6 @@ const Demo = () => {
                     >
                       Spot price check
                     </a>
-                  )}
-                  {selectedRunMethod === WITH_LIQUID_AI && (
-                    <UserControlUI
-                      onUserRequirementChange={(userRequirement, equipment) =>
-                        handleUserRequirements(userRequirement, equipment)
-                      }
-                      optimizedTimeSlots={optimizedTimeSlots}
-                    />
                   )}
                 </Box>
               </Grid>
