@@ -9,7 +9,7 @@ import {
   Typography,
 } from "@mui/material";
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import backgroundImage from "./../assets/yard.png";
 import controlHub from "./../assets/controlHub.png";
 import Service_Provider1 from "./../assets/service_provider.png";
@@ -101,6 +101,7 @@ const Demo = () => {
   const [userRequirements, setUserRequirements] = useState({});
   const [optimizedTimeSlots, setOptimizedTimeSlots] = useState({});
   const [selectedRunMethod, setSelectedRunMethod] = useState(WITHOUT_LIQUID_AI);
+  const [hackerVisible, setHackerVisible] = useState(false);
   const [consumptionData, setConsumptionData] = useState([]);
 
   // This function will make the house border blink in order to indicate the warning state when data is going outside
@@ -643,9 +644,10 @@ const Demo = () => {
         evChargerRef,
         EV_CHARGER
       );
-      drawLines(serviceProviderRef1, SERVICE_PROVIDER1, hackerRef, HACKER, "red");
-      drawLines(serviceProviderRef2, SERVICE_PROVIDER2, hackerRef, HACKER, "red");
-
+      if(hackerVisible) {
+        drawLines(serviceProviderRef1, SERVICE_PROVIDER1, hackerRef, HACKER, "red");
+        drawLines(serviceProviderRef2, SERVICE_PROVIDER2, hackerRef, HACKER, "red");
+      }
       window.addEventListener("resize", () =>
         drawLines(serviceProviderRef1, SERVICE_PROVIDER1, freezerRef, FREEZER)
       );
@@ -665,12 +667,14 @@ const Demo = () => {
           EV_CHARGER
         )
       );
-      window.addEventListener("resize", () =>
-        drawLines(serviceProviderRef1, SERVICE_PROVIDER1, hackerRef, HACKER, "red")
-      );
-      window.addEventListener("resize", () =>
-        drawLines(serviceProviderRef2, SERVICE_PROVIDER2, hackerRef, HACKER, "red")
-      );
+      if(hackerVisible) {
+        window.addEventListener("resize", () =>
+          drawLines(serviceProviderRef1, SERVICE_PROVIDER1, hackerRef, HACKER, "red")
+        );
+        window.addEventListener("resize", () =>
+          drawLines(serviceProviderRef2, SERVICE_PROVIDER2, hackerRef, HACKER, "red")
+        );
+      }
     }
 
     return () => {
@@ -741,15 +745,17 @@ const Demo = () => {
             EV_CHARGER
           )
         );
-        window.removeEventListener("resize", () =>
-          drawLines(serviceProviderRef1, SERVICE_PROVIDER1, hackerRef, HACKER, "red")
-        );
-        window.removeEventListener("resize", () =>
-          drawLines(serviceProviderRef2, SERVICE_PROVIDER2, hackerRef, HACKER, "red")
-        );
+        if(hackerVisible) {
+          window.removeEventListener("resize", () =>
+            drawLines(serviceProviderRef1, SERVICE_PROVIDER1, hackerRef, HACKER, "red")
+          );
+          window.removeEventListener("resize", () =>
+            drawLines(serviceProviderRef2, SERVICE_PROVIDER2, hackerRef, HACKER, "red")
+          );
+        }
       }
     };
-  }, [selectedRunMethod]);
+  }, [selectedRunMethod, hackerVisible]);
 
   /**
    * This function updates the user requirements for a specific piece of equipment in the state.
@@ -829,8 +835,21 @@ const Demo = () => {
               <div id="serviceProvider1-freezer-line" />
               <div id="serviceProvider1-washingMachine-line" />
               <div id="serviceProvider2-evCharger-line" />
-              <div id="serviceProvider1-hacker-line" />
-              <div id="serviceProvider2-hacker-line" />
+              <AnimatePresence initial={false}>
+                {hackerVisible ? (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{
+                      opacity: { duration: 1, ease: "easeInOut" },
+                    }}
+                  >
+                    <div id="serviceProvider1-hacker-line" />
+                    <div id="serviceProvider2-hacker-line" />
+                  </motion.div>
+                ) : null}
+              </AnimatePresence>
             </>
           )}
           {movingDeployments.map((deployment) => (
@@ -1027,19 +1046,32 @@ const Demo = () => {
                           zIndex: 2,
                         }}
                       />
-                      <img
-                        src={HackerIcon}
-                        alt="HackerIcon"
-                        ref={hackerRef}
-                        style={{
-                          position: "absolute",
-                          top: "50%",
-                          left: "130.2%",
-                          width: "20%",
-                          height: "27%",
-                          zIndex: 2,
-                        }}
-                      />
+                      <AnimatePresence initial={false}>
+                        {hackerVisible ? (
+                          <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{
+                              opacity: { duration: 1, ease: "easeInOut" },
+                            }}
+                          >
+                            <img
+                              src={HackerIcon}
+                              alt="HackerIcon"
+                              ref={hackerRef}
+                              style={{
+                                position: "absolute",
+                                top: "50%",
+                                left: "130.2%",
+                                width: "20%",
+                                height: "27%",
+                                zIndex: 2,
+                              }}
+                            />
+                          </motion.div>
+                        ) : null}
+                      </AnimatePresence>
                       <img
                         src={CloudIcon}
                         alt="CloudIcon"
@@ -1145,6 +1177,9 @@ const Demo = () => {
                         handleOptimizedTimeSlots(optimizedTimeSlots, equipment)
                       }
                       onRunMethodSelect={(value) => onRunMethodSelect(value)}
+                      setHackerVisibility={(isHackerVisible) =>
+                        setHackerVisible(isHackerVisible)
+                      }
                     />
                   </div>
                   {selectedRunMethod === WITH_LIQUID_AI && (
