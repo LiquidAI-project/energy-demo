@@ -8,7 +8,7 @@ import { Popover, Tab, Tabs, Box } from '@mui/material';
 import userControlIcon from '../../assets/userControl.png';
 import WashinMachineControl from './WashingMachineControl';
 
-const UserControlUI = React.forwardRef((props, ref) => {
+const UserControlUI = React.forwardRef(function UserControlUI(props, ref) {
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedTab, setSelectedTab] = useState(0);
 
