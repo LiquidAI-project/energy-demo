@@ -32,7 +32,6 @@ const DemoControlls = ({
     const [demoTime, setDemoTime] = useState(new Date().setMinutes(0, 0));
     const [optimizedTimeSlots, setOptimizedTimeSlots] = useState({});
     const [selectedRunMethod, setSelectedRunMethod] = useState(WITHOUT_LIQUID_AI);
-    const [hourlyQueryCompleted, setHourlyQueryCompleted] = useState(false);
 
     const { changeHackerVisibility } = useDemoVisualizationContext();
 
@@ -87,20 +86,12 @@ const DemoControlls = ({
                     if (moduleName.includes("run")) {
                         onLogAdd(`${convertToLocalTime(optimizedTimeSlots[deviceName].startDate)} - Running ${deviceName} - ${optimizedTimeSlots[deviceName].price}c/kWh`);
                         setDemoRunning(true);
-                    } else {
-                        // await queryingcontinousAnimationRun();
                     }
 
                     const res = await runFunction(deploymentObj._id, 3600, Math.floor(demoTime / 1000));
 
                     onLogAdd(`${deviceName} consumed Energy: ${res[0]}kWh, Cost: ${((parseFloat(res[0])*parseFloat(optimizedTimeSlots[deviceName].price)) / 100).toFixed(2)}€`);
 
-                    // if (moduleName.includes("energy-query")) {
-                    //     const newTime = new Date(demoTime);
-                    //     newTime.setHours(newTime.getHours() + 1);
-                    //     onLogAdd(`Energy usage between (${new Date(demoTime).toLocaleTimeString()} - ${newTime.toLocaleTimeString()}) : ${res[0]}`);
-                    //     setHourlyQueryCompleted(true);
-                    // }
                 } else {
                     console.error("Device response status is not 200");
                 }
@@ -126,7 +117,6 @@ const DemoControlls = ({
                 param1: timeDuration,
             };
             const res = await fetchPostData(endpoint, postData);
-            // setDemoRunning(false);
             console.log(`Response from the wasm module:`, res);
             return res
         } catch (error) {
@@ -190,13 +180,6 @@ const DemoControlls = ({
       );
       onUpdateOptimizedTimeSlots(newOptimizedTimeSlots, deviceName);
     };
-
-    // useEffect(() => {
-    //     if (hourlyQueryCompleted) {
-    //         setHourlyQueryCompleted(false);
-    //         handleStart();
-    //     }
-    // }, [hourlyQueryCompleted]);
 
     useEffect(() => {
         const keys = Object.keys(userRequirement);

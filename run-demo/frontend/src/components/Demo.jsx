@@ -12,8 +12,8 @@ import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import backgroundImage from "./../assets/yard.png";
 import controlHub from "./../assets/controlHub.png";
-import Service_Provider1 from "./../assets/service_provider.png";
-import Service_Provider2 from "./../assets/service_provider.png";
+import Service_Provider1 from "./../assets/service_provider1.png";
+import Service_Provider2 from "./../assets/service_provider2.png";
 import houseImage from "./../assets/house.png";
 import House_Warning_Border from "./../assets/house_warning_border.png";
 import Freezer from "./visual_components/Freezer";
@@ -24,10 +24,7 @@ import ElectricCar2 from "./visual_components/ElectricCar2";
 import Jacuzzi from "./visual_components/Jacuzzi";
 import Orchestrator from "./../assets/orchestrator.png";
 import WebAssembly_Icon from "./../assets/WebAssembly_Logo.png";
-import ConfigurationIcon from "./../assets/configurationIcon.png";
-import Query_Icon from "./../assets/query_icon.png";
 import EnergyUsageIcon from "./../assets/energy_usage_icon.png";
-import Result_Icon_Red from "./../assets/result_icon_with_warning.png";
 import roadImage from "./../assets/road.png";
 import IntelligentControlIcon from "./../assets/intelligent_control.jpg";
 import EVChargerEnergyIcon from "../assets/ev_charger_energy.png";
@@ -40,8 +37,6 @@ import userPreferenceIcon from "../assets/user_preference_icon.png";
 import HackerIcon from "../assets/hacker_icon.png";
 import CloudIcon from "../assets/cloud_icon.png";
 import OptimizedSettingsIcon from "../assets/optimized_settings_icon.png";
-import ServiceProvider from "./serviceProvider/ServiceProvider";
-import ElectricityPrice from "./serviceProvider/energyQuery/ElectricityConsumption";
 import UserControlUI from "./userControl/UserControlUI";
 import { fetchData } from '../services/apiService';
 import DemoControlls from "./demoControll/DemoControlls";
@@ -1182,11 +1177,6 @@ const Demo = () => {
                   {selectedRunMethod === WITH_LIQUID_AI && (
                     <DemoDataVisualize logs={logs} />
                   )}
-                  {/* <ServiceProvider
-                    ref={serviceProviderRef}
-                    onClick={handleQueryClick}
-                  /> */}
-                  {/* <ElectricityPrice consumptionData={consumptionData} /> */}
                   {selectedRunMethod === WITH_LIQUID_AI && (
                     <a
                       href="https://www.helen.fi/en/electricity/electricity-products-and-prices/exchange-electricity"
