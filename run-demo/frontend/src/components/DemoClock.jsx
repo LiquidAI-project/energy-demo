@@ -4,7 +4,6 @@
 // Author(s): Lakshan Rathnayaka <lakshan.rathnayaka@tuni.fi>, Ville Heikkilä <ville.heikkila@tuni.fi>.
 
 import { useState, useEffect } from "react";
-import PropTypes from "prop-types";
 import { Box } from "@mui/material";
 import { useDemoControlContext } from "../context/demoControlContext/useDemoControlContext";
 
@@ -22,13 +21,14 @@ function getDayName(date) {
     return dayName;
 }
 
-function DemoClock({ onDemoTimeChange }) {
-    const [demoTime, setDemoTime] = useState(new Date().setMinutes(0, 0));
+function DemoClock() {
     const [demoPassedHours, setDmoPassedHours] = useState(0);
-    const demoTimeDateObj = new Date(demoTime);
     const [demoPassedMinutes, setDemoPassedMinutes] = useState(0);
 
-    const { demoRunning, setDemoRunning } = useDemoControlContext();
+    const { demoRunning, demoTime, setDemoRunning, setDemoTime } =
+      useDemoControlContext();
+
+    const demoTimeDateObj = new Date(demoTime);
 
     // Default speed 1 hour per 10 seconds
     const [speed, setSpeed] = useState(10000 / 6);
@@ -51,12 +51,10 @@ function DemoClock({ onDemoTimeChange }) {
                             newDemoTime.setHours(newDemoTime.getHours() + 1)
                         );
                         setDemoTime(newDemoTime.setMinutes(0));
-                        onDemoTimeChange(newDemoTime);
                     } else {
                         // Increase passed minutes by ten
                         const newPassedMinutes = demoPassedMinutes + 10;
                         setDemoTime(newDemoTime.setMinutes(newPassedMinutes));
-                        onDemoTimeChange(newDemoTime);
                         setDemoPassedMinutes(newPassedMinutes);
                     }
                 } else {
@@ -74,7 +72,7 @@ function DemoClock({ onDemoTimeChange }) {
         demoPassedHours,
         demoPassedMinutes,
         setDemoRunning,
-        onDemoTimeChange,
+        setDemoTime,
     ]);
 
     return (
@@ -98,8 +96,5 @@ function DemoClock({ onDemoTimeChange }) {
       </Box>
     );
 }
-DemoClock.propTypes = {
-    onDemoTimeChange: PropTypes.func.isRequired,
-};
 
 export default DemoClock;
