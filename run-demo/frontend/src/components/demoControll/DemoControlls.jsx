@@ -16,6 +16,7 @@ import UnsafeDataIcon from "../../assets/unsafe_data_icon.png";
 import DropdownMenu from "./DropdownMenu";
 import { getDeviceNameById } from "../../utils/deviceUtils";
 import { convertToLocalTime } from "../../utils/timeUtils";
+import { useDemoControlContext } from "../../context/demoControlContext/useDemoControlContext";
 
 // eslint-disable-next-line no-undef
 const ANIMATION_MOVING_TIME = process.env.ANIMATION_MOVING_TIME;
@@ -26,14 +27,13 @@ const DemoControlls = ({
   runMoveCodeAnimation,
   userRequirement,
   onUpdateOptimizedTimeSlots,
-  onRunMethodSelect,
 }) => {
     const [demoRunning, setDemoRunning] = useState(false);
     const [demoTime, setDemoTime] = useState(new Date().setMinutes(0, 0));
     const [optimizedTimeSlots, setOptimizedTimeSlots] = useState({});
-    const [selectedRunMethod, setSelectedRunMethod] = useState(WITHOUT_LIQUID_AI);
 
     const { changeHackerVisibility } = useDemoVisualizationContext();
+    const { demoRunMethod } = useDemoControlContext();
 
     /**
      * Deploys the wasm module to the specified device.
@@ -227,7 +227,7 @@ const DemoControlls = ({
             }
         };
 
-        if (selectedRunMethod === WITHOUT_LIQUID_AI &&  demoRunning) {
+        if (demoRunMethod === WITHOUT_LIQUID_AI &&  demoRunning) {
             continousAnimationRun();
 
             if (new Date(demoTime).getMinutes() === 20 || new Date(demoTime).getMinutes() === 50) {
@@ -244,7 +244,7 @@ const DemoControlls = ({
             }
         } 
 
-        if (selectedRunMethod === WITH_LIQUID_AI &&  demoRunning) {
+        if (demoRunMethod === WITH_LIQUID_AI &&  demoRunning) {
             if (new Date(demoTime).getMinutes() === 0) {
                 continousAnimationRun();
                 onLogAdd(`Spot price request`);
@@ -257,12 +257,7 @@ const DemoControlls = ({
     return (
       <div>
         <div>
-          <DropdownMenu
-            onRunMethodSelect={(value) => {
-              onRunMethodSelect(value); 
-              setSelectedRunMethod(value);
-            }}
-          />
+          <DropdownMenu />
           <Button
             variant="contained"
             color="primary"
@@ -298,7 +293,6 @@ DemoControlls.propTypes = {
     runMoveCodeAnimation: PropTypes.func.isRequired,
     userRequirement: PropTypes.object.isRequired,
     onUpdateOptimizedTimeSlots: PropTypes.func.isRequired,
-    onRunMethodSelect: PropTypes.func.isRequired,
 };
 
 export default DemoControlls;

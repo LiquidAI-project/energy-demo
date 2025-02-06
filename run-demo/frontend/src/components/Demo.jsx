@@ -58,6 +58,7 @@ import {
 } from "../../constants";
 import { v4 as uuidv4 } from 'uuid';
 import { useDemoVisualizationContext } from "../context/demoVisualizationContext/useDemoVisualizationContext";
+import { useDemoControlContext } from "../context/demoControlContext/useDemoControlContext";
 
 // eslint-disable-next-line no-undef
 const PUBLIC_HOST = process.env.PUBLIC_HOST;
@@ -96,8 +97,8 @@ const Demo = () => {
   const [logs, setLogs] = useState([]);
   const [userRequirements, setUserRequirements] = useState({});
   const [optimizedTimeSlots, setOptimizedTimeSlots] = useState({});
-  const [selectedRunMethod, setSelectedRunMethod] = useState(WITHOUT_LIQUID_AI);
   const { hackerVisibility } = useDemoVisualizationContext();
+  const { demoRunMethod } = useDemoControlContext();
 
   // This function will make the house border blink in order to indicate the warning state when data is going outside
   const startBlinking = () => {
@@ -239,7 +240,7 @@ const Demo = () => {
   const continousAnimationRun = async () => {
     const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-    if (selectedRunMethod === WITH_LIQUID_AI) {
+    if (demoRunMethod === WITH_LIQUID_AI) {
       moveCodeAnimation(ENERGY_COMPANY, INTELLIGENT_CONTROL, SpotPriceDataIcon);
     } else {
 
@@ -545,7 +546,7 @@ const Demo = () => {
       }
     };
 
-    if (selectedRunMethod === WITH_LIQUID_AI) {
+    if (demoRunMethod === WITH_LIQUID_AI) {
       drawLines(
         orchestratorRef,
         ORCHESTRATOR,
@@ -673,7 +674,7 @@ const Demo = () => {
     }
 
     return () => {
-      if (selectedRunMethod === WITH_LIQUID_AI) {
+      if (demoRunMethod === WITH_LIQUID_AI) {
         window.removeEventListener("resize", () =>
           drawLines(
             orchestratorRef,
@@ -750,7 +751,7 @@ const Demo = () => {
         }
       }
     };
-  }, [selectedRunMethod, hackerVisibility]);
+  }, [demoRunMethod, hackerVisibility]);
 
   /**
    * This function updates the user requirements for a specific piece of equipment in the state.
@@ -779,16 +780,6 @@ const Demo = () => {
     });
   };
 
-  /**
-   * This function updates the demo running method
-   *
-   * @param {String} method - Running method selected by the user. With or without liquid AI.
-   *
-   */
-  const onRunMethodSelect = (method) => {
-    setSelectedRunMethod(method);
-  };
-
   return (
     <div>
       <div
@@ -815,7 +806,7 @@ const Demo = () => {
           columns={5}
           style={{ paddingRight: "3vh", paddingLeft: "3vh" }}
         >
-          {selectedRunMethod === WITH_LIQUID_AI && (
+          {demoRunMethod === WITH_LIQUID_AI && (
             <>
               <div id="orchestrator-freezer-line" />
               <div id="orchestrator-washingMachine-line" />
@@ -825,7 +816,7 @@ const Demo = () => {
               <div id="orchestrator-evCharger-line" />
             </>
           )}
-          {selectedRunMethod === WITHOUT_LIQUID_AI && (
+          {demoRunMethod === WITHOUT_LIQUID_AI && (
             <>
               <div id="serviceProvider1-freezer-line" />
               <div id="serviceProvider1-washingMachine-line" />
@@ -850,7 +841,7 @@ const Demo = () => {
           {movingDeployments.map((deployment) => (
             <MovingIcon key={deployment.id} deployment={deployment} />
           ))}
-          {selectedRunMethod === WITH_LIQUID_AI &&
+          {demoRunMethod === WITH_LIQUID_AI &&
             activeDeployments.map((deployment, index) => (
               <motion.div
                 key={index}
@@ -961,7 +952,7 @@ const Demo = () => {
                       height: "29.2%",
                     }}
                   />
-                  {selectedRunMethod === WITH_LIQUID_AI && (
+                  {demoRunMethod === WITH_LIQUID_AI && (
                     <img
                       src={Orchestrator}
                       alt="Orchestrator"
@@ -976,7 +967,7 @@ const Demo = () => {
                       }}
                     />
                   )}
-                  {selectedRunMethod === WITH_LIQUID_AI && (
+                  {demoRunMethod === WITH_LIQUID_AI && (
                     <img
                       src={IntelligentControlIcon}
                       alt="IntelligentControl"
@@ -991,7 +982,7 @@ const Demo = () => {
                       }}
                     />
                   )}
-                  {selectedRunMethod === WITH_LIQUID_AI && (
+                  {demoRunMethod === WITH_LIQUID_AI && (
                     <UserControlUI
                       ref={userControlRef}
                       onUserRequirementChange={(userRequirement, equipment) =>
@@ -1000,7 +991,7 @@ const Demo = () => {
                       optimizedTimeSlots={optimizedTimeSlots}
                     />
                   )}
-                  {selectedRunMethod === WITH_LIQUID_AI && (
+                  {demoRunMethod === WITH_LIQUID_AI && (
                     <img
                       src={Energy_Company_Icon}
                       alt="energyCompany"
@@ -1015,7 +1006,7 @@ const Demo = () => {
                       }}
                     />
                   )}
-                  {selectedRunMethod === WITHOUT_LIQUID_AI && (
+                  {demoRunMethod === WITHOUT_LIQUID_AI && (
                     <>
                       <img
                         src={Service_Provider1}
@@ -1171,13 +1162,12 @@ const Demo = () => {
                       ) =>
                         handleOptimizedTimeSlots(optimizedTimeSlots, equipment)
                       }
-                      onRunMethodSelect={(value) => onRunMethodSelect(value)}
                     />
                   </div>
-                  {selectedRunMethod === WITH_LIQUID_AI && (
+                  {demoRunMethod === WITH_LIQUID_AI && (
                     <DemoDataVisualize logs={logs} />
                   )}
-                  {selectedRunMethod === WITH_LIQUID_AI && (
+                  {demoRunMethod === WITH_LIQUID_AI && (
                     <a
                       href="https://www.helen.fi/en/electricity/electricity-products-and-prices/exchange-electricity"
                       target="_blank"
