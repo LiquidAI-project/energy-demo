@@ -62,6 +62,7 @@ import {
   WITH_LIQUID_AI,
 } from "../../constants";
 import { v4 as uuidv4 } from 'uuid';
+import { useDemoVisualizationContext } from "../context/DemoVisualizationContext/useDemoVisualizationContext";
 
 // eslint-disable-next-line no-undef
 const PUBLIC_HOST = process.env.PUBLIC_HOST;
@@ -101,8 +102,7 @@ const Demo = () => {
   const [userRequirements, setUserRequirements] = useState({});
   const [optimizedTimeSlots, setOptimizedTimeSlots] = useState({});
   const [selectedRunMethod, setSelectedRunMethod] = useState(WITHOUT_LIQUID_AI);
-  const [hackerVisible, setHackerVisible] = useState(false);
-  const [consumptionData, setConsumptionData] = useState([]);
+  const { hackerVisibility } = useDemoVisualizationContext();
 
   // This function will make the house border blink in order to indicate the warning state when data is going outside
   const startBlinking = () => {
@@ -644,7 +644,7 @@ const Demo = () => {
         evChargerRef,
         EV_CHARGER
       );
-      if(hackerVisible) {
+      if(hackerVisibility) {
         drawLines(serviceProviderRef1, SERVICE_PROVIDER1, hackerRef, HACKER, "red");
         drawLines(serviceProviderRef2, SERVICE_PROVIDER2, hackerRef, HACKER, "red");
       }
@@ -667,7 +667,7 @@ const Demo = () => {
           EV_CHARGER
         )
       );
-      if(hackerVisible) {
+      if(hackerVisibility) {
         window.addEventListener("resize", () =>
           drawLines(serviceProviderRef1, SERVICE_PROVIDER1, hackerRef, HACKER, "red")
         );
@@ -745,7 +745,7 @@ const Demo = () => {
             EV_CHARGER
           )
         );
-        if(hackerVisible) {
+        if(hackerVisibility) {
           window.removeEventListener("resize", () =>
             drawLines(serviceProviderRef1, SERVICE_PROVIDER1, hackerRef, HACKER, "red")
           );
@@ -755,7 +755,7 @@ const Demo = () => {
         }
       }
     };
-  }, [selectedRunMethod, hackerVisible]);
+  }, [selectedRunMethod, hackerVisibility]);
 
   /**
    * This function updates the user requirements for a specific piece of equipment in the state.
@@ -836,7 +836,7 @@ const Demo = () => {
               <div id="serviceProvider1-washingMachine-line" />
               <div id="serviceProvider2-evCharger-line" />
               <AnimatePresence initial={false}>
-                {hackerVisible ? (
+                {hackerVisibility ? (
                   <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -1047,7 +1047,7 @@ const Demo = () => {
                         }}
                       />
                       <AnimatePresence initial={false}>
-                        {hackerVisible ? (
+                        {hackerVisibility ? (
                           <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
@@ -1177,9 +1177,6 @@ const Demo = () => {
                         handleOptimizedTimeSlots(optimizedTimeSlots, equipment)
                       }
                       onRunMethodSelect={(value) => onRunMethodSelect(value)}
-                      setHackerVisibility={(isHackerVisible) =>
-                        setHackerVisible(isHackerVisible)
-                      }
                     />
                   </div>
                   {selectedRunMethod === WITH_LIQUID_AI && (

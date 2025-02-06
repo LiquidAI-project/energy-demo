@@ -5,6 +5,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Button } from "@mui/material";
+import { useDemoVisualizationContext } from "../../context/DemoVisualizationContext/useDemoVisualizationContext";
 import { fetchData,fetchPostData, fetchIntelligentControllerData } from "../../services/apiService";
 import RealtimeClock from "../RealtimeClock";
 import DemoClock from "../DemoClock";
@@ -26,13 +27,14 @@ const DemoControlls = ({
   userRequirement,
   onUpdateOptimizedTimeSlots,
   onRunMethodSelect,
-  setHackerVisibility,
 }) => {
     const [demoRunning, setDemoRunning] = useState(false);
     const [demoTime, setDemoTime] = useState(new Date().setMinutes(0, 0));
     const [optimizedTimeSlots, setOptimizedTimeSlots] = useState({});
     const [selectedRunMethod, setSelectedRunMethod] = useState(WITHOUT_LIQUID_AI);
     const [hourlyQueryCompleted, setHourlyQueryCompleted] = useState(false);
+
+    const { changeHackerVisibility } = useDemoVisualizationContext();
 
     /**
      * Deploys the wasm module to the specified device.
@@ -246,7 +248,7 @@ const DemoControlls = ({
             continousAnimationRun();
 
             if (new Date(demoTime).getMinutes() === 20 || new Date(demoTime).getMinutes() === 50) {
-                setHackerVisibility(true);
+                changeHackerVisibility(true);
             }
 
             if (new Date(demoTime).getMinutes() === 0 || new Date(demoTime).getMinutes() === 30) {
@@ -255,7 +257,7 @@ const DemoControlls = ({
             }
 
             if (new Date(demoTime).getMinutes() === 10 || new Date(demoTime).getMinutes() === 40) {
-                setHackerVisibility(false);
+                changeHackerVisibility(false);
             }
         } 
 
@@ -314,7 +316,6 @@ DemoControlls.propTypes = {
     userRequirement: PropTypes.object.isRequired,
     onUpdateOptimizedTimeSlots: PropTypes.func.isRequired,
     onRunMethodSelect: PropTypes.func.isRequired,
-    setHackerVisibility: PropTypes.func.isRequired,
 };
 
 export default DemoControlls;
