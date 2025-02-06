@@ -57,7 +57,7 @@ import {
   WITH_LIQUID_AI,
 } from "../../constants";
 import { v4 as uuidv4 } from 'uuid';
-import { useDemoVisualizationContext } from "../context/DemoVisualizationContext/useDemoVisualizationContext";
+import { useDemoVisualizationContext } from "../context/demoVisualizationContext/useDemoVisualizationContext";
 
 // eslint-disable-next-line no-undef
 const PUBLIC_HOST = process.env.PUBLIC_HOST;

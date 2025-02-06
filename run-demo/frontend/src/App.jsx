@@ -1,6 +1,6 @@
 import Demo from "./components/Demo";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
-import { DemoVisualizationProvider } from "./context/DemoVisualizationContext/DemoVisualizationContext";
+import { DemoVisualizationProvider } from "./context/demoVisualizationContext/DemoVisualizationContext";
 
 function App() {
   return (

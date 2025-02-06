@@ -5,7 +5,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Button } from "@mui/material";
-import { useDemoVisualizationContext } from "../../context/DemoVisualizationContext/useDemoVisualizationContext";
+import { useDemoVisualizationContext } from "../../context/demoVisualizationContext/useDemoVisualizationContext";
 import { fetchData,fetchPostData, fetchIntelligentControllerData } from "../../services/apiService";
 import RealtimeClock from "../RealtimeClock";
 import DemoClock from "../DemoClock";
