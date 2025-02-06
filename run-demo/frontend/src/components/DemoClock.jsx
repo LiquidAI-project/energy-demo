@@ -6,6 +6,7 @@
 import { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { Box } from "@mui/material";
+import { useDemoControlContext } from "../context/demoControlContext/useDemoControlContext";
 
 function getDayName(date) {
     var days = [
@@ -21,11 +22,13 @@ function getDayName(date) {
     return dayName;
 }
 
-function DemoClock({ demoRunning, setDemoRunning, onDemoTimeChange }) {
+function DemoClock({ onDemoTimeChange }) {
     const [demoTime, setDemoTime] = useState(new Date().setMinutes(0, 0));
     const [demoPassedHours, setDmoPassedHours] = useState(0);
     const demoTimeDateObj = new Date(demoTime);
     const [demoPassedMinutes, setDemoPassedMinutes] = useState(0);
+
+    const { demoRunning, setDemoRunning } = useDemoControlContext();
 
     // Default speed 1 hour per 10 seconds
     const [speed, setSpeed] = useState(10000 / 6);
@@ -96,8 +99,6 @@ function DemoClock({ demoRunning, setDemoRunning, onDemoTimeChange }) {
     );
 }
 DemoClock.propTypes = {
-    demoRunning: PropTypes.bool.isRequired,
-    setDemoRunning: PropTypes.func.isRequired,
     onDemoTimeChange: PropTypes.func.isRequired,
 };
 

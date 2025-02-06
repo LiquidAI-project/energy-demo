@@ -28,12 +28,11 @@ const DemoControlls = ({
   userRequirement,
   onUpdateOptimizedTimeSlots,
 }) => {
-    const [demoRunning, setDemoRunning] = useState(false);
     const [demoTime, setDemoTime] = useState(new Date().setMinutes(0, 0));
     const [optimizedTimeSlots, setOptimizedTimeSlots] = useState({});
 
     const { changeHackerVisibility } = useDemoVisualizationContext();
-    const { demoRunMethod } = useDemoControlContext();
+    const { demoRunMethod, demoRunning, setDemoRunning } = useDemoControlContext();
 
     /**
      * Deploys the wasm module to the specified device.
@@ -278,8 +277,6 @@ const DemoControlls = ({
         <div style={{ marginTop: "5%" }}>
           <RealtimeClock />
           <DemoClock
-            demoRunning={demoRunning}
-            setDemoRunning={(status) => setDemoRunning(status)}
             onDemoTimeChange={(newTime) => setDemoTime(newTime)}
           />
         </div>
