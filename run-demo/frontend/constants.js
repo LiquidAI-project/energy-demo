@@ -16,6 +16,7 @@ export const INTELLIGENT_CONTROL = "intelligentControl";
 export const USER_CONTROL = "userControl";
 export const EV_CHARGER = "evCharger";
 export const ENERGY_COMPANY = "energyCompany";
+export const FLEXIBILITY_SERVICE = "flexibilityService";
 export const HACKER = "hacker";
 export const WITH_LIQUID_AI = "With Liquid AI";
 export const WITHOUT_LIQUID_AI = "Without Liquid AI";

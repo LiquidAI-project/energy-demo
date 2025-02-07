@@ -30,6 +30,7 @@ import IntelligentControlIcon from "./../assets/intelligent_control.jpg";
 import EVChargerEnergyIcon from "../assets/ev_charger_energy.png";
 import EVChargerIcon from "../assets/ev_charger.png";
 import Energy_Company_Icon from "../assets/spot_price.png";
+import FlexibilityServiceIcon from "../assets/flexibility_service.jpg";
 import SpotPriceDataIcon from "../assets/spotPriceDataIcon.png";
 import TemperatureDataIcon from "../assets/temperature_data_icon.png";
 import DangerIcon from "../assets/danger_icon.png";
@@ -49,6 +50,7 @@ import {
   SERVICE_PROVIDER1,
   SERVICE_PROVIDER2,
   ENERGY_COMPANY,
+  FLEXIBILITY_SERVICE,
   INTELLIGENT_CONTROL,
   USER_CONTROL,
   EV_CHARGER,
@@ -85,6 +87,7 @@ const Demo = () => {
   const intelligentControlRef = useRef(null);
   const userControlRef = useRef(null);
   const energyCompanyRef = useRef(null);
+  const flexibilityServiceRef = useRef(null);
   const evChargerRef = useRef(null);
   const hackerRef = useRef(null);
   const logsQueueRef = useRef([]);
@@ -130,6 +133,7 @@ const Demo = () => {
       [USER_CONTROL]: userControlRef,
       [EV_CHARGER]: evChargerRef,
       [ENERGY_COMPANY]: energyCompanyRef,
+      [FLEXIBILITY_SERVICE]: flexibilityServiceRef,
       [HACKER]: hackerRef,
       // Add more device names and their references here
     }),
@@ -578,6 +582,12 @@ const Demo = () => {
         intelligentControlRef,
         INTELLIGENT_CONTROL
       );
+      drawLines(
+        flexibilityServiceRef,
+        FLEXIBILITY_SERVICE,
+        intelligentControlRef,
+        INTELLIGENT_CONTROL
+      );
 
       window.addEventListener("resize", () =>
         drawLines(
@@ -621,6 +631,14 @@ const Demo = () => {
         drawLines(
           energyCompanyRef,
           ENERGY_COMPANY,
+          intelligentControlRef,
+          INTELLIGENT_CONTROL
+        )
+      );
+      window.addEventListener("resize", () =>
+        drawLines(
+          flexibilityServiceRef,
+          FLEXIBILITY_SERVICE,
           intelligentControlRef,
           INTELLIGENT_CONTROL
         )
@@ -720,6 +738,14 @@ const Demo = () => {
             INTELLIGENT_CONTROL
           )
         );
+        window.removeEventListener("resize", () =>
+          drawLines(
+            flexibilityServiceRef,
+            FLEXIBILITY_SERVICE,
+            intelligentControlRef,
+            INTELLIGENT_CONTROL
+          )
+        );
       } else {
         window.removeEventListener("resize", () =>
           drawLines(
@@ -811,6 +837,7 @@ const Demo = () => {
               <div id="orchestrator-washingMachine-line" />
               <div id="orchestrator-intelligentControl-line" />
               <div id="energyCompany-intelligentControl-line" />
+              <div id="flexibilityService-intelligentControl-line" />
               <div id="userControl-intelligentControl-line" />
               <div id="orchestrator-evCharger-line" />
             </>
@@ -998,8 +1025,23 @@ const Demo = () => {
                       style={{
                         position: "absolute",
                         top: "90%",
-                        left: "20.2%",
+                        left: "10.2%",
                         width: "15%",
+                        height: "10%",
+                        zIndex: 2,
+                      }}
+                    />
+                  )}
+                  {demoRunMethod === WITH_LIQUID_AI && (
+                    <img
+                      src={FlexibilityServiceIcon}
+                      alt="FlexibilityServiceIcon"
+                      ref={flexibilityServiceRef}
+                      style={{
+                        position: "absolute",
+                        top: "90%",
+                        left: "40.2%",
+                        width: "10%",
                         height: "10%",
                         zIndex: 2,
                       }}
