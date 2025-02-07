@@ -22,13 +22,9 @@ function getDayName(date) {
 }
 
 function DemoClock() {
-    const [demoPassedHours, setDmoPassedHours] = useState(0);
-    const [demoPassedMinutes, setDemoPassedMinutes] = useState(0);
 
     const { demoRunning, demoTime, setDemoRunning, setDemoTime } =
       useDemoControlContext();
-
-    const demoTimeDateObj = new Date(demoTime);
 
     // Default speed 1 hour per 10 seconds
     const [speed, setSpeed] = useState(10000 / 6);
@@ -38,24 +34,21 @@ function DemoClock() {
     useEffect(() => {
         let intervalId;
 
-        if (demoRunning || demoPassedMinutes >= 50) {
+        if (demoRunning || new Date(demoTime).getMinutes() >= 50) {
             intervalId = setInterval(() => {
                 setSpeed(speed);
                 // Increase hours while passed hours are low enough
-                if (demoPassedHours < 24) {
+                if (new Date(demoTime).getHours() < 24) {
                     const newDemoTime = new Date(demoTime);
-                    if (demoPassedMinutes >= 50) {
-                        setDemoPassedMinutes(0);
-                        setDmoPassedHours(demoPassedHours + 1);
+                    if (new Date(demoTime).getMinutes() >= 50) {
                         setDemoTime(
                             newDemoTime.setHours(newDemoTime.getHours() + 1)
                         );
                         setDemoTime(newDemoTime.setMinutes(0));
                     } else {
                         // Increase passed minutes by ten
-                        const newPassedMinutes = demoPassedMinutes + 10;
+                        const newPassedMinutes = new Date(demoTime).getMinutes() + 10;
                         setDemoTime(newDemoTime.setMinutes(newPassedMinutes));
-                        setDemoPassedMinutes(newPassedMinutes);
                     }
                 } else {
                     // stop the interval when demoPassedHours reaches 24
@@ -69,8 +62,6 @@ function DemoClock() {
         demoRunning,
         speed,
         demoTime,
-        demoPassedHours,
-        demoPassedMinutes,
         setDemoRunning,
         setDemoTime,
     ]);
@@ -86,10 +77,10 @@ function DemoClock() {
                 padding: "2px",
               }}
             >
-              {String(demoTimeDateObj.getHours()).padStart(2, "0")}:
-              {String(demoPassedMinutes).padStart(2, "0")},{" "}
-              {getDayName(demoTimeDateObj)} {demoTimeDateObj.getDate()}.
-              {demoTimeDateObj.getMonth() + 1}. &#x1F4C5;
+              {String(new Date(demoTime).getHours()).padStart(2, "0")}:
+              {String(new Date(demoTime).getMinutes()).padStart(2, "0")},{" "}
+              {getDayName(new Date(demoTime))} {new Date(demoTime).getDate()}.
+              {new Date(demoTime).getMonth() + 1}. &#x1F4C5;
             </span>
           </Box>
         </Box>

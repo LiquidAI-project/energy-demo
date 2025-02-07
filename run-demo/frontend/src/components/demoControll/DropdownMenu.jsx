@@ -7,11 +7,14 @@ import { WITHOUT_LIQUID_AI, WITH_LIQUID_AI } from '../../../constants';
 import { useDemoControlContext } from '../../context/demoControlContext/useDemoControlContext';
 
 const DropdownMenu = () => {
-  const { demoRunMethod, changeDemoRunMethod } = useDemoControlContext();
+  const { demoRunMethod, changeDemoRunMethod, setDemoTime } = useDemoControlContext();
 
   const handleChange = (e) => {
     const selectedValue = e.target.value;
     changeDemoRunMethod(selectedValue);
+    const resetDemoTime = new Date();
+    resetDemoTime.setHours(0, 0, 0, 0);
+    setDemoTime(resetDemoTime);
   };
 
   return (

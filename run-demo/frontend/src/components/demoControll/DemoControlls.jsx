@@ -7,7 +7,6 @@ import { useState, useEffect, useCallback } from "react";
 import { Button } from "@mui/material";
 import { useDemoVisualizationContext } from "../../context/demoVisualizationContext/useDemoVisualizationContext";
 import { fetchData,fetchPostData, fetchIntelligentControllerData } from "../../services/apiService";
-import RealtimeClock from "../RealtimeClock";
 import DemoClock from "../DemoClock";
 import PropTypes from "prop-types";
 import { HACKER, INTELLIGENT_CONTROL, ORCHESTRATOR, SERVICE_PROVIDER1, SERVICE_PROVIDER2, USER_CONTROL, WASHING_MACHINE, WITHOUT_LIQUID_AI, WITH_LIQUID_AI } from "../../../constants";
@@ -274,7 +273,6 @@ const DemoControlls = ({
           </Button>
         </div>
         <div style={{ marginTop: "5%" }}>
-          <RealtimeClock />
           <DemoClock />
         </div>
       </div>
