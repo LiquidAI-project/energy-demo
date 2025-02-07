@@ -228,16 +228,16 @@ const DemoControlls = ({
         if (demoRunMethod === WITHOUT_LIQUID_AI &&  demoRunning) {
             continousAnimationRun();
 
-            if (new Date(demoTime).getMinutes() === 20 || new Date(demoTime).getMinutes() === 50) {
+            if (new Date(demoTime).getMinutes() === 40) {
                 changeHackerVisibility(true);
             }
 
-            if (new Date(demoTime).getMinutes() === 0 || new Date(demoTime).getMinutes() === 30) {
+            if (new Date(demoTime).getMinutes() === 50) {
                 runMoveCodeAnimation(SERVICE_PROVIDER1, HACKER, UnsafeDataIcon);
                 runMoveCodeAnimation(SERVICE_PROVIDER2, HACKER, UnsafeDataIcon);
             }
 
-            if (new Date(demoTime).getMinutes() === 10 || new Date(demoTime).getMinutes() === 40) {
+            if (new Date(demoTime).getMinutes() === 20) {
                 changeHackerVisibility(false);
             }
         } 
