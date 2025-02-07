@@ -8,11 +8,14 @@ import PropTypes from "prop-types";
 
 const DemoVisualizationContext = createContext({
   hackerVisibility: false,
+  movingDeployments: [],
   changeHackerVisibility: () => {},
+  setMovingDeployments: () => {},
 });
 
 export const DemoVisualizationProvider = ({ children }) => {
   const [hackerVisibility, setHackerVisibility] = useState(false);
+  const [movingDeployments, setMovingDeployments] = useState([]);
 
   // Function to toggle the visibility of hacker Icon
   const changeHackerVisibility = (isHackerVisible) => {
@@ -20,8 +23,8 @@ export const DemoVisualizationProvider = ({ children }) => {
   };
 
   const value = useMemo(
-    () => ({ hackerVisibility, changeHackerVisibility }),
-    [hackerVisibility]
+    () => ({ hackerVisibility, movingDeployments, changeHackerVisibility, setMovingDeployments }),
+    [hackerVisibility, movingDeployments]
   );
 
   return (

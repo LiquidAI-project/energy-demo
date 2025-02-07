@@ -90,14 +90,13 @@ const Demo = () => {
   const logsQueueRef = useRef([]);
   const healthLogTimerRef = useRef(null);
 
-  const [movingDeployments, setMovingDeployments] = useState([]);
   const [activeDeployments, setActiveDeployments] = useState([]);
   const [warningBorderVisible, setWarningBorderVisible] = useState(false);
   const [shouldBlink, setShouldBlink] = useState(false);
   const [logs, setLogs] = useState([]);
   const [userRequirements, setUserRequirements] = useState({});
   const [optimizedTimeSlots, setOptimizedTimeSlots] = useState({});
-  const { hackerVisibility } = useDemoVisualizationContext();
+  const { hackerVisibility, movingDeployments, setMovingDeployments } = useDemoVisualizationContext();
   const { demoRunMethod } = useDemoControlContext();
 
   // This function will make the house border blink in order to indicate the warning state when data is going outside

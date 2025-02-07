@@ -5,9 +5,11 @@
 
 import { WITHOUT_LIQUID_AI, WITH_LIQUID_AI } from '../../../constants';
 import { useDemoControlContext } from '../../context/demoControlContext/useDemoControlContext';
+import { useDemoVisualizationContext } from '../../context/demoVisualizationContext/useDemoVisualizationContext';
 
 const DropdownMenu = () => {
-  const { demoRunMethod, changeDemoRunMethod, setDemoTime } = useDemoControlContext();
+  const { demoRunMethod, changeDemoRunMethod, setDemoRunning, setDemoTime } = useDemoControlContext();
+  const { setMovingDeployments } = useDemoVisualizationContext();
 
   const handleChange = (e) => {
     const selectedValue = e.target.value;
@@ -15,6 +17,8 @@ const DropdownMenu = () => {
     const resetDemoTime = new Date();
     resetDemoTime.setHours(0, 0, 0, 0);
     setDemoTime(resetDemoTime);
+    setDemoRunning(false);
+    setMovingDeployments([]);
   };
 
   return (
