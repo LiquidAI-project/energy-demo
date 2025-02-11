@@ -62,7 +62,7 @@ const OperatingTimeChart = () => {
       <Grid
         item
         xs={12}
-        key={index}
+        key={task.name}
         sx={{ position: "relative", marginBottom: 2 }}
       >
         <Box sx={{ padding: 1, position: "relative", width: chartWidth }}>
@@ -100,9 +100,9 @@ const OperatingTimeChart = () => {
             marginRight: 2,
           }}
         >
-          {tasks.map((task, taskIndex) => (
+          {tasks.map((task) => (
             <Typography
-              key={taskIndex}
+              key={task.name}
               variant="body1"
               sx={{ textAlign: "center", marginBottom: 1 }}
             >
