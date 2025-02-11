@@ -4,42 +4,22 @@
 // Author(s): Lakshan Rathnayaka <lakshan.rathnayaka@tuni.fi>, Ville Heikkilä <ville.heikkila@tuni.fi>.
 
 import { Grid, Typography, Box } from "@mui/material";
+import { useDemoVisualizationContext } from "../../context/demoVisualizationContext/useDemoVisualizationContext";
 
 // Helper function to calculate the duration in hours
 const calculateDurationInHours = (start, end) => {
   return end - start;
 };
 
-// Task data with multiple slots (purely hourly)
-const tasks = [
-  {
-    name: "Washing Machine",
-    slots: [
-      { start: 8, end: 12 }, // 8 AM to 12 PM
-      { start: 14, end: 18 }, // 2 PM to 6 PM
-    ],
-  },
-  {
-    name: "Freezer",
-    slots: [
-      { start: 9, end: 17 }, // 9 AM to 5 PM
-    ],
-  },
-  {
-    name: "EV charger",
-    slots: [
-      { start: 10, end: 24 }, // 10 AM to 2 PM
-    ],
-  },
-];
-
 const OperatingTimeChart = () => {
+
+  const { dayPlans } = useDemoVisualizationContext();
   const chartWidth = "100%";
   const hourWidth = 100 / 24;
 
-  // Render the tasks with slots
-  const renderTasks = tasks.map((task, index) => {
-    const renderSlots = task.slots.map((slot, slotIndex) => {
+  // Render the dayPlans with slots
+  const renderDayPlans = dayPlans.map((devicePlan, index) => {
+    const renderSlots = devicePlan.slots.map((slot, slotIndex) => {
       const taskDuration = calculateDurationInHours(slot.start, slot.end);
       const taskOffset = slot.start * hourWidth;
 
@@ -62,7 +42,7 @@ const OperatingTimeChart = () => {
       <Grid
         item
         xs={12}
-        key={task.name}
+        key={devicePlan.name}
         sx={{ position: "relative", marginBottom: 2 }}
       >
         <Box sx={{ padding: 1, position: "relative", width: chartWidth }}>
@@ -91,7 +71,7 @@ const OperatingTimeChart = () => {
           marginBottom: 2,
         }}
       >
-        {/* Task names on the left */}
+        {/* Device names on the left */}
         <Box
           sx={{
             display: "flex",
@@ -100,18 +80,18 @@ const OperatingTimeChart = () => {
             marginRight: 2,
           }}
         >
-          {tasks.map((task) => (
+          {dayPlans.map((devicePlan) => (
             <Typography
-              key={task.name}
+              key={devicePlan.name}
               variant="body1"
               sx={{ textAlign: "center", marginBottom: 1 }}
             >
-              {task.name}
+              {devicePlan.name}
             </Typography>
           ))}
         </Box>
 
-        {/* The Graph for Task Slots */}
+        {/* The Graph for Device Slots */}
         <Box
           sx={{
             display: "flex",
@@ -120,8 +100,8 @@ const OperatingTimeChart = () => {
             width: chartWidth,
           }}
         >
-          {/* Task Rows */}
-          <Box sx={{ position: "relative", marginTop: 2 }}>{renderTasks}</Box>
+          {/* Device Rows */}
+          <Box sx={{ position: "relative", marginTop: 2 }}>{renderDayPlans}</Box>
 
           {/* Vertical Grid Lines (X-Axis) */}
           <Box

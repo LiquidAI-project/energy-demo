@@ -5,17 +5,21 @@
 
 import { createContext, useState, useMemo } from "react";
 import PropTypes from "prop-types";
+import { initialDayPlan } from "../../assets/mockData/dailyPlan";
 
 const DemoVisualizationContext = createContext({
   hackerVisibility: false,
   movingDeployments: [],
+  dayPlans: initialDayPlan,
   changeHackerVisibility: () => {},
   setMovingDeployments: () => {},
+  setDayPlans: () => {},
 });
 
 export const DemoVisualizationProvider = ({ children }) => {
   const [hackerVisibility, setHackerVisibility] = useState(false);
   const [movingDeployments, setMovingDeployments] = useState([]);
+  const [dayPlans, setDayPlans] = useState(initialDayPlan);
 
   // Function to toggle the visibility of hacker Icon
   const changeHackerVisibility = (isHackerVisible) => {
@@ -23,8 +27,15 @@ export const DemoVisualizationProvider = ({ children }) => {
   };
 
   const value = useMemo(
-    () => ({ hackerVisibility, movingDeployments, changeHackerVisibility, setMovingDeployments }),
-    [hackerVisibility, movingDeployments]
+    () => ({
+      hackerVisibility,
+      movingDeployments,
+      dayPlans,
+      changeHackerVisibility,
+      setMovingDeployments,
+      setDayPlans,
+    }),
+    [hackerVisibility, movingDeployments, dayPlans]
   );
 
   return (
