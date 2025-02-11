@@ -5,6 +5,7 @@
 
 import { Grid, Typography, Box } from "@mui/material";
 import { useDemoVisualizationContext } from "../../context/demoVisualizationContext/useDemoVisualizationContext";
+import { useDemoControlContext } from "../../context/demoControlContext/useDemoControlContext";
 
 // Helper function to calculate the duration in hours
 const calculateDurationInHours = (start, end) => {
@@ -14,8 +15,12 @@ const calculateDurationInHours = (start, end) => {
 const OperatingTimeChart = () => {
 
   const { dayPlans } = useDemoVisualizationContext();
+  const { demoTime } = useDemoControlContext();
   const chartWidth = "100%";
   const hourWidth = 100 / 24;
+  
+  // Calculate the position of the current demo time (red line)
+  const demoTimePosition = (new Date(demoTime).getHours()/ 24) * 100 + (new Date(demoTime).getMinutes() / 60) * (100 / 24);
 
   // Render the dayPlans with slots
   const renderDayPlans = dayPlans.map((devicePlan, index) => {
@@ -127,6 +132,18 @@ const OperatingTimeChart = () => {
               />
             ))}
           </Box>
+
+          {/* Red Vertical Line for Demo Time */}
+          <Box
+            sx={{
+              position: "absolute",
+              top: 0,
+              left: `${demoTimePosition}%`,
+              bottom: 0,
+              width: "2px",
+              backgroundColor: "red",
+            }}
+          />
 
           {/* Time labels at the bottom of the graph */}
           <Box sx={{ padding: 1 }}>
