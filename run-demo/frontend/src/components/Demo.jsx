@@ -22,14 +22,13 @@ import MovingIcon from "./visual_components/MovingIcon";
 import ElectricCar1 from "./visual_components/ElectricCar1";
 import ElectricCar2 from "./visual_components/ElectricCar2";
 import Jacuzzi from "./visual_components/Jacuzzi";
+import EvCharger from "./visual_components/EvCharger";
 import Orchestrator from "./../assets/orchestrator.png";
 import Storage from "./../assets/storage.png";
 import WebAssembly_Icon from "./../assets/WebAssembly_Logo.png";
 import EnergyUsageIcon from "./../assets/energy_usage_icon.png";
 import roadImage from "./../assets/road.png";
 import IntelligentControlIcon from "./../assets/intelligent_control.jpg";
-import EVChargerEnergyIcon from "../assets/ev_charger_energy.png";
-import EVChargerIcon from "../assets/ev_charger.png";
 import Energy_Company_Icon from "../assets/spot_price.png";
 import FlexibilityServiceIcon from "../assets/flexibility_service.jpg";
 import SpotPriceDataIcon from "../assets/spotPriceDataIcon.png";
@@ -1159,45 +1158,7 @@ const Demo = () => {
                     <ElectricCar1 ref={electricCar1Ref} />
                     <ElectricCar2 ref={electricCar2Ref} />
                     <Jacuzzi ref={jacuzziRef} />
-                    {/*TEMP add of EV charger TODO: Add proper component for this later*/}
-                    <img
-                      id="ev-charger-energy"
-                      src={EVChargerEnergyIcon}
-                      alt="energy"
-                      className="washing-machine-energy-border"
-                      style={{
-                        position: "absolute",
-                        top: "51.8%",
-                        left: "80%",
-                        width: "4.8%",
-                        height: "4.8%",
-                        zIndex: 2,
-                      }}
-                    />
-                    <button
-                      style={{
-                        position: "absolute",
-                        top: "52.2%",
-                        left: "80.35%",
-                        width: "4%",
-                        height: "4%",
-                        backgroundColor: "transparent",
-                        border: "none",
-                        padding: "0%",
-                        zIndex: 2,
-                      }}
-                    >
-                      <img
-                        id="washing-machine"
-                        src={EVChargerIcon}
-                        alt="washingMachine"
-                        ref={evChargerRef}
-                        style={{
-                          width: "100%",
-                          height: "100%",
-                        }}
-                      />
-                    </button>
+                    <EvCharger ref={evChargerRef} />
                   </div>
                 </div>
               </div>

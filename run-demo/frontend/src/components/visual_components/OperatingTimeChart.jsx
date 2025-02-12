@@ -50,7 +50,7 @@ const OperatingTimeChart = () => {
         key={devicePlan.name}
         sx={{ position: "relative", marginBottom: 2 }}
       >
-        <Box sx={{ padding: 1, position: "relative", width: chartWidth }}>
+        <Box sx={{ position: "relative", width: chartWidth }}>
           <div
             style={{
               position: "relative",

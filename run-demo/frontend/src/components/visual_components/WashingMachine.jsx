@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Popover } from "@mui/material";
 import washingMachineImage from "../../assets/washing_machine.png";
-import energyBorder from "../../assets/washing_machine_energy.png";
 import activeIcon from "../../assets/active.png";
 import inactiveIcon from '../../assets/inactive.png';
 import EnergyComponent from "../EnergyComponent";
@@ -11,6 +10,7 @@ const WashingMachine = React.forwardRef((props, ref) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [isActive, setIsActive] = useState(false);
   const [deviceInfo, setDeviceInfo] = useState({});
+  const [washingMachineOn, setWashingMachineOn] = useState(false);
 
   const component = {
     id: "washingMachine",
@@ -37,6 +37,21 @@ const WashingMachine = React.forwardRef((props, ref) => {
 
     return () => clearInterval(intervalId);
   }, [component.id]);
+
+  useEffect(() => {
+    let intervalId;
+
+    if (washingMachineOn) {
+      intervalId = setInterval(() => {
+        setBlinkState(prevState => !prevState);
+      }, 500);
+    } else {
+      clearInterval(intervalId);
+    }
+    return () => clearInterval(intervalId);
+  }, [washingMachineOn]);
+
+  const [blinkState, setBlinkState] = useState(false);
 
   const handleHoverOn = (event) => {
     setAnchorEl(event.currentTarget);
@@ -73,8 +88,9 @@ const WashingMachine = React.forwardRef((props, ref) => {
           style={{
             width: "100%",
             height: "100%",
-            border: "5px solid green",
+            border: blinkState ? "5px solid red" : "5px solid green", // Conditionally change border
             borderRadius: "8px",
+            transition: "border 0.2s", // Smooth transition for border change
           }}
         />
       </button>

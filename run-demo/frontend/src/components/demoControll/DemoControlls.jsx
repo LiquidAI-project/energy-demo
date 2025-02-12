@@ -9,13 +9,37 @@ import { useDemoVisualizationContext } from "../../context/demoVisualizationCont
 import { fetchData,fetchPostData, fetchIntelligentControllerData } from "../../services/apiService";
 import DemoClock from "../DemoClock";
 import PropTypes from "prop-types";
-import { HACKER, INTELLIGENT_CONTROL, ORCHESTRATOR, SERVICE_PROVIDER1, SERVICE_PROVIDER2, USER_CONTROL, WASHING_MACHINE, WITHOUT_LIQUID_AI, WITH_LIQUID_AI } from "../../../constants";
+import {
+  EV_CHARGER,
+  HACKER,
+  INTELLIGENT_CONTROL,
+  ORCHESTRATOR,
+  SERVICE_PROVIDER1,
+  SERVICE_PROVIDER2,
+  USER_CONTROL,
+  WASHING_MACHINE,
+  WITHOUT_LIQUID_AI,
+  WITH_LIQUID_AI,
+  ENERGY_COMPANY,
+  FREEZER,
+} from "../../../constants";
 import ConfigurationIcon from "../../assets/ConfigurationIcon.png";
 import UnsafeDataIcon from "../../assets/unsafe_data_icon.png";
+import SpotPriceDataIcon from "../../assets/spotPriceDataIcon.png";
+import WasmWithOnnxIcon from "../../assets/wasm_with_onnx.png";
+import ScheduleIcon from "../../assets/schedule.png";
 import DropdownMenu from "./DropdownMenu";
-import { getDeviceNameById } from "../../utils/deviceUtils";
+import { getDeviceNameById, isDeviceOperating } from "../../utils/deviceUtils";
 import { convertToLocalTime } from "../../utils/timeUtils";
 import { useDemoControlContext } from "../../context/demoControlContext/useDemoControlContext";
+import {
+  predefinedDayPlan1,
+  predefinedDayPlan2,
+  predefinedDayPlan3,
+  predefinedDayPlan4,
+  predefinedDayPlan5,
+  predefinedDayPlan6,
+} from "../../assets/mockData/dailyPlan";
 
 // eslint-disable-next-line no-undef
 const ANIMATION_MOVING_TIME = process.env.ANIMATION_MOVING_TIME;
@@ -29,7 +53,7 @@ const DemoControlls = ({
 }) => {
     const [optimizedTimeSlots, setOptimizedTimeSlots] = useState({});
 
-    const { changeHackerVisibility } = useDemoVisualizationContext();
+    const { dayPlans, changeHackerVisibility, setDayPlans, setEvChargerOn } = useDemoVisualizationContext();
     const { demoRunMethod, demoRunning, demoTime, setDemoRunning } = useDemoControlContext();
 
     /**
@@ -198,6 +222,72 @@ const DemoControlls = ({
         }
     }, [userRequirement]);
 
+    /**
+     * Plan of application and date movement simulation.
+     */
+    const dayPlanExecution = async () => {
+      const currentDate = new Date(demoTime);
+      const currentHour = currentDate.getHours();
+      const currentMinute = currentDate.getMinutes();
+
+      const isWashingMachineRunning = isDeviceOperating(
+        WASHING_MACHINE,
+        dayPlans,
+        demoTime
+      );
+
+      const isEvChargeRunning = isDeviceOperating(
+        EV_CHARGER,
+        dayPlans,
+        demoTime
+      );
+
+      setEvChargerOn(isEvChargeRunning);
+
+      if (currentHour == 0 && currentMinute === 30) {
+        setDemoRunning(false);
+        runMoveCodeAnimation(ENERGY_COMPANY, INTELLIGENT_CONTROL, SpotPriceDataIcon);
+        await new Promise((resolve) =>
+            setTimeout(resolve, ANIMATION_MOVING_TIME)
+        );
+        runMoveCodeAnimation(ORCHESTRATOR, INTELLIGENT_CONTROL, WasmWithOnnxIcon);
+        await new Promise((resolve) =>
+            setTimeout(resolve, ANIMATION_MOVING_TIME)
+        );
+        runMoveCodeAnimation(INTELLIGENT_CONTROL, ORCHESTRATOR, ScheduleIcon);
+        await new Promise((resolve) =>
+            setTimeout(resolve, ANIMATION_MOVING_TIME)
+        );
+        runMoveCodeAnimation(ORCHESTRATOR, FREEZER, ScheduleIcon);
+        runMoveCodeAnimation(ORCHESTRATOR, EV_CHARGER, ScheduleIcon);
+        await new Promise((resolve) =>
+            setTimeout(resolve, ANIMATION_MOVING_TIME)
+        );
+        setDemoRunning(true);
+        setDayPlans(predefinedDayPlan1);
+      }
+
+      if (currentHour == 4 && currentMinute === 0) {
+        setDayPlans(predefinedDayPlan2);
+      }
+
+      if (currentHour == 10 && currentMinute === 0) {
+        setDayPlans(predefinedDayPlan3);
+      }
+
+      if (currentHour == 13 && currentMinute === 0) {
+        setDayPlans(predefinedDayPlan4);
+      }
+
+      if (currentHour == 18 && currentMinute === 0) {
+        setDayPlans(predefinedDayPlan5);
+      }
+
+      if (currentHour == 21 && currentMinute === 0) {
+        setDayPlans(predefinedDayPlan6);
+      }
+    };
+
     useEffect(() => {
 
         const runWithLiquidAI = () => {
@@ -241,12 +331,17 @@ const DemoControlls = ({
             }
         } 
 
-        if (demoRunMethod === WITH_LIQUID_AI &&  demoRunning) {
-            if (new Date(demoTime).getMinutes() === 0) {
-                continousAnimationRun();
-                onLogAdd(`Spot price request`);
-            }
-            runWithLiquidAI();
+        // TODO: Uncomment when the real deployment of wasm module is completed
+        // if (demoRunMethod === WITH_LIQUID_AI &&  demoRunning) {
+        //     if (new Date(demoTime).getMinutes() === 0) {
+        //         continousAnimationRun();
+        //         onLogAdd(`Spot price request`);
+        //     }
+        //     runWithLiquidAI();
+        // }
+
+        if (demoRunMethod === WITH_LIQUID_AI && demoRunning) {
+          dayPlanExecution();
         }
 
       }, [demoTime, optimizedTimeSlots]);
