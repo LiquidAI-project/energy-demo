@@ -23,6 +23,7 @@ import ElectricCar1 from "./visual_components/ElectricCar1";
 import ElectricCar2 from "./visual_components/ElectricCar2";
 import Jacuzzi from "./visual_components/Jacuzzi";
 import Orchestrator from "./../assets/orchestrator.png";
+import Storage from "./../assets/storage.png";
 import WebAssembly_Icon from "./../assets/WebAssembly_Logo.png";
 import EnergyUsageIcon from "./../assets/energy_usage_icon.png";
 import roadImage from "./../assets/road.png";
@@ -41,10 +42,10 @@ import OptimizedSettingsIcon from "../assets/optimized_settings_icon.png";
 import UserControlUI from "./userControl/UserControlUI";
 import { fetchData } from '../services/apiService';
 import DemoControlls from "./demoControll/DemoControlls";
-import DemoDataVisualize from "./DemoDataVisualize";
 import { getDeviceIdMap, getDeviceIdByName } from "../utils/deviceUtils";
 import {
   ORCHESTRATOR,
+  STORAGE,
   FREEZER,
   WASHING_MACHINE,
   SERVICE_PROVIDER1,
@@ -78,6 +79,7 @@ const DATA_ICONS_MOVING_FROM_EV = [EnergyUsageIcon, userPreferenceIcon];
 
 const Demo = () => {
   const orchestratorRef = useRef(null);
+  const storageRef = useRef(null);
   const serviceProviderRef1 = useRef(null);
   const serviceProviderRef2 = useRef(null);
   const freezerRef = useRef(null);
@@ -128,6 +130,7 @@ const Demo = () => {
       [FREEZER]: freezerRef,
       [WASHING_MACHINE]: washingMachineRef,
       [ORCHESTRATOR]: orchestratorRef,
+      [STORAGE]: storageRef,
       [SERVICE_PROVIDER1]: serviceProviderRef1,
       [SERVICE_PROVIDER2]: serviceProviderRef2,
       [INTELLIGENT_CONTROL]: intelligentControlRef,
@@ -589,6 +592,7 @@ const Demo = () => {
         intelligentControlRef,
         INTELLIGENT_CONTROL
       );
+      drawLines(orchestratorRef, ORCHESTRATOR, storageRef, STORAGE);
 
       window.addEventListener("resize", () =>
         drawLines(
@@ -643,6 +647,9 @@ const Demo = () => {
           intelligentControlRef,
           INTELLIGENT_CONTROL
         )
+      );
+      window.addEventListener("resize", () =>
+        drawLines(orchestratorRef, ORCHESTRATOR, storageRef, STORAGE)
       );
     } else {
       drawLines(serviceProviderRef1, SERVICE_PROVIDER1, freezerRef, FREEZER);
@@ -747,6 +754,9 @@ const Demo = () => {
             INTELLIGENT_CONTROL
           )
         );
+        window.removeEventListener("resize", () =>
+          drawLines(orchestratorRef, ORCHESTRATOR, storageRef, STORAGE)
+        );
       } else {
         window.removeEventListener("resize", () =>
           drawLines(
@@ -841,6 +851,7 @@ const Demo = () => {
               <div id="flexibilityService-intelligentControl-line" />
               <div id="userControl-intelligentControl-line" />
               <div id="orchestrator-evCharger-line" />
+              <div id="orchestrator-storage-line" />
             </>
           )}
           {demoRunMethod === WITHOUT_LIQUID_AI && (
@@ -989,6 +1000,21 @@ const Demo = () => {
                         top: "57%",
                         left: "45%",
                         width: "7%",
+                        height: "7%",
+                        zIndex: 2,
+                      }}
+                    />
+                  )}
+                  {demoRunMethod === WITH_LIQUID_AI && (
+                    <img
+                      src={Storage}
+                      alt="Storage"
+                      ref={storageRef}
+                      style={{
+                        position: "absolute",
+                        top: "60%",
+                        left: "55%",
+                        width: "6%",
                         height: "7%",
                         zIndex: 2,
                       }}
@@ -1207,7 +1233,6 @@ const Demo = () => {
                     />
                   </div>
                   {demoRunMethod === WITH_LIQUID_AI && (
-                    // <DemoDataVisualize logs={logs} />
                     <OperatingTimeChart />
                   )}
                   {demoRunMethod === WITH_LIQUID_AI && (

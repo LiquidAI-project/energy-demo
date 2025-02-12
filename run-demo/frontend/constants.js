@@ -8,6 +8,7 @@
 */
 
 export const ORCHESTRATOR = "orchestrator";
+export const STORAGE = "storage";
 export const FREEZER = "freezer";
 export const WASHING_MACHINE = "washingMachine";
 export const SERVICE_PROVIDER1 = "serviceProvider1";
