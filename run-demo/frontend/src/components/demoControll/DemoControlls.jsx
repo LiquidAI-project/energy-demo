@@ -53,7 +53,7 @@ const DemoControlls = ({
 }) => {
     const [optimizedTimeSlots, setOptimizedTimeSlots] = useState({});
 
-    const { dayPlans, changeHackerVisibility, setDayPlans, setEvChargerOn, setWashingMachineOn } = useDemoVisualizationContext();
+    const { dayPlans, changeHackerVisibility, setDayPlans, setEvChargerOn, setWashingMachineOn, setFreezerMaxOn } = useDemoVisualizationContext();
     const { demoRunMethod, demoRunning, demoTime, setDemoRunning } = useDemoControlContext();
 
     /**
@@ -236,6 +236,13 @@ const DemoControlls = ({
         demoTime
       );
 
+      // Freezer running means the freezer run at high capacity
+      const isFreezerMaxRun = isDeviceOperating(
+        FREEZER,
+        dayPlans,
+        demoTime
+      );
+
       const isEvChargeRunning = isDeviceOperating(
         EV_CHARGER,
         dayPlans,
@@ -244,6 +251,7 @@ const DemoControlls = ({
 
       setEvChargerOn(isEvChargeRunning);
       setWashingMachineOn(isWashingMachineRunning);
+      setFreezerMaxOn(isFreezerMaxRun);
 
       if (currentHour == 0 && currentMinute === 30) {
         setDemoRunning(false);

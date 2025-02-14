@@ -4,12 +4,16 @@ import freezerImage from '../../assets/freezer.png';
 import activeIcon from '../../assets/active.png';
 import inactiveIcon from '../../assets/inactive.png';
 import EnergyComponent from '../EnergyComponent';
+import { useDemoVisualizationContext } from "../../context/demoVisualizationContext/useDemoVisualizationContext";
+
 
 const Freezer = React.forwardRef((props, ref) => {
 
   const [anchorEl, setAnchorEl] = useState(null);
   const [isActive, setIsActive] = useState(false);
   const [deviceInfo, setDeviceInfo] = useState({});
+  const [blinkState, setBlinkState] = useState(false);
+  const { freezerMaxOn } = useDemoVisualizationContext();
 
   const component = {
     id: 'freezer',
@@ -36,6 +40,20 @@ const Freezer = React.forwardRef((props, ref) => {
 
     return () => clearInterval(intervalId);
   }, [component.id]);
+
+    useEffect(() => {
+      let intervalId;
+
+      if (freezerMaxOn) {
+        intervalId = setInterval(() => {
+          setBlinkState((prevState) => !prevState);
+        }, 500);
+      } else {
+        setBlinkState(false);
+        clearInterval(intervalId);
+      }
+      return () => clearInterval(intervalId);
+    }, [freezerMaxOn]);
 
   const handleHoverOn = (event) => {
     setAnchorEl(event.currentTarget);
@@ -72,8 +90,9 @@ const Freezer = React.forwardRef((props, ref) => {
           style={{
             width: "100%",
             height: "100%",
-            border: "5px solid green",
+            border: blinkState ? "5px solid red" : "5px solid green",
             borderRadius: "8px",
+            transition: "border 0.2s", 
           }}
         />
       </button>
