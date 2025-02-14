@@ -12,10 +12,12 @@ const DemoVisualizationContext = createContext({
   movingDeployments: [],
   dayPlans: initialDayPlan,
   evChargerOn: false,
+  washingMachineOn: false,
   changeHackerVisibility: () => {},
   setMovingDeployments: () => {},
   setDayPlans: () => {},
   setEvChargerOn: () => {},
+  setWashingMachineOn: () => {},
 });
 
 export const DemoVisualizationProvider = ({ children }) => {
@@ -23,6 +25,7 @@ export const DemoVisualizationProvider = ({ children }) => {
   const [movingDeployments, setMovingDeployments] = useState([]);
   const [dayPlans, setDayPlans] = useState(initialDayPlan);
   const [evChargerOn, setEvChargerOn] = useState(false);
+  const [washingMachineOn, setWashingMachineOn] = useState(false);
 
   // Function to toggle the visibility of hacker Icon
   const changeHackerVisibility = (isHackerVisible) => {
@@ -35,12 +38,20 @@ export const DemoVisualizationProvider = ({ children }) => {
       movingDeployments,
       dayPlans,
       evChargerOn,
+      washingMachineOn,
       changeHackerVisibility,
       setMovingDeployments,
       setDayPlans,
       setEvChargerOn,
+      setWashingMachineOn,
     }),
-    [hackerVisibility, movingDeployments, dayPlans, evChargerOn]
+    [
+      hackerVisibility,
+      movingDeployments,
+      dayPlans,
+      evChargerOn,
+      washingMachineOn,
+    ]
   );
 
   return (

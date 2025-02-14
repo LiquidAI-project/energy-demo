@@ -53,7 +53,7 @@ const DemoControlls = ({
 }) => {
     const [optimizedTimeSlots, setOptimizedTimeSlots] = useState({});
 
-    const { dayPlans, changeHackerVisibility, setDayPlans, setEvChargerOn } = useDemoVisualizationContext();
+    const { dayPlans, changeHackerVisibility, setDayPlans, setEvChargerOn, setWashingMachineOn } = useDemoVisualizationContext();
     const { demoRunMethod, demoRunning, demoTime, setDemoRunning } = useDemoControlContext();
 
     /**
@@ -243,6 +243,7 @@ const DemoControlls = ({
       );
 
       setEvChargerOn(isEvChargeRunning);
+      setWashingMachineOn(isWashingMachineRunning);
 
       if (currentHour == 0 && currentMinute === 30) {
         setDemoRunning(false);

@@ -4,13 +4,14 @@ import washingMachineImage from "../../assets/washing_machine.png";
 import activeIcon from "../../assets/active.png";
 import inactiveIcon from '../../assets/inactive.png';
 import EnergyComponent from "../EnergyComponent";
+import { useDemoVisualizationContext } from "../../context/demoVisualizationContext/useDemoVisualizationContext";
 
 const WashingMachine = React.forwardRef((props, ref) => {
 
   const [anchorEl, setAnchorEl] = useState(null);
   const [isActive, setIsActive] = useState(false);
   const [deviceInfo, setDeviceInfo] = useState({});
-  const [washingMachineOn, setWashingMachineOn] = useState(false);
+  const { washingMachineOn } = useDemoVisualizationContext();
 
   const component = {
     id: "washingMachine",
@@ -46,6 +47,7 @@ const WashingMachine = React.forwardRef((props, ref) => {
         setBlinkState(prevState => !prevState);
       }, 500);
     } else {
+      setBlinkState(false); 
       clearInterval(intervalId);
     }
     return () => clearInterval(intervalId);
@@ -88,9 +90,9 @@ const WashingMachine = React.forwardRef((props, ref) => {
           style={{
             width: "100%",
             height: "100%",
-            border: blinkState ? "5px solid red" : "5px solid green", // Conditionally change border
+            border: blinkState ? "5px solid red" : "5px solid green",
             borderRadius: "8px",
-            transition: "border 0.2s", // Smooth transition for border change
+            transition: "border 0.2s", 
           }}
         />
       </button>
