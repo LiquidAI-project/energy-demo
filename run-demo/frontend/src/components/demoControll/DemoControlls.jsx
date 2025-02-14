@@ -22,10 +22,13 @@ import {
   WITH_LIQUID_AI,
   ENERGY_COMPANY,
   FREEZER,
+  FLEXIBILITY_SERVICE,
 } from "../../../constants";
 import ConfigurationIcon from "../../assets/ConfigurationIcon.png";
 import UnsafeDataIcon from "../../assets/unsafe_data_icon.png";
 import SpotPriceDataIcon from "../../assets/spotPriceDataIcon.png";
+import DemandSpikeIcon from "../../assets/demand_spike.png";
+import UserInputIcon from "../../assets/user_input.png";
 import WasmWithOnnxIcon from "../../assets/wasm_with_onnx.png";
 import ScheduleIcon from "../../assets/schedule.png";
 import DropdownMenu from "./DropdownMenu";
@@ -277,22 +280,118 @@ const DemoControlls = ({
       }
 
       if (currentHour == 4 && currentMinute === 0) {
+        setDemoRunning(false);
+        runMoveCodeAnimation(FLEXIBILITY_SERVICE, INTELLIGENT_CONTROL, DemandSpikeIcon);
+        await new Promise((resolve) =>
+            setTimeout(resolve, ANIMATION_MOVING_TIME)
+        );
+        runMoveCodeAnimation(ORCHESTRATOR, INTELLIGENT_CONTROL, WasmWithOnnxIcon);
+        await new Promise((resolve) =>
+            setTimeout(resolve, ANIMATION_MOVING_TIME)
+        );
+        runMoveCodeAnimation(INTELLIGENT_CONTROL, ORCHESTRATOR, ScheduleIcon);
+        await new Promise((resolve) =>
+            setTimeout(resolve, ANIMATION_MOVING_TIME)
+        );
+        runMoveCodeAnimation(ORCHESTRATOR, FREEZER, ScheduleIcon);
+        runMoveCodeAnimation(ORCHESTRATOR, EV_CHARGER, ScheduleIcon);
+        await new Promise((resolve) =>
+            setTimeout(resolve, ANIMATION_MOVING_TIME)
+        );
+        setDemoRunning(true);
         setDayPlans(predefinedDayPlan2);
       }
 
+      if (currentHour == 7 && currentMinute === 0) {
+        // Add animation which shows  car unplug from charger
+      }
+
       if (currentHour == 10 && currentMinute === 0) {
+        setDemoRunning(false);
+        runMoveCodeAnimation(USER_CONTROL, INTELLIGENT_CONTROL, UserInputIcon);
+        await new Promise((resolve) =>
+            setTimeout(resolve, ANIMATION_MOVING_TIME)
+        );
+        runMoveCodeAnimation(ORCHESTRATOR, INTELLIGENT_CONTROL, WasmWithOnnxIcon);
+        await new Promise((resolve) =>
+            setTimeout(resolve, ANIMATION_MOVING_TIME)
+        );
+        runMoveCodeAnimation(INTELLIGENT_CONTROL, ORCHESTRATOR, ScheduleIcon);
+        await new Promise((resolve) =>
+            setTimeout(resolve, ANIMATION_MOVING_TIME)
+        );
+        runMoveCodeAnimation(ORCHESTRATOR, FREEZER, ScheduleIcon);
+        runMoveCodeAnimation(ORCHESTRATOR, WASHING_MACHINE, ScheduleIcon);
+        await new Promise((resolve) =>
+            setTimeout(resolve, ANIMATION_MOVING_TIME)
+        );
+        setDemoRunning(true);
         setDayPlans(predefinedDayPlan3);
       }
 
       if (currentHour == 13 && currentMinute === 0) {
+        setDemoRunning(false);
+        runMoveCodeAnimation(FLEXIBILITY_SERVICE, INTELLIGENT_CONTROL, DemandSpikeIcon);
+        await new Promise((resolve) =>
+            setTimeout(resolve, ANIMATION_MOVING_TIME)
+        );
+        runMoveCodeAnimation(ORCHESTRATOR, INTELLIGENT_CONTROL, WasmWithOnnxIcon);
+        await new Promise((resolve) =>
+            setTimeout(resolve, ANIMATION_MOVING_TIME)
+        );
+        runMoveCodeAnimation(INTELLIGENT_CONTROL, ORCHESTRATOR, ScheduleIcon);
+        await new Promise((resolve) =>
+            setTimeout(resolve, ANIMATION_MOVING_TIME)
+        );
+        runMoveCodeAnimation(ORCHESTRATOR, FREEZER, ScheduleIcon);
+        runMoveCodeAnimation(ORCHESTRATOR, WASHING_MACHINE, ScheduleIcon);
+        await new Promise((resolve) =>
+            setTimeout(resolve, ANIMATION_MOVING_TIME)
+        );
+        setDemoRunning(true);
         setDayPlans(predefinedDayPlan4);
       }
 
       if (currentHour == 18 && currentMinute === 0) {
+        setDemoRunning(false);
+        // TODO:: Add car coming to charge
+        runMoveCodeAnimation(ORCHESTRATOR, INTELLIGENT_CONTROL, WasmWithOnnxIcon);
+        await new Promise((resolve) =>
+            setTimeout(resolve, ANIMATION_MOVING_TIME)
+        );
+        runMoveCodeAnimation(INTELLIGENT_CONTROL, ORCHESTRATOR, ScheduleIcon);
+        await new Promise((resolve) =>
+            setTimeout(resolve, ANIMATION_MOVING_TIME)
+        );
+        runMoveCodeAnimation(ORCHESTRATOR, FREEZER, ScheduleIcon);
+        runMoveCodeAnimation(ORCHESTRATOR, EV_CHARGER, ScheduleIcon);
+        await new Promise((resolve) =>
+            setTimeout(resolve, ANIMATION_MOVING_TIME)
+        );
+        setDemoRunning(true);
         setDayPlans(predefinedDayPlan5);
       }
 
       if (currentHour == 21 && currentMinute === 0) {
+        setDemoRunning(false);
+        runMoveCodeAnimation(FLEXIBILITY_SERVICE, INTELLIGENT_CONTROL, DemandSpikeIcon);
+        await new Promise((resolve) =>
+            setTimeout(resolve, ANIMATION_MOVING_TIME)
+        );
+        runMoveCodeAnimation(ORCHESTRATOR, INTELLIGENT_CONTROL, WasmWithOnnxIcon);
+        await new Promise((resolve) =>
+            setTimeout(resolve, ANIMATION_MOVING_TIME)
+        );
+        runMoveCodeAnimation(INTELLIGENT_CONTROL, ORCHESTRATOR, ScheduleIcon);
+        await new Promise((resolve) =>
+            setTimeout(resolve, ANIMATION_MOVING_TIME)
+        );
+        runMoveCodeAnimation(ORCHESTRATOR, FREEZER, ScheduleIcon);
+        runMoveCodeAnimation(ORCHESTRATOR, EV_CHARGER, ScheduleIcon);
+        await new Promise((resolve) =>
+            setTimeout(resolve, ANIMATION_MOVING_TIME)
+        );
+        setDemoRunning(true);
         setDayPlans(predefinedDayPlan6);
       }
     };
