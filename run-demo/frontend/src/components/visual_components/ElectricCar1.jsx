@@ -1,34 +1,12 @@
-import React, { useState } from 'react';
-import { Popover } from "@mui/material";
+import React from 'react';
+import { motion } from 'framer-motion';
 import carImage from "../../assets/car.png";
 import carChargerImage from "../../assets/car_charger.png";
-import EnergyComponent from "../EnergyComponent";
+import { useDemoVisualizationContext } from '../../context/demoVisualizationContext/useDemoVisualizationContext';
 
 const ElectricCar1 = React.forwardRef((props, ref) => {
 
-  const [anchorEl, setAnchorEl] = useState(null);
-  const [isActive, setIsActive] = useState(false);
-  const [deviceInfo, setDeviceInfo] = useState({});
-
-  const component = {
-    id: "ElectricCar1",
-    name: "ElectricCar1",
-    type: "consumer",
-    description: "Electric car is charged at the charging station.",
-    optimize: false,
-    isActive:  isActive,
-    deviceInfo: deviceInfo,
-  };
-
-  const handleHoverOn = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleHoverAway = () => {
-    setAnchorEl(null);
-  };
-
-  const open = Boolean(anchorEl);
+  const { ev1PluggedIn } = useDemoVisualizationContext();
 
   return (
     <div>
@@ -43,8 +21,6 @@ const ElectricCar1 = React.forwardRef((props, ref) => {
           border: "none",
           padding: "0%",
         }}
-        onMouseEnter={handleHoverOn}
-        onMouseLeave={handleHoverAway}
       >
         <img
           id="electric-car-1-charger"
@@ -55,7 +31,9 @@ const ElectricCar1 = React.forwardRef((props, ref) => {
             height: "20%",
           }}
         />
-        <img
+        
+        {/* Animate the car image */}
+        <motion.img
           id="electric-car-1"
           src={carImage}
           alt="ElectricCar1"
@@ -64,25 +42,14 @@ const ElectricCar1 = React.forwardRef((props, ref) => {
             width: "100%",
             height: "100%",
           }}
+          initial={{ y: 0 }} 
+          animate={{ y: ev1PluggedIn ? 0 : '100vh' }}  // If ev1PluggedIn is false, move out of the screen
+          transition={{
+            duration: 5,
+            ease: 'easeInOut',
+          }}
         />
       </button>
-      <Popover
-        sx={{ pointerEvents: "none" }}
-        open={open}
-        anchorEl={anchorEl}
-        anchorOrigin={{
-          vertical: "bottom",
-          horizontal: "left",
-        }}
-        transformOrigin={{
-          vertical: "top",
-          horizontal: "left",
-        }}
-        onClose={handleHoverAway}
-        disableRestoreFocus
-      >
-        <EnergyComponent {...component} />
-      </Popover>
     </div>
   );
 });

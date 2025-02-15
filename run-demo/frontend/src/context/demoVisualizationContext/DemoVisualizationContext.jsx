@@ -14,12 +14,16 @@ const DemoVisualizationContext = createContext({
   evChargerOn: false,
   washingMachineOn: false,
   freezerMaxOn: false,
+  ev1PluggedIn: true,
+  ev2PluggedIn: true,
   changeHackerVisibility: () => {},
   setMovingDeployments: () => {},
   setDayPlans: () => {},
   setEvChargerOn: () => {},
   setWashingMachineOn: () => {},
   setFreezerMaxOn: () => {},
+  setEv1PluggedIn: () => {},
+  setEv2PluggedIn: () => {},
 });
 
 export const DemoVisualizationProvider = ({ children }) => {
@@ -29,6 +33,8 @@ export const DemoVisualizationProvider = ({ children }) => {
   const [evChargerOn, setEvChargerOn] = useState(false);
   const [washingMachineOn, setWashingMachineOn] = useState(false);
   const [freezerMaxOn, setFreezerMaxOn] = useState(false);
+  const [ev1PluggedIn, setEv1PluggedIn] = useState(true);
+  const [ev2PluggedIn, setEv2PluggedIn] = useState(true);
 
   // Function to toggle the visibility of hacker Icon
   const changeHackerVisibility = (isHackerVisible) => {
@@ -43,12 +49,16 @@ export const DemoVisualizationProvider = ({ children }) => {
       evChargerOn,
       washingMachineOn,
       freezerMaxOn,
+      ev1PluggedIn,
+      ev2PluggedIn,
       changeHackerVisibility,
       setMovingDeployments,
       setDayPlans,
       setEvChargerOn,
       setWashingMachineOn,
       setFreezerMaxOn,
+      setEv1PluggedIn,
+      setEv2PluggedIn,
     }),
     [
       hackerVisibility,
@@ -57,6 +67,8 @@ export const DemoVisualizationProvider = ({ children }) => {
       evChargerOn,
       washingMachineOn,
       freezerMaxOn,
+      ev1PluggedIn,
+      ev2PluggedIn,
     ]
   );
 

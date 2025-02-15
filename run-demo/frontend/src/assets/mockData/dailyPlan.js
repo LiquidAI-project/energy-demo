@@ -37,8 +37,7 @@ export const initialDayPlan = [
       id: EV_CHARGER,
       name: 'EV Charger',
       slots: [
-        { start: 1, end: 5 }, 
-        { start: 23, end: 24 }, 
+        { start: 1, end: 5 }
       ],
     },
   ];
@@ -62,8 +61,7 @@ export const initialDayPlan = [
       id: EV_CHARGER,
       name: 'EV Charger',
       slots: [
-        { start: 5, end: 6 },
-        { start: 23, end: 24 },
+        { start: 5, end: 6 }
       ],
     },
   ];
@@ -87,9 +85,7 @@ export const initialDayPlan = [
     {
       id: EV_CHARGER,
       name: 'EV Charger',
-      slots: [
-        { start: 23, end: 24 },
-      ],
+      slots: [],
     },
   ];
 
@@ -111,9 +107,7 @@ export const initialDayPlan = [
     {
       id: EV_CHARGER,
       name: 'EV Charger',
-      slots: [
-        { start: 23, end: 24 },
-      ],
+      slots: [],
     },
   ];
 

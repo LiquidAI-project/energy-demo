@@ -56,8 +56,18 @@ const DemoControlls = ({
 }) => {
     const [optimizedTimeSlots, setOptimizedTimeSlots] = useState({});
 
-    const { dayPlans, changeHackerVisibility, setDayPlans, setEvChargerOn, setWashingMachineOn, setFreezerMaxOn } = useDemoVisualizationContext();
-    const { demoRunMethod, demoRunning, demoTime, setDemoRunning } = useDemoControlContext();
+    const {
+      dayPlans,
+      changeHackerVisibility,
+      setDayPlans,
+      setEvChargerOn,
+      setWashingMachineOn,
+      setFreezerMaxOn,
+      setEv1PluggedIn,
+      setEv2PluggedIn,
+    } = useDemoVisualizationContext();
+    const { demoRunMethod, demoRunning, demoTime, setDemoRunning } =
+      useDemoControlContext();
 
     /**
      * Deploys the wasm module to the specified device.
@@ -303,7 +313,8 @@ const DemoControlls = ({
       }
 
       if (currentHour == 7 && currentMinute === 0) {
-        // Add animation which shows  car unplug from charger
+        setEv1PluggedIn(false);
+        setEv2PluggedIn(false);
       }
 
       if (currentHour == 10 && currentMinute === 0) {
@@ -354,7 +365,11 @@ const DemoControlls = ({
 
       if (currentHour == 18 && currentMinute === 0) {
         setDemoRunning(false);
-        // TODO:: Add car coming to charge
+        setEv1PluggedIn(true);
+        setEv2PluggedIn(true);
+        await new Promise((resolve) =>
+          setTimeout(resolve, ANIMATION_MOVING_TIME)
+        );
         runMoveCodeAnimation(ORCHESTRATOR, INTELLIGENT_CONTROL, WasmWithOnnxIcon);
         await new Promise((resolve) =>
             setTimeout(resolve, ANIMATION_MOVING_TIME)
