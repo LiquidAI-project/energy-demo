@@ -31,6 +31,7 @@ import DemandSpikeIcon from "../../assets/demand_spike.png";
 import UserInputIcon from "../../assets/user_input.png";
 import WasmWithOnnxIcon from "../../assets/wasm_with_onnx.png";
 import ScheduleIcon from "../../assets/schedule.png";
+import OnnxFileIcon from "../../assets/onnx_file.png";
 import DropdownMenu from "./DropdownMenu";
 import { getDeviceNameById, isDeviceOperating } from "../../utils/deviceUtils";
 import { convertToLocalTime } from "../../utils/timeUtils";
@@ -266,6 +267,33 @@ const DemoControlls = ({
       setWashingMachineOn(isWashingMachineRunning);
       setFreezerMaxOn(isFreezerMaxRun);
 
+      // Simulation of sending ML model to retrain near to data source
+      if (currentMinute === 10) {
+        if (isEvChargeRunning) {
+          runMoveCodeAnimation(ORCHESTRATOR, EV_CHARGER, WasmWithOnnxIcon);
+        }
+        if (isFreezerMaxRun) {
+          runMoveCodeAnimation(ORCHESTRATOR, FREEZER, WasmWithOnnxIcon);
+        }
+        if (isWashingMachineRunning) {
+          runMoveCodeAnimation(ORCHESTRATOR, WASHING_MACHINE, WasmWithOnnxIcon);
+        }
+      }
+
+      // Simulation of sending back the trained ML model to orchestrator
+      if (currentMinute === 50) {
+        if (isEvChargeRunning) {
+          runMoveCodeAnimation(EV_CHARGER, ORCHESTRATOR, OnnxFileIcon);
+        }
+        if (isFreezerMaxRun) {
+          runMoveCodeAnimation(FREEZER, ORCHESTRATOR, OnnxFileIcon);
+        }
+        if (isWashingMachineRunning) {
+          runMoveCodeAnimation(WASHING_MACHINE, ORCHESTRATOR, OnnxFileIcon);
+        }
+      }
+
+      // Spot price fetch simulation
       if (currentHour == 0 && currentMinute === 30) {
         setDemoRunning(false);
         runMoveCodeAnimation(ENERGY_COMPANY, INTELLIGENT_CONTROL, SpotPriceDataIcon);
@@ -289,6 +317,7 @@ const DemoControlls = ({
         setDayPlans(predefinedDayPlan1);
       }
 
+      // Demand spike simulation
       if (currentHour == 4 && currentMinute === 0) {
         setDemoRunning(false);
         runMoveCodeAnimation(FLEXIBILITY_SERVICE, INTELLIGENT_CONTROL, DemandSpikeIcon);
@@ -312,11 +341,13 @@ const DemoControlls = ({
         setDayPlans(predefinedDayPlan2);
       }
 
+      // EV unplug simulation
       if (currentHour == 7 && currentMinute === 0) {
         setEv1PluggedIn(false);
         setEv2PluggedIn(false);
       }
 
+      // Washing machine set to simulation
       if (currentHour == 10 && currentMinute === 0) {
         setDemoRunning(false);
         runMoveCodeAnimation(USER_CONTROL, INTELLIGENT_CONTROL, UserInputIcon);
@@ -340,6 +371,7 @@ const DemoControlls = ({
         setDayPlans(predefinedDayPlan3);
       }
 
+      // Demand spike simulation
       if (currentHour == 13 && currentMinute === 0) {
         setDemoRunning(false);
         runMoveCodeAnimation(FLEXIBILITY_SERVICE, INTELLIGENT_CONTROL, DemandSpikeIcon);
@@ -363,6 +395,7 @@ const DemoControlls = ({
         setDayPlans(predefinedDayPlan4);
       }
 
+      // EV plug back in simulation
       if (currentHour == 18 && currentMinute === 0) {
         setDemoRunning(false);
         setEv1PluggedIn(true);
@@ -387,6 +420,7 @@ const DemoControlls = ({
         setDayPlans(predefinedDayPlan5);
       }
 
+      // Demand spike simulation
       if (currentHour == 21 && currentMinute === 0) {
         setDemoRunning(false);
         runMoveCodeAnimation(FLEXIBILITY_SERVICE, INTELLIGENT_CONTROL, DemandSpikeIcon);
