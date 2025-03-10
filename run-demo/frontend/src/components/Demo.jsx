@@ -98,9 +98,6 @@ const Demo = () => {
   const [activeDeployments, setActiveDeployments] = useState([]);
   const [warningBorderVisible, setWarningBorderVisible] = useState(false);
   const [shouldBlink, setShouldBlink] = useState(false);
-  const [logs, setLogs] = useState([]);
-  const [userRequirements, setUserRequirements] = useState({});
-  const [optimizedTimeSlots, setOptimizedTimeSlots] = useState({});
   const { hackerVisibility, movingDeployments, setMovingDeployments } = useDemoVisualizationContext();
   const { demoRunMethod } = useDemoControlContext();
 
@@ -156,10 +153,6 @@ const Demo = () => {
     },
     [deviceReferences]
   );
-
-  const addLog = (message) => {
-    setLogs((prevLogs) => [...prevLogs, message]);
-  };
 
   // Object moving one place to another place animation
   const moveCodeAnimation = useCallback(
@@ -788,33 +781,6 @@ const Demo = () => {
     };
   }, [demoRunMethod, hackerVisibility]);
 
-  /**
-   * This function updates the user requirements for a specific piece of equipment in the state.
-   *
-   * @param {Object} userRequirement - The new data or requirement to be set for the specified equipment.
-   * @param {string} equipment - The key for the equipment whose user requirements are being updated (e.g., 'washingMachine', 'freezer').
-   *
-   */
-  const handleUserRequirements = (userRequirement, equipment) => {
-    setUserRequirements((prevRequirements) => ({
-      ...prevRequirements,
-      [equipment]: userRequirement,
-    }));
-  };
-
-  /**
-   * This function updates the optimal time of an equipment to operate.
-   *
-   * @param {Object} optimizedTimeSlots - The new optimized data to be set for the specified equipment.
-   * @param {string} equipment - The key for the equipment whose user requirements are being updated (e.g., 'washingMachine', 'freezer').
-   *
-   */
-  const handleOptimizedTimeSlots = (optimizedTimeSlots, equipment) => {
-    setOptimizedTimeSlots({
-      [equipment]: optimizedTimeSlots,
-    });
-  };
-
   return (
     <div>
       <div
@@ -1035,13 +1001,7 @@ const Demo = () => {
                     />
                   )}
                   {demoRunMethod === WITH_LIQUID_AI && (
-                    <UserControlUI
-                      ref={userControlRef}
-                      onUserRequirementChange={(userRequirement, equipment) =>
-                        handleUserRequirements(userRequirement, equipment)
-                      }
-                      optimizedTimeSlots={optimizedTimeSlots}
-                    />
+                    <UserControlUI ref={userControlRef} />
                   )}
                   {demoRunMethod === WITH_LIQUID_AI && (
                     <img
@@ -1179,31 +1139,13 @@ const Demo = () => {
                 >
                   <div style={{ marginBottom: "5%" }}>
                     <DemoControlls
-                      onLogAdd={(log) => addLog(log)}
                       continousAnimationRun={continousAnimationRun}
                       runMoveCodeAnimation={(from, to, icon) =>
                         moveCodeAnimation(from, to, icon)
                       }
-                      userRequirement={userRequirements}
-                      onUpdateOptimizedTimeSlots={(
-                        optimizedTimeSlots,
-                        equipment
-                      ) =>
-                        handleOptimizedTimeSlots(optimizedTimeSlots, equipment)
-                      }
                     />
                   </div>
-                  {demoRunMethod === WITH_LIQUID_AI && (
-                    <OperatingTimeChart />
-                  )}
-                  {demoRunMethod === WITH_LIQUID_AI && (
-                    <a
-                      href="https://www.helen.fi/en/electricity/electricity-products-and-prices/exchange-electricity"
-                      target="_blank"
-                    >
-                      Spot price check
-                    </a>
-                  )}
+                  {demoRunMethod === WITH_LIQUID_AI && <OperatingTimeChart />}
                 </Box>
               </Grid>
             </Grid>
