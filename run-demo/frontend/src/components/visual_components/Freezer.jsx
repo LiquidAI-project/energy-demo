@@ -4,6 +4,7 @@ import freezerImage from '../../assets/freezer.png';
 import activeIcon from '../../assets/active.png';
 import inactiveIcon from '../../assets/inactive.png';
 import EnergyComponent from '../EnergyComponent';
+import { FREEZER } from '../../../constants';
 import { useDemoVisualizationContext } from "../../context/demoVisualizationContext/useDemoVisualizationContext";
 
 
@@ -13,7 +14,7 @@ const Freezer = React.forwardRef((props, ref) => {
   const [isActive, setIsActive] = useState(false);
   const [deviceInfo, setDeviceInfo] = useState({});
   const [blinkState, setBlinkState] = useState(false);
-  const { freezerMaxOn } = useDemoVisualizationContext();
+  const { deviceStatus } = useDemoVisualizationContext();
 
   const component = {
     id: 'freezer',
@@ -24,6 +25,8 @@ const Freezer = React.forwardRef((props, ref) => {
     isActive:  isActive,
     deviceInfo: deviceInfo,
   };
+
+  const freezerMaxOn = deviceStatus.find((device) => device.deviceName === FREEZER).isEnergyIntensive;
 
   useEffect(() => {
     const checkEquipment = () => {

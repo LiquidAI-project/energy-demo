@@ -6,11 +6,14 @@
 import React, { useState, useEffect } from "react";
 import activeIcon from "../../assets/active.png";
 import EVChargerIcon from "../../assets/ev_charger.png";
+import { EV_CHARGER } from "../../../constants";
 import { useDemoVisualizationContext } from "../../context/demoVisualizationContext/useDemoVisualizationContext";
 
 const evCharger = React.forwardRef((props, ref) => {
-  const { evChargerOn } = useDemoVisualizationContext();
+  const { deviceStatus } = useDemoVisualizationContext();
   const [blinkState, setBlinkState] = useState(false);
+
+  const evChargerOn = deviceStatus.find((device) => device.deviceName === EV_CHARGER).isEnergyIntensive;
 
   useEffect(() => {
     let intervalId;

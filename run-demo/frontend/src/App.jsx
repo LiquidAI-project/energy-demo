@@ -5,15 +5,15 @@ import { DemoControlProvider } from "./context/demoControlContext/DemoControlCon
 
 function App() {
   return (
-    <DemoVisualizationProvider>
-      <DemoControlProvider>
+    <DemoControlProvider>
+      <DemoVisualizationProvider>
         <Router>
           <Routes>
             <Route exact path="/" element={<Demo />} />
           </Routes>
         </Router>
-      </DemoControlProvider>
-    </DemoVisualizationProvider>
+      </DemoVisualizationProvider>
+    </DemoControlProvider>
   );
 }
 export default App;

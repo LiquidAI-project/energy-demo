@@ -4,6 +4,7 @@ import washingMachineImage from "../../assets/washing_machine.png";
 import activeIcon from "../../assets/active.png";
 import inactiveIcon from '../../assets/inactive.png';
 import EnergyComponent from "../EnergyComponent";
+import { WASHING_MACHINE } from '../../../constants';
 import { useDemoVisualizationContext } from "../../context/demoVisualizationContext/useDemoVisualizationContext";
 
 const WashingMachine = React.forwardRef((props, ref) => {
@@ -11,7 +12,7 @@ const WashingMachine = React.forwardRef((props, ref) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [isActive, setIsActive] = useState(false);
   const [deviceInfo, setDeviceInfo] = useState({});
-  const { washingMachineOn } = useDemoVisualizationContext();
+  const { deviceStatus } = useDemoVisualizationContext();
 
   const component = {
     id: "washingMachine",
@@ -22,6 +23,8 @@ const WashingMachine = React.forwardRef((props, ref) => {
     isActive:  isActive,
     deviceInfo: deviceInfo,
   };
+
+  const washingMachineOn = deviceStatus.find((device) => device.deviceName === WASHING_MACHINE).isEnergyIntensive;
 
   useEffect(() => {
     const checkEquipment = () => {
