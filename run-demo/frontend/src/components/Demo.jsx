@@ -62,6 +62,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { useDemoVisualizationContext } from "../context/demoVisualizationContext/useDemoVisualizationContext";
 import { useDemoControlContext } from "../context/demoControlContext/useDemoControlContext";
 import OperatingTimeChart from "./visual_components/OperatingTimeChart";
+import SpotPriceChart from "./visual_components/SpotPriceChart";
 
 // eslint-disable-next-line no-undef
 const PUBLIC_HOST = process.env.PUBLIC_HOST;
@@ -1146,6 +1147,7 @@ const Demo = () => {
                     />
                   </div>
                   {demoRunMethod === WITH_LIQUID_AI && <OperatingTimeChart />}
+                  {demoRunMethod === WITH_LIQUID_AI && <SpotPriceChart />}
                 </Box>
               </Grid>
             </Grid>

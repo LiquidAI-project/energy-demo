@@ -13,14 +13,15 @@ const calculateDurationInHours = (start, end) => {
 };
 
 const OperatingTimeChart = () => {
-
   const { dayPlans } = useDemoVisualizationContext();
   const { demoTime } = useDemoControlContext();
   const chartWidth = "100%";
   const hourWidth = 100 / 24;
-  
+
   // Calculate the position of the current demo time (red line)
-  const demoTimePosition = (new Date(demoTime).getHours()/ 24) * 100 + (new Date(demoTime).getMinutes() / 60) * (100 / 24);
+  const demoTimePosition =
+    (new Date(demoTime).getHours() / 24) * 100 +
+    (new Date(demoTime).getMinutes() / 60) * (100 / 24);
 
   // Render the dayPlans with slots
   const renderDayPlans = dayPlans.map((devicePlan, index) => {
@@ -68,6 +69,9 @@ const OperatingTimeChart = () => {
 
   return (
     <div>
+      <Typography variant="h9" gutterBottom sx={{ fontWeight: "bold" }}>
+        Device Schedule
+      </Typography>
       <Box
         sx={{
           display: "flex",
@@ -106,7 +110,9 @@ const OperatingTimeChart = () => {
           }}
         >
           {/* Device Rows */}
-          <Box sx={{ position: "relative", marginTop: 2 }}>{renderDayPlans}</Box>
+          <Box sx={{ position: "relative", marginTop: 2 }}>
+            {renderDayPlans}
+          </Box>
 
           {/* Vertical Grid Lines (X-Axis) */}
           <Box

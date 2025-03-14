@@ -1,0 +1,51 @@
+// Copyright 2024 Tampere University
+// This software was developed as a part of the LiquidAI project
+// This source code is licensed under the MIT license. See LICENSE in the repository root directory.
+// Author(s): Lakshan Rathnayaka <lakshan.rathnayaka@tuni.fi>, Ville Heikkilä <ville.heikkila@tuni.fi>.
+
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
+import { Box, Typography } from "@mui/material";
+import { hourlyEnergyData } from "../../assets/mockData/spotPrice";
+import { useDemoVisualizationContext } from "../../context/demoVisualizationContext/useDemoVisualizationContext";
+
+const SpotPriceChart = () => {
+  // State to control whether the chart is displayed or not
+  const { spotPriceVisible } = useDemoVisualizationContext();
+
+  return (
+    <>
+      {spotPriceVisible && (
+        <>
+          <Typography variant="h9" gutterBottom sx={{ fontWeight: "bold" }}>
+            Hourly Energy Spot Prices
+          </Typography>
+          <Box
+            sx={{ width: "100%", display: "flex", justifyContent: "flex-end" }}
+          >
+            <ResponsiveContainer width="92%" height={200}>
+              <BarChart data={hourlyEnergyData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="hour" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="price" fill="#8884d8" name="Price (c/kWh)" />
+              </BarChart>
+            </ResponsiveContainer>
+          </Box>
+        </>
+      )}
+    </>
+  );
+};
+
+export default SpotPriceChart;

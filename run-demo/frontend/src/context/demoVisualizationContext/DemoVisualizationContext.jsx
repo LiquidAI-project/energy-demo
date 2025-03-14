@@ -17,12 +17,14 @@ const DemoVisualizationContext = createContext({
   ev1PluggedIn: true,
   ev2PluggedIn: true,
   deviceStatus: [],
+  spotPriceVisible: false,
   changeHackerVisibility: () => {},
   setMovingDeployments: () => {},
   setDayPlans: () => {},
   setEv1PluggedIn: () => {},
   setEv2PluggedIn: () => {},
   setDeviceStatus: () => {},
+  setSpotPriceVisibile: () => {},
 });
 
 export const DemoVisualizationProvider = ({ children }) => {
@@ -32,6 +34,7 @@ export const DemoVisualizationProvider = ({ children }) => {
   const [dayPlans, setDayPlans] = useState(initialDayPlan);
   const [ev1PluggedIn, setEv1PluggedIn] = useState(true);
   const [ev2PluggedIn, setEv2PluggedIn] = useState(true);
+  const [spotPriceVisible, setSpotPriceVisibile] = useState(false);
   const [deviceStatus, setDeviceStatus] = useState([
     {
       deviceName: EV_CHARGER,
@@ -81,11 +84,13 @@ export const DemoVisualizationProvider = ({ children }) => {
       ev1PluggedIn,
       ev2PluggedIn,
       deviceStatus,
+      spotPriceVisible,
       changeHackerVisibility,
       setMovingDeployments,
       setDayPlans,
       setEv1PluggedIn,
       setEv2PluggedIn,
+      setSpotPriceVisibile,
     }),
     [
       hackerVisibility,
@@ -94,6 +99,7 @@ export const DemoVisualizationProvider = ({ children }) => {
       ev1PluggedIn,
       ev2PluggedIn,
       deviceStatus,
+      spotPriceVisible,
     ]
   );
 

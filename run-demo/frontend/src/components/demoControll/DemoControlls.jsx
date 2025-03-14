@@ -3,7 +3,7 @@
 // This source code is licensed under the MIT license. See LICENSE in the repository root directory.
 // Author(s): Lakshan Rathnayaka <lakshan.rathnayaka@tuni.fi>, Ville Heikkilä <ville.heikkila@tuni.fi>.
 
-import { useEffect, useCallback } from "react";
+import { useEffect } from "react";
 import { Button } from "@mui/material";
 import { useDemoVisualizationContext } from "../../context/demoVisualizationContext/useDemoVisualizationContext";
 import DemoClock from "../DemoClock";
@@ -51,6 +51,7 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation }) => {
     setDayPlans,
     setEv1PluggedIn,
     setEv2PluggedIn,
+    setSpotPriceVisibile,
   } = useDemoVisualizationContext();
   const { demoRunMethod, demoRunning, demoTime, setDemoRunning } =
     useDemoControlContext();
@@ -104,6 +105,7 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation }) => {
       await new Promise((resolve) =>
         setTimeout(resolve, ANIMATION_MOVING_TIME)
       );
+      setSpotPriceVisibile(true);
       runMoveCodeAnimation(ORCHESTRATOR, INTELLIGENT_CONTROL, WasmWithOnnxIcon);
       await new Promise((resolve) => setTimeout(resolve, ANIMATION_MOVING_TIME));
       runMoveCodeAnimation(INTELLIGENT_CONTROL, ORCHESTRATOR, ScheduleIcon);
