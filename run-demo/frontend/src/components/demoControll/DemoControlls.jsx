@@ -241,7 +241,10 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation }) => {
 
   useEffect(() => {
     if (demoRunMethod === WITHOUT_LIQUID_AI && demoRunning) {
-      continousAnimationRun();
+
+      if (new Date(demoTime).getMinutes() % 20 === 0) {
+        continousAnimationRun();
+      }
 
       if (new Date(demoTime).getMinutes() === 40) {
         changeHackerVisibility(true);
