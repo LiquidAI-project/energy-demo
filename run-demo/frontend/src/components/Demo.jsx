@@ -1076,10 +1076,10 @@ const Demo = () => {
                               ref={hackerRef}
                               style={{
                                 position: "absolute",
-                                top: "50%",
-                                left: "130.2%",
-                                width: "20%",
-                                height: "27%",
+                                top: "85%",
+                                left: "90.2%",
+                                width: "10%",
+                                height: "15%",
                                 zIndex: 2,
                               }}
                             />
