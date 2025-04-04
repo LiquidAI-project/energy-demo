@@ -1,125 +1,5 @@
 services:
 
-  orchestrator:
-    image: ghcr.io/liquidai-project/wasmiot-orchestrator
-    build:
-      context: ./wasmiot-orchestrator/fileserv
-      dockerfile: ./Dockerfile
-    ports:
-      - ${PUBLIC_PORT:-3000}:${PUBLIC_PORT:-3000}
-    networks:
-      default:
-        ipv4_address: 172.15.0.10
-    environment:
-      MONGO_HOST: ${MONGO_HOST:-mongo}
-      MONGO_PORT: ${MONGO_PORT:-27017}
-      MONGO_ROOT_USERNAME: ${MONGO_ROOT_USERNAME}
-      MONGO_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
-      PUBLIC_HOST: ${PUBLIC_HOST:-http://orchestrator}
-      PUBLIC_PORT: ${PUBLIC_PORT:-3000}
-      USE_INTERNAL_HOST: ${USE_INTERNAL_HOST:-true}
-      WASMIOT_INIT_FOLDER: ${WASMIOT_INIT_FOLDER:-/init}
-      WASMIOT_CLEAR_LOGS: ${WASMIOT_CLEAR_LOGS:-true}
-    volumes:
-      - ./orchestrator-init:/init
-    command: nodejs ./server.js
-    depends_on:
-      - mongo
-
-  mongo:
-    image: mongo:6.0.15
-    restart: unless-stopped
-    networks:
-      default:
-        ipv4_address: 172.15.0.17
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
-    command: mongod --port ${MONGO_PORT:-27017}
-    volumes:
-      - mongo-config:/data/configdb
-      - mongo-db:/data/db
-    expose:
-      - ${MONGO_PORT:-27017}
-
-  mongo-express:
-    image: mongo-express:1.0.2
-    restart: unless-stopped
-    depends_on:
-      - mongo
-    networks:
-      default:
-        ipv4_address: 172.15.0.3
-    environment:
-      ME_CONFIG_SITE_BASEURL: ${MONGO_EXPRESS_BASEURL:-/}
-      ME_CONFIG_MONGODB_URL: ${MONGO_URL:-mongodb://mongo:27017}
-      ME_CONFIG_MONGODB_ENABLE_ADMIN: ${MONGO_EXPRESS_ENABLE_ADMIN:-false}
-      ME_CONFIG_BASICAUTH: ${MONGO_EXPRESS_BASICAUTH:-false}
-      ME_CONFIG_BASICAUTH_USERNAME: ${MONGO_EXPRESS_USERNAME}
-      ME_CONFIG_BASICAUTH_PASSWORD: ${MONGO_EXPRESS_PASSWORD}
-    ports:
-      - ${MONGO_EXPRESS_PORT:-8081}:8081
-
-  device-base:
-    profiles:
-      # NOTE: This makes it so that the service can be extended and the
-      # ::OVERRIDE::-marked settings overridden without starting this service
-      # during `docker compose up`. The "inherited" services need to be started
-      # on their own though (separate profile)...
-      - ABSTRACT_BASE_HACK_DO_NOT_USE
-    image: ghcr.io/liquidai-project/wasmiot-supervisor
-    build:
-      context: ./wasmiot-supervisor
-      dockerfile: ./Dockerfile
-    expose:
-      - 5000
-    volumes:
-      - type: bind
-        source: ./wasmiot-supervisor/host_app
-        target: /app/host_app
-    environment:
-      WASMIOT_ORCHESTRATOR_URL: ${WASMIOT_ORCHESTRATOR_URL}
-      WASMIOT_LOGGING_ENDPOINT: ${WASMIOT_LOGGING_ENDPOINT}
-    links:
-      - orchestrator
-
-  freezer:
-    extends: device-base
-    profiles:
-      - device
-    environment:
-      - DEVICE_TYPE=equipment
-      - FLASK_APP=freezer
-      - WASMIOT_SUPERVISOR_IP=172.15.0.21
-    privileged: true
-    volumes:
-      - ./example/device1/configs:/app/instance/configs
-      - ./example/device1/modules:/app/instance/modules
-      - ./example/device1/output:/app/instance/output
-    networks:
-      default:
-        ipv4_address: 172.15.0.21
-
-
-  washingMachine:
-    extends: device-base
-    profiles:
-      - device
-    environment:
-      - DEVICE_TYPE=equipment
-      - FLASK_APP=washingMachine
-      - WASMIOT_SUPERVISOR_IP=172.15.0.22
-    privileged: true
-    volumes:
-      - ./example/device2/configs:/app/instance/configs
-      - ./example/device2/modules:/app/instance/modules
-      - ./example/device2/output:/app/instance/output
-    networks:
-      default:
-        ipv4_address: 172.15.0.22
-    devices:
-      - /dev/video0:/dev/video0
-
   frontend:
     image: ghcr.io/liquidai-project/energy-demo-frontend
     build:
@@ -128,25 +8,12 @@ services:
     ports:
       - ${FRONTEND_PORT-5173}:5173
     environment:
-      PUBLIC_HOST: ${ORCHESTRATOR_HOST}
-      PUBLIC_PORT: ${ORCHESTRATOR_PORT}
-      DEVICE_CHECK_INTERVAL: ${DEVICE_CHECK_INTERVAL}
-      INTELLIGENT_CONTROLLER_HOST: ${INTELLIGENT_CONTROLLER_HOST}
-      INTELLIGENT_CONTROLLER_PORT: ${INTELLIGENT_CONTROLLER_PORT}
       ANIMATION_MOVING_TIME: ${ANIMATION_MOVING_TIME}
     volumes:
     # the volumes included here to allow interactive development
     # for final version, they should be removed
       - ./frontend:/usr/src/app
       - /usr/src/app/node_modules
-    depends_on:
-      - orchestrator
-
-  intelligentcontroller:
-    build: ./intelligentController
-    container_name: intelligentcontroller
-    ports: 
-      - ${INTELLIGENT_CONTROLLER_PORT-3001}:3001
 
 volumes:
   mongo-config:

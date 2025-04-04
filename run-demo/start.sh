@@ -5,8 +5,6 @@
 # Get this file directory
 DIR=$(dirname "${BASH_SOURCE[0]}")
 
-git submodule update --remote --init
-
 # Check for .env file
 if [ ! -f "${DIR}/.env" ]; then
     echo "Creating .env file"

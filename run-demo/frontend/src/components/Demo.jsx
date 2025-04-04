@@ -39,9 +39,7 @@ import HackerIcon from "../assets/hacker_icon.png";
 import CloudIcon from "../assets/cloud_icon.png";
 import OptimizedSettingsIcon from "../assets/optimized_settings_icon.png";
 import UserControlUI from "./userControl/UserControlUI";
-import { fetchData } from '../services/apiService';
 import DemoControlls from "./demoControll/DemoControlls";
-import { getDeviceIdMap, getDeviceIdByName } from "../utils/deviceUtils";
 import {
   ORCHESTRATOR,
   STORAGE,
@@ -65,12 +63,6 @@ import OperatingTimeChart from "./visual_components/OperatingTimeChart";
 import SpotPriceChart from "./visual_components/SpotPriceChart";
 
 // eslint-disable-next-line no-undef
-const PUBLIC_HOST = process.env.PUBLIC_HOST;
-// eslint-disable-next-line no-undef
-const PUBLIC_PORT = process.env.PUBLIC_PORT;
-// eslint-disable-next-line no-undef
-const DEVICE_CHECK_INTERVAL = process.env.DEVICE_CHECK_INTERVAL;
-// eslint-disable-next-line no-undef
 const ANIMATION_MOVING_TIME = process.env.ANIMATION_MOVING_TIME;
 
 const DATA_ICONS_MOVING_FROM_WM = [EnergyUsageIcon, userPreferenceIcon];
@@ -93,8 +85,6 @@ const Demo = () => {
   const flexibilityServiceRef = useRef(null);
   const evChargerRef = useRef(null);
   const hackerRef = useRef(null);
-  const logsQueueRef = useRef([]);
-  const healthLogTimerRef = useRef(null);
 
   const [activeDeployments, setActiveDeployments] = useState([]);
   const [warningBorderVisible, setWarningBorderVisible] = useState(false);
@@ -214,28 +204,6 @@ const Demo = () => {
     [getDeviceReference]
   );
 
-  // Reset the device storage after 3 minutes of inactivity
-  const resetDeviceStorage = () => {
-    const existingDevices = JSON.parse(localStorage.getItem("devices")) || [];
-    const now = Date.now();
-    const expiryTime = parseInt(DEVICE_CHECK_INTERVAL) + 2000;
-
-    const updatedDevices = existingDevices.filter(
-      (device) => now - device.lastUpdateTime < expiryTime
-    );
-
-    localStorage.setItem("devices", JSON.stringify(updatedDevices));
-  };
-
-  // Reset the health log timer after 3 minutes
-  const resetHealthLogTimer = useCallback(() => {
-    clearTimeout(healthLogTimerRef.current);
-    healthLogTimerRef.current = setTimeout(() => {
-      resetDeviceStorage();
-      resetHealthLogTimer();
-    }, parseInt(DEVICE_CHECK_INTERVAL));
-  }, []);
-
   // Handle animation of icon movements
   const continousAnimationRun = async () => {
     const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -282,230 +250,6 @@ const Demo = () => {
       moveCodeAnimation(SERVICE_PROVIDER2, EV_CHARGER, OptimizedSettingsIcon);
     }
   };
-
-  // Update the deployment details for the device
-  const updateDeployment = useCallback(
-    async (device, deviceName, deployments) => {
-      const deviceSpecificDeployment = deployments.find((item) =>
-        item.sequence.some((seq) => seq.device === device.deviceId)
-      );
-
-      if (deviceSpecificDeployment) {
-        // Accessing the modules inside fullManifest using the deviceId
-        const deviceManifest =
-          deviceSpecificDeployment.fullManifest[device.deviceId];
-
-        device.deploymentId = deviceSpecificDeployment._id;
-        device.existingModuleId = deviceManifest.modules[0].id;
-        device.existingModuleName = deviceManifest.modules[0].name;
-        device.isModuleActive = Boolean(deviceSpecificDeployment.active);
-
-        const deviceRef = getDeviceReference(deviceName);
-
-        if (deviceRef.current && device.isModuleActive) {
-          const deviceBounds = deviceRef.current.getBoundingClientRect();
-
-          const wasmModuleIconPosition = {
-            x: deviceBounds.left + deviceBounds.width / 2,
-            y: deviceBounds.top + deviceBounds.height / 2,
-          };
-
-          setActiveDeployments((prevActiveDeployments) => {
-            const existingDeploymentIds = prevActiveDeployments.map(
-              (dep) => dep.id
-            );
-
-            if (!existingDeploymentIds.includes(deviceSpecificDeployment._id)) {
-              return [
-                ...prevActiveDeployments,
-                {
-                  id: deviceSpecificDeployment._id,
-                  wasmModuleIconPosition: wasmModuleIconPosition,
-                  deviceId: device.deviceId,
-                },
-              ];
-            }
-            return prevActiveDeployments;
-          });
-        }
-      } else {
-        device.deploymentId = null;
-        device.existingModuleId = null;
-        device.existingModuleName = null;
-        device.isModuleActive = false;
-
-        setActiveDeployments((prevActiveDeployments) => {
-          return prevActiveDeployments.filter(
-            (dep) => dep.deviceId !== device.deviceId
-          );
-        });
-      }
-    },
-    [getDeviceReference]
-  );
-
-  // Collect logs in a queue and process them in batch
-  const processLogsQueue = useCallback(async () => {
-    const logs = logsQueueRef.current;
-    if (logs.length === 0) return;
-
-    // Get the existing devices from local storage
-    let existingDevices = JSON.parse(localStorage.getItem("devices")) || [];
-
-    // Convert the array to a map for efficient updates
-    const deviceMap = new Map(
-      existingDevices.map((device) => [device.name, device])
-    );
-
-    const now = Date.now();
-    const expiryTime = parseInt(DEVICE_CHECK_INTERVAL) + 2000;
-
-    const updatePromises = [];
-
-    const deployments = await fetchData("/file/manifest"); // Fetch all the deployments available in orchestrator
-
-    for (const log of logs) {
-      const deviceId = getDeviceIdByName(log.deviceName);
-      const logReceivedTime = new Date(log.dateReceived).getTime(); // This is in milliseconds
-
-      if (log.funcName === "thingi_health") {
-        if (!deviceMap.has(log.deviceName)) {
-          deviceMap.set(log.deviceName, {
-            name: log.deviceName,
-            lastUpdateTime: now,
-            deviceId: deviceId,
-            deploymentId: null,
-            existingModuleId: null,
-            existingModuleName: null,
-            isModuleActive: false,
-          });
-        } else {
-          const device = deviceMap.get(log.deviceName);
-          device.lastUpdateTime = now;
-          device.deviceId = deviceId;
-
-          // This will make sure any changes to deployment are updated in local storage
-          updatePromises.push(
-            updateDeployment(
-              deviceMap.get(log.deviceName),
-              log.deviceName,
-              deployments
-            )
-          );
-        }
-        // Added log time and current time difference check to prevent to create multiple moving object for old logs when refreshing the page
-      } else if (
-        log.funcName === "deployment_create" &&
-        now - logReceivedTime < 5000
-      ) {
-        await moveCodeAnimation(ORCHESTRATOR, log.deviceName, WebAssembly_Icon);
-        updatePromises.push(
-          updateDeployment(
-            deviceMap.get(log.deviceName),
-            log.deviceName,
-            deployments
-          )
-        );
-      }
-    }
-
-    // Wait for all updateDeployment calls to complete
-    await Promise.all(updatePromises);
-
-    // Filter out devices that haven't been updated within the expiry time
-    const updatedDevices = Array.from(deviceMap.values()).filter(
-      (device) => now - device.lastUpdateTime < expiryTime
-    );
-
-    // Update the local storage with the new devices array
-    localStorage.setItem("devices", JSON.stringify(updatedDevices));
-
-    // Clear the queue
-    logsQueueRef.current = [];
-  }, [getDeviceIdByName, moveCodeAnimation, updateDeployment]);
-
-  // Trigger processing when deviceIdMap changes
-  useEffect(() => {
-    if (getDeviceIdMap.size > 0) {
-      processLogsQueue();
-    }
-  }, [getDeviceIdMap, processLogsQueue]);
-
-  // Get the devices health at the moment
-  const getInitialDeviceHealth = useCallback(async () => {
-    try {
-      const currentDate = new Date();
-
-      // Subtract 3 minutes from the current date and time because health check is done every 3 minutes from the orchestrator
-      currentDate.setTime(
-        currentDate.getTime() - parseInt(DEVICE_CHECK_INTERVAL)
-      );
-
-      // Convert to ISO 8601 format (e.g., "2024-07-24T13:21:35.776Z")
-      const formattedDate = currentDate.toISOString();
-
-      const logs = await fetchData("/device/logs?after=" + formattedDate);
-
-      logs.forEach((log) => logsQueueRef.current.push(log));
-      setTimeout(processLogsQueue, 500);
-    } catch (error) {
-      console.error("Error fetching data:", error);
-    }
-  }, [processLogsQueue]);
-
-  // Fetch the device data from the API
-  const fetchDeviceData = async () => {
-    try {
-      const devicesFromAPI = await fetchData("/file/device");
-      const deviceMap = new Map(
-        devicesFromAPI.map((device) => [device.name, device._id])
-      );
-      localStorage.setItem(
-        "deviceIdMap",
-        JSON.stringify(Array.from(deviceMap.entries()))
-      );
-    } catch (error) {
-      console.error("Error fetching device data:", error);
-    }
-  };
-
-  useEffect(() => {
-    fetchDeviceData();
-    getInitialDeviceHealth();
-    resetHealthLogTimer();
-  }, [getInitialDeviceHealth, resetHealthLogTimer]);
-
-  // WebSocket setup to receive new logs
-  useEffect(() => {
-    const wsHost = PUBLIC_HOST.replace(/^http/, "ws");
-    const ws = new WebSocket(`${wsHost}:${PUBLIC_PORT}`);
-
-    ws.onopen = () => {
-      console.log("Connected to the WebSocket server");
-    };
-
-    ws.onmessage = (event) => {
-      const newLog = JSON.parse(event.data);
-
-      // Add new logs to the queue
-      logsQueueRef.current.push(newLog);
-
-      // Process the queue after a short delay
-      setTimeout(processLogsQueue, 500);
-    };
-
-    ws.onclose = () => {
-      console.log("Disconnected from the WebSocket server");
-    };
-
-    ws.onerror = (error) => {
-      console.error("WebSocket error:", error);
-    };
-
-    return () => {
-      ws.close();
-    };
-  }, [processLogsQueue]);
 
   useEffect(() => {
     // This logic will draw a line between the orchestrator and the equipment
