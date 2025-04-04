@@ -12,8 +12,8 @@ import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import backgroundImage from "./../assets/yard.png";
 import controlHub from "./../assets/controlHub.png";
-import Service_Provider1 from "./../assets/service_provider.png";
-import Service_Provider2 from "./../assets/service_provider.png";
+import Service_Provider1 from "./../assets/service_provider1.png";
+import Service_Provider2 from "./../assets/service_provider2.png";
 import houseImage from "./../assets/house.png";
 import House_Warning_Border from "./../assets/house_warning_border.png";
 import Freezer from "./visual_components/Freezer";
@@ -22,17 +22,15 @@ import MovingIcon from "./visual_components/MovingIcon";
 import ElectricCar1 from "./visual_components/ElectricCar1";
 import ElectricCar2 from "./visual_components/ElectricCar2";
 import Jacuzzi from "./visual_components/Jacuzzi";
+import EvCharger from "./visual_components/EvCharger";
 import Orchestrator from "./../assets/orchestrator.png";
+import Storage from "./../assets/storage.png";
 import WebAssembly_Icon from "./../assets/WebAssembly_Logo.png";
-import ConfigurationIcon from "./../assets/configurationIcon.png";
-import Query_Icon from "./../assets/query_icon.png";
 import EnergyUsageIcon from "./../assets/energy_usage_icon.png";
-import Result_Icon_Red from "./../assets/result_icon_with_warning.png";
 import roadImage from "./../assets/road.png";
 import IntelligentControlIcon from "./../assets/intelligent_control.jpg";
-import EVChargerEnergyIcon from "../assets/ev_charger_energy.png";
-import EVChargerIcon from "../assets/ev_charger.png";
 import Energy_Company_Icon from "../assets/spot_price.png";
+import FlexibilityServiceIcon from "../assets/flexibility_service.jpg";
 import SpotPriceDataIcon from "../assets/spotPriceDataIcon.png";
 import TemperatureDataIcon from "../assets/temperature_data_icon.png";
 import DangerIcon from "../assets/danger_icon.png";
@@ -40,20 +38,19 @@ import userPreferenceIcon from "../assets/user_preference_icon.png";
 import HackerIcon from "../assets/hacker_icon.png";
 import CloudIcon from "../assets/cloud_icon.png";
 import OptimizedSettingsIcon from "../assets/optimized_settings_icon.png";
-import ServiceProvider from "./serviceProvider/ServiceProvider";
-import ElectricityPrice from "./serviceProvider/energyQuery/ElectricityConsumption";
 import UserControlUI from "./userControl/UserControlUI";
 import { fetchData } from '../services/apiService';
 import DemoControlls from "./demoControll/DemoControlls";
-import DemoDataVisualize from "./DemoDataVisualize";
 import { getDeviceIdMap, getDeviceIdByName } from "../utils/deviceUtils";
 import {
   ORCHESTRATOR,
+  STORAGE,
   FREEZER,
   WASHING_MACHINE,
   SERVICE_PROVIDER1,
   SERVICE_PROVIDER2,
   ENERGY_COMPANY,
+  FLEXIBILITY_SERVICE,
   INTELLIGENT_CONTROL,
   USER_CONTROL,
   EV_CHARGER,
@@ -62,6 +59,10 @@ import {
   WITH_LIQUID_AI,
 } from "../../constants";
 import { v4 as uuidv4 } from 'uuid';
+import { useDemoVisualizationContext } from "../context/demoVisualizationContext/useDemoVisualizationContext";
+import { useDemoControlContext } from "../context/demoControlContext/useDemoControlContext";
+import OperatingTimeChart from "./visual_components/OperatingTimeChart";
+import SpotPriceChart from "./visual_components/SpotPriceChart";
 
 // eslint-disable-next-line no-undef
 const PUBLIC_HOST = process.env.PUBLIC_HOST;
@@ -78,6 +79,7 @@ const DATA_ICONS_MOVING_FROM_EV = [EnergyUsageIcon, userPreferenceIcon];
 
 const Demo = () => {
   const orchestratorRef = useRef(null);
+  const storageRef = useRef(null);
   const serviceProviderRef1 = useRef(null);
   const serviceProviderRef2 = useRef(null);
   const freezerRef = useRef(null);
@@ -88,21 +90,17 @@ const Demo = () => {
   const intelligentControlRef = useRef(null);
   const userControlRef = useRef(null);
   const energyCompanyRef = useRef(null);
+  const flexibilityServiceRef = useRef(null);
   const evChargerRef = useRef(null);
   const hackerRef = useRef(null);
   const logsQueueRef = useRef([]);
   const healthLogTimerRef = useRef(null);
 
-  const [movingDeployments, setMovingDeployments] = useState([]);
   const [activeDeployments, setActiveDeployments] = useState([]);
   const [warningBorderVisible, setWarningBorderVisible] = useState(false);
   const [shouldBlink, setShouldBlink] = useState(false);
-  const [logs, setLogs] = useState([]);
-  const [userRequirements, setUserRequirements] = useState({});
-  const [optimizedTimeSlots, setOptimizedTimeSlots] = useState({});
-  const [selectedRunMethod, setSelectedRunMethod] = useState(WITHOUT_LIQUID_AI);
-  const [hackerVisible, setHackerVisible] = useState(false);
-  const [consumptionData, setConsumptionData] = useState([]);
+  const { hackerVisibility, movingDeployments, setMovingDeployments } = useDemoVisualizationContext();
+  const { demoRunMethod } = useDemoControlContext();
 
   // This function will make the house border blink in order to indicate the warning state when data is going outside
   const startBlinking = () => {
@@ -129,12 +127,14 @@ const Demo = () => {
       [FREEZER]: freezerRef,
       [WASHING_MACHINE]: washingMachineRef,
       [ORCHESTRATOR]: orchestratorRef,
+      [STORAGE]: storageRef,
       [SERVICE_PROVIDER1]: serviceProviderRef1,
       [SERVICE_PROVIDER2]: serviceProviderRef2,
       [INTELLIGENT_CONTROL]: intelligentControlRef,
       [USER_CONTROL]: userControlRef,
       [EV_CHARGER]: evChargerRef,
       [ENERGY_COMPANY]: energyCompanyRef,
+      [FLEXIBILITY_SERVICE]: flexibilityServiceRef,
       [HACKER]: hackerRef,
       // Add more device names and their references here
     }),
@@ -154,10 +154,6 @@ const Demo = () => {
     },
     [deviceReferences]
   );
-
-  const addLog = (message) => {
-    setLogs((prevLogs) => [...prevLogs, message]);
-  };
 
   // Object moving one place to another place animation
   const moveCodeAnimation = useCallback(
@@ -244,7 +240,7 @@ const Demo = () => {
   const continousAnimationRun = async () => {
     const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-    if (selectedRunMethod === WITH_LIQUID_AI) {
+    if (demoRunMethod === WITH_LIQUID_AI) {
       moveCodeAnimation(ENERGY_COMPANY, INTELLIGENT_CONTROL, SpotPriceDataIcon);
     } else {
 
@@ -550,7 +546,7 @@ const Demo = () => {
       }
     };
 
-    if (selectedRunMethod === WITH_LIQUID_AI) {
+    if (demoRunMethod === WITH_LIQUID_AI) {
       drawLines(
         orchestratorRef,
         ORCHESTRATOR,
@@ -583,6 +579,13 @@ const Demo = () => {
         intelligentControlRef,
         INTELLIGENT_CONTROL
       );
+      drawLines(
+        flexibilityServiceRef,
+        FLEXIBILITY_SERVICE,
+        intelligentControlRef,
+        INTELLIGENT_CONTROL
+      );
+      drawLines(orchestratorRef, ORCHESTRATOR, storageRef, STORAGE);
 
       window.addEventListener("resize", () =>
         drawLines(
@@ -630,6 +633,17 @@ const Demo = () => {
           INTELLIGENT_CONTROL
         )
       );
+      window.addEventListener("resize", () =>
+        drawLines(
+          flexibilityServiceRef,
+          FLEXIBILITY_SERVICE,
+          intelligentControlRef,
+          INTELLIGENT_CONTROL
+        )
+      );
+      window.addEventListener("resize", () =>
+        drawLines(orchestratorRef, ORCHESTRATOR, storageRef, STORAGE)
+      );
     } else {
       drawLines(serviceProviderRef1, SERVICE_PROVIDER1, freezerRef, FREEZER);
       drawLines(
@@ -644,7 +658,7 @@ const Demo = () => {
         evChargerRef,
         EV_CHARGER
       );
-      if(hackerVisible) {
+      if(hackerVisibility) {
         drawLines(serviceProviderRef1, SERVICE_PROVIDER1, hackerRef, HACKER, "red");
         drawLines(serviceProviderRef2, SERVICE_PROVIDER2, hackerRef, HACKER, "red");
       }
@@ -667,7 +681,7 @@ const Demo = () => {
           EV_CHARGER
         )
       );
-      if(hackerVisible) {
+      if(hackerVisibility) {
         window.addEventListener("resize", () =>
           drawLines(serviceProviderRef1, SERVICE_PROVIDER1, hackerRef, HACKER, "red")
         );
@@ -678,7 +692,7 @@ const Demo = () => {
     }
 
     return () => {
-      if (selectedRunMethod === WITH_LIQUID_AI) {
+      if (demoRunMethod === WITH_LIQUID_AI) {
         window.removeEventListener("resize", () =>
           drawLines(
             orchestratorRef,
@@ -725,6 +739,17 @@ const Demo = () => {
             INTELLIGENT_CONTROL
           )
         );
+        window.removeEventListener("resize", () =>
+          drawLines(
+            flexibilityServiceRef,
+            FLEXIBILITY_SERVICE,
+            intelligentControlRef,
+            INTELLIGENT_CONTROL
+          )
+        );
+        window.removeEventListener("resize", () =>
+          drawLines(orchestratorRef, ORCHESTRATOR, storageRef, STORAGE)
+        );
       } else {
         window.removeEventListener("resize", () =>
           drawLines(
@@ -745,7 +770,7 @@ const Demo = () => {
             EV_CHARGER
           )
         );
-        if(hackerVisible) {
+        if(hackerVisibility) {
           window.removeEventListener("resize", () =>
             drawLines(serviceProviderRef1, SERVICE_PROVIDER1, hackerRef, HACKER, "red")
           );
@@ -755,44 +780,7 @@ const Demo = () => {
         }
       }
     };
-  }, [selectedRunMethod, hackerVisible]);
-
-  /**
-   * This function updates the user requirements for a specific piece of equipment in the state.
-   *
-   * @param {Object} userRequirement - The new data or requirement to be set for the specified equipment.
-   * @param {string} equipment - The key for the equipment whose user requirements are being updated (e.g., 'washingMachine', 'freezer').
-   *
-   */
-  const handleUserRequirements = (userRequirement, equipment) => {
-    setUserRequirements((prevRequirements) => ({
-      ...prevRequirements,
-      [equipment]: userRequirement,
-    }));
-  };
-
-  /**
-   * This function updates the optimal time of an equipment to operate.
-   *
-   * @param {Object} optimizedTimeSlots - The new optimized data to be set for the specified equipment.
-   * @param {string} equipment - The key for the equipment whose user requirements are being updated (e.g., 'washingMachine', 'freezer').
-   *
-   */
-  const handleOptimizedTimeSlots = (optimizedTimeSlots, equipment) => {
-    setOptimizedTimeSlots({
-      [equipment]: optimizedTimeSlots,
-    });
-  };
-
-  /**
-   * This function updates the demo running method
-   *
-   * @param {String} method - Running method selected by the user. With or without liquid AI.
-   *
-   */
-  const onRunMethodSelect = (method) => {
-    setSelectedRunMethod(method);
-  };
+  }, [demoRunMethod, hackerVisibility]);
 
   return (
     <div>
@@ -820,23 +808,25 @@ const Demo = () => {
           columns={5}
           style={{ paddingRight: "3vh", paddingLeft: "3vh" }}
         >
-          {selectedRunMethod === WITH_LIQUID_AI && (
+          {demoRunMethod === WITH_LIQUID_AI && (
             <>
               <div id="orchestrator-freezer-line" />
               <div id="orchestrator-washingMachine-line" />
               <div id="orchestrator-intelligentControl-line" />
               <div id="energyCompany-intelligentControl-line" />
+              <div id="flexibilityService-intelligentControl-line" />
               <div id="userControl-intelligentControl-line" />
               <div id="orchestrator-evCharger-line" />
+              <div id="orchestrator-storage-line" />
             </>
           )}
-          {selectedRunMethod === WITHOUT_LIQUID_AI && (
+          {demoRunMethod === WITHOUT_LIQUID_AI && (
             <>
               <div id="serviceProvider1-freezer-line" />
               <div id="serviceProvider1-washingMachine-line" />
               <div id="serviceProvider2-evCharger-line" />
               <AnimatePresence initial={false}>
-                {hackerVisible ? (
+                {hackerVisibility ? (
                   <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -855,7 +845,7 @@ const Demo = () => {
           {movingDeployments.map((deployment) => (
             <MovingIcon key={deployment.id} deployment={deployment} />
           ))}
-          {selectedRunMethod === WITH_LIQUID_AI &&
+          {demoRunMethod === WITH_LIQUID_AI &&
             activeDeployments.map((deployment, index) => (
               <motion.div
                 key={index}
@@ -966,7 +956,7 @@ const Demo = () => {
                       height: "29.2%",
                     }}
                   />
-                  {selectedRunMethod === WITH_LIQUID_AI && (
+                  {demoRunMethod === WITH_LIQUID_AI && (
                     <img
                       src={Orchestrator}
                       alt="Orchestrator"
@@ -981,7 +971,22 @@ const Demo = () => {
                       }}
                     />
                   )}
-                  {selectedRunMethod === WITH_LIQUID_AI && (
+                  {demoRunMethod === WITH_LIQUID_AI && (
+                    <img
+                      src={Storage}
+                      alt="Storage"
+                      ref={storageRef}
+                      style={{
+                        position: "absolute",
+                        top: "60%",
+                        left: "55%",
+                        width: "6%",
+                        height: "7%",
+                        zIndex: 2,
+                      }}
+                    />
+                  )}
+                  {demoRunMethod === WITH_LIQUID_AI && (
                     <img
                       src={IntelligentControlIcon}
                       alt="IntelligentControl"
@@ -996,16 +1001,10 @@ const Demo = () => {
                       }}
                     />
                   )}
-                  {selectedRunMethod === WITH_LIQUID_AI && (
-                    <UserControlUI
-                      ref={userControlRef}
-                      onUserRequirementChange={(userRequirement, equipment) =>
-                        handleUserRequirements(userRequirement, equipment)
-                      }
-                      optimizedTimeSlots={optimizedTimeSlots}
-                    />
+                  {demoRunMethod === WITH_LIQUID_AI && (
+                    <UserControlUI ref={userControlRef} />
                   )}
-                  {selectedRunMethod === WITH_LIQUID_AI && (
+                  {demoRunMethod === WITH_LIQUID_AI && (
                     <img
                       src={Energy_Company_Icon}
                       alt="energyCompany"
@@ -1013,14 +1012,29 @@ const Demo = () => {
                       style={{
                         position: "absolute",
                         top: "90%",
-                        left: "20.2%",
+                        left: "10.2%",
                         width: "15%",
                         height: "10%",
                         zIndex: 2,
                       }}
                     />
                   )}
-                  {selectedRunMethod === WITHOUT_LIQUID_AI && (
+                  {demoRunMethod === WITH_LIQUID_AI && (
+                    <img
+                      src={FlexibilityServiceIcon}
+                      alt="FlexibilityServiceIcon"
+                      ref={flexibilityServiceRef}
+                      style={{
+                        position: "absolute",
+                        top: "90%",
+                        left: "40.2%",
+                        width: "10%",
+                        height: "10%",
+                        zIndex: 2,
+                      }}
+                    />
+                  )}
+                  {demoRunMethod === WITHOUT_LIQUID_AI && (
                     <>
                       <img
                         src={Service_Provider1}
@@ -1047,7 +1061,7 @@ const Demo = () => {
                         }}
                       />
                       <AnimatePresence initial={false}>
-                        {hackerVisible ? (
+                        {hackerVisibility ? (
                           <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
@@ -1062,10 +1076,10 @@ const Demo = () => {
                               ref={hackerRef}
                               style={{
                                 position: "absolute",
-                                top: "50%",
-                                left: "130.2%",
-                                width: "20%",
-                                height: "27%",
+                                top: "85%",
+                                left: "90.2%",
+                                width: "10%",
+                                height: "15%",
                                 zIndex: 2,
                               }}
                             />
@@ -1105,45 +1119,7 @@ const Demo = () => {
                     <ElectricCar1 ref={electricCar1Ref} />
                     <ElectricCar2 ref={electricCar2Ref} />
                     <Jacuzzi ref={jacuzziRef} />
-                    {/*TEMP add of EV charger TODO: Add proper component for this later*/}
-                    <img
-                      id="ev-charger-energy"
-                      src={EVChargerEnergyIcon}
-                      alt="energy"
-                      className="washing-machine-energy-border"
-                      style={{
-                        position: "absolute",
-                        top: "51.8%",
-                        left: "80%",
-                        width: "4.8%",
-                        height: "4.8%",
-                        zIndex: 2,
-                      }}
-                    />
-                    <button
-                      style={{
-                        position: "absolute",
-                        top: "52.2%",
-                        left: "80.35%",
-                        width: "4%",
-                        height: "4%",
-                        backgroundColor: "transparent",
-                        border: "none",
-                        padding: "0%",
-                        zIndex: 2,
-                      }}
-                    >
-                      <img
-                        id="washing-machine"
-                        src={EVChargerIcon}
-                        alt="washingMachine"
-                        ref={evChargerRef}
-                        style={{
-                          width: "100%",
-                          height: "100%",
-                        }}
-                      />
-                    </button>
+                    <EvCharger ref={evChargerRef} />
                   </div>
                 </div>
               </div>
@@ -1164,40 +1140,14 @@ const Demo = () => {
                 >
                   <div style={{ marginBottom: "5%" }}>
                     <DemoControlls
-                      onLogAdd={(log) => addLog(log)}
                       continousAnimationRun={continousAnimationRun}
                       runMoveCodeAnimation={(from, to, icon) =>
                         moveCodeAnimation(from, to, icon)
                       }
-                      userRequirement={userRequirements}
-                      onUpdateOptimizedTimeSlots={(
-                        optimizedTimeSlots,
-                        equipment
-                      ) =>
-                        handleOptimizedTimeSlots(optimizedTimeSlots, equipment)
-                      }
-                      onRunMethodSelect={(value) => onRunMethodSelect(value)}
-                      setHackerVisibility={(isHackerVisible) =>
-                        setHackerVisible(isHackerVisible)
-                      }
                     />
                   </div>
-                  {selectedRunMethod === WITH_LIQUID_AI && (
-                    <DemoDataVisualize logs={logs} />
-                  )}
-                  {/* <ServiceProvider
-                    ref={serviceProviderRef}
-                    onClick={handleQueryClick}
-                  /> */}
-                  {/* <ElectricityPrice consumptionData={consumptionData} /> */}
-                  {selectedRunMethod === WITH_LIQUID_AI && (
-                    <a
-                      href="https://www.helen.fi/en/electricity/electricity-products-and-prices/exchange-electricity"
-                      target="_blank"
-                    >
-                      Spot price check
-                    </a>
-                  )}
+                  {demoRunMethod === WITH_LIQUID_AI && <OperatingTimeChart />}
+                  {demoRunMethod === WITH_LIQUID_AI && <SpotPriceChart />}
                 </Box>
               </Grid>
             </Grid>

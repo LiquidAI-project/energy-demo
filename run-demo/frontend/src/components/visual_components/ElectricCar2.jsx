@@ -1,52 +1,40 @@
-import React, { useState, useEffect } from 'react';
-import { Popover } from "@mui/material";
+import React from 'react';
+import { motion } from 'framer-motion';
 import carImage from "../../assets/car.png";
-import EnergyComponent from "../EnergyComponent";
+import carChargerImage from "../../assets/car_charger.png";
+import { useDemoVisualizationContext } from '../../context/demoVisualizationContext/useDemoVisualizationContext';
 
 const ElectricCar2 = React.forwardRef((props, ref) => {
 
-  const [anchorEl, setAnchorEl] = useState(null);
-  const [isActive, setIsActive] = useState(false);
-  const [deviceInfo, setDeviceInfo] = useState({});
-
-  const component = {
-    id: "ElectricCar2",
-    name: "ElectricCar2",
-    type: "consumer",
-    description: "Electric car is charged at the charging station.",
-    optimize: false,
-    isActive:  isActive,
-    deviceInfo: deviceInfo,
-  };
-
-  const handleHoverOn = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleHoverAway = () => {
-    setAnchorEl(null);
-  };
-
-  const open = Boolean(anchorEl);
+  const { ev2PluggedIn } = useDemoVisualizationContext();
 
   return (
     <div>
       <button
         style={{
-            position: "absolute",
-            top: "55.9%",
-            left: "83%",
-            width: "10%",
-            height: "27%",
-            backgroundColor: "transparent",
-            border: "none",
-            padding: "0%",
-          }}
-        onMouseEnter={handleHoverOn}
-        onMouseLeave={handleHoverAway}
+          position: "absolute",
+          top: "55.9%",
+          left: "83%",
+          width: "10%",
+          height: "23%",
+          backgroundColor: "transparent",
+          border: "none",
+          padding: "0%",
+        }}
       >
         <img
-          id="electric-car-1"
+          id="electric-car-2-charger"
+          src={carChargerImage}
+          alt="ElectricCar2Charger"
+          style={{
+            width: "30%",
+            height: "20%",
+          }}
+        />
+        
+        {/* Animate the car image */}
+        <motion.img
+          id="electric-car-2"
           src={carImage}
           alt="ElectricCar2"
           ref={ref}
@@ -54,25 +42,14 @@ const ElectricCar2 = React.forwardRef((props, ref) => {
             width: "100%",
             height: "100%",
           }}
+          initial={{ y: 0 }} 
+          animate={{ y: ev2PluggedIn ? 0 : '100vh' }}  // If ev2PluggedIn is false, move out of the screen
+          transition={{
+            duration: 5,
+            ease: 'easeInOut',
+          }}
         />
       </button>
-      <Popover
-        sx={{ pointerEvents: "none" }}
-        open={open}
-        anchorEl={anchorEl}
-        anchorOrigin={{
-          vertical: "bottom",
-          horizontal: "left",
-        }}
-        transformOrigin={{
-          vertical: "top",
-          horizontal: "left",
-        }}
-        onClose={handleHoverAway}
-        disableRestoreFocus
-      >
-        <EnergyComponent {...component} />
-      </Popover>
     </div>
   );
 });

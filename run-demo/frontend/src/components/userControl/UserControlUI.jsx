@@ -6,7 +6,6 @@
 import React, { useState } from 'react';
 import { Popover, Tab, Tabs, Box } from '@mui/material';
 import userControlIcon from '../../assets/userControl.png';
-import WashinMachineControl from './WashingMachineControl';
 
 const UserControlUI = React.forwardRef((props, ref) => {
   const [anchorEl, setAnchorEl] = useState(null);
@@ -84,7 +83,7 @@ const UserControlUI = React.forwardRef((props, ref) => {
 
           {/* Tab Content */}
           <Box sx={{ padding: 2 }}>
-            {selectedTab === 0 && <WashinMachineControl {...props} />}
+            {selectedTab === 0 && <div>TODO: Washing Machine controls</div>}
             {selectedTab === 1 && <div>TODO: Freezer controls</div>}
             {selectedTab === 2 && <div>TODO: EV charge controls</div>}
           </Box>
@@ -94,4 +93,5 @@ const UserControlUI = React.forwardRef((props, ref) => {
   );
 });
 
+UserControlUI.displayName = "UserControlUI";
 export default UserControlUI;

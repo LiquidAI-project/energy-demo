@@ -8,6 +8,7 @@
 */
 
 export const ORCHESTRATOR = "orchestrator";
+export const STORAGE = "storage";
 export const FREEZER = "freezer";
 export const WASHING_MACHINE = "washingMachine";
 export const SERVICE_PROVIDER1 = "serviceProvider1";
@@ -16,6 +17,7 @@ export const INTELLIGENT_CONTROL = "intelligentControl";
 export const USER_CONTROL = "userControl";
 export const EV_CHARGER = "evCharger";
 export const ENERGY_COMPANY = "energyCompany";
+export const FLEXIBILITY_SERVICE = "flexibilityService";
 export const HACKER = "hacker";
 export const WITH_LIQUID_AI = "With Liquid AI";
 export const WITHOUT_LIQUID_AI = "Without Liquid AI";
