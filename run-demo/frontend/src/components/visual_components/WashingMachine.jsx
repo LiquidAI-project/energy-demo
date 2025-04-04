@@ -28,9 +28,13 @@ const WashingMachine = React.forwardRef((props, ref) => {
 
   useEffect(() => {
     const checkEquipment = () => {
-      const devices = JSON.parse(localStorage.getItem('devices') || '[]');
-      const deviceFound = devices.find(device => device.name === component.id);
-      setIsActive(deviceFound !== undefined);
+      const devices = JSON.parse(localStorage.getItem("devices") || "[]");
+      const deviceFound = devices.find(
+        (device) => device.name === component.id
+      );
+      // Added hardcoded true until the development of dynamic health check developed
+      setIsActive(true);
+      //setIsActive(deviceFound !== undefined);
       setDeviceInfo(deviceFound || {});
     };
 
