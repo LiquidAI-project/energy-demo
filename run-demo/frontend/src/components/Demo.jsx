@@ -61,6 +61,8 @@ import { useDemoVisualizationContext } from "../context/demoVisualizationContext
 import { useDemoControlContext } from "../context/demoControlContext/useDemoControlContext";
 import OperatingTimeChart from "./visual_components/OperatingTimeChart";
 import SpotPriceChart from "./visual_components/SpotPriceChart";
+import ElectricityPrice from "./visual_components/ElectricityPrice";
+import { cloudBasedPlan } from "../assets/mockData/dailyPlan"
 
 // eslint-disable-next-line no-undef
 const ANIMATION_MOVING_TIME = process.env.ANIMATION_MOVING_TIME;
@@ -90,7 +92,25 @@ const Demo = () => {
   const [warningBorderVisible, setWarningBorderVisible] = useState(false);
   const [shouldBlink, setShouldBlink] = useState(false);
   const { hackerVisibility, movingDeployments, setMovingDeployments } = useDemoVisualizationContext();
-  const { demoRunMethod } = useDemoControlContext();
+  const { demoRunMethod, demoTime } = useDemoControlContext();
+
+  let totalConsumption = [];
+
+  for (let i = 0; i <= 23; i++) {
+    totalConsumption.push({ hour: i, value: 0 });
+  }
+
+  cloudBasedPlan.forEach((c) => {
+    const data = c.slots;
+    data.forEach((d) => {
+      for (let hour = d.start; hour < d.end; hour++) {
+        const consumptionHour = totalConsumption.find((obj) => obj.hour === hour);
+        if (consumptionHour) {
+          consumptionHour.value += d.value;
+        }
+      }
+    });
+  });
 
   // This function will make the house border blink in order to indicate the warning state when data is going outside
   const startBlinking = () => {
@@ -892,6 +912,13 @@ const Demo = () => {
                   </div>
                   {demoRunMethod === WITH_LIQUID_AI && <OperatingTimeChart />}
                   {demoRunMethod === WITH_LIQUID_AI && <SpotPriceChart />}
+                  {demoRunMethod === WITHOUT_LIQUID_AI && (
+                    <ElectricityPrice
+                      demoTime={demoTime}
+                      demoPassedHrs={parseInt(new Date(demoTime).getHours())}
+                      totalConsumption={totalConsumption}
+                    />
+                  )}
                 </Box>
               </Grid>
             </Grid>

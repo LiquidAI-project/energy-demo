@@ -1,5 +1,31 @@
 import { WASHING_MACHINE, FREEZER, EV_CHARGER } from "../../../constants";
 
+export const cloudBasedPlan = [
+  {
+    id: WASHING_MACHINE,
+    name: 'Washing Machine',
+    slots: [
+      { start: 13, end: 15, value: 0.3 },
+    ],
+  },
+  {
+    id: FREEZER,
+    name: 'Freezer',
+    slots: [
+      { start: 3, end: 5, value: 0.5 },
+      { start: 7, end: 9, value: 0.5 },
+      { start: 19, end: 20, value: 0.5 },
+    ],
+  },
+  {
+    id: EV_CHARGER,
+    name: 'EV Charger',
+    slots: [
+      { start: 1, end: 5, value: 5 },
+    ],
+  },
+];
+
 export const initialDayPlan = [
     {
       id: WASHING_MACHINE,
