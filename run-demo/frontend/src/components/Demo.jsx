@@ -62,7 +62,9 @@ import { useDemoControlContext } from "../context/demoControlContext/useDemoCont
 import OperatingTimeChart from "./visual_components/OperatingTimeChart";
 import SpotPriceChart from "./visual_components/SpotPriceChart";
 import ElectricityPrice from "./visual_components/ElectricityPrice";
-import { cloudBasedPlan } from "../assets/mockData/dailyPlan"
+import { cloudBasedPlan, liquidBasedPlanFinal } from "../assets/mockData/dailyPlan"
+import { List, ListItemButton, ListItemText, Collapse } from "@mui/material";
+import { ExpandLess, ExpandMore } from "@mui/icons-material";
 
 // eslint-disable-next-line no-undef
 const ANIMATION_MOVING_TIME = process.env.ANIMATION_MOVING_TIME;
@@ -90,27 +92,46 @@ const Demo = () => {
 
   const [activeDeployments, setActiveDeployments] = useState([]);
   const [warningBorderVisible, setWarningBorderVisible] = useState(false);
+  const [open, setOpen] = useState(false);
   const [shouldBlink, setShouldBlink] = useState(false);
   const { hackerVisibility, movingDeployments, setMovingDeployments } = useDemoVisualizationContext();
   const { demoRunMethod, demoTime } = useDemoControlContext();
 
-  let totalConsumption = [];
+  let totalConsumptionCloudBased = [];
+  let totalConsumptionLiquidBased = [];
 
   for (let i = 0; i <= 23; i++) {
-    totalConsumption.push({ hour: i, value: 0 });
+    totalConsumptionCloudBased.push({ hour: i, value: 0 });
+    totalConsumptionLiquidBased.push({ hour: i, value: 0 });
   }
 
   cloudBasedPlan.forEach((c) => {
     const data = c.slots;
     data.forEach((d) => {
       for (let hour = d.start; hour < d.end; hour++) {
-        const consumptionHour = totalConsumption.find((obj) => obj.hour === hour);
+        const consumptionHour = totalConsumptionCloudBased.find((obj) => obj.hour === hour);
         if (consumptionHour) {
           consumptionHour.value += d.value;
         }
       }
     });
   });
+
+  liquidBasedPlanFinal.forEach((c) => {
+    const data = c.slots;
+    data.forEach((d) => {
+      for (let hour = d.start; hour < d.end; hour++) {
+        const consumptionHour = totalConsumptionLiquidBased.find((obj) => obj.hour === hour);
+        if (consumptionHour) {
+          consumptionHour.value += d.value;
+        }
+      }
+    });
+  });
+
+  const handleClick = () => {
+    setOpen(!open);
+  };
 
   // This function will make the house border blink in order to indicate the warning state when data is going outside
   const startBlinking = () => {
@@ -902,7 +923,7 @@ const Demo = () => {
                   height="auto"
                   overflow="hidden"
                 >
-                  <div style={{ marginBottom: "5%" }}>
+                  <div style={{ marginBottom: "1%" }}>
                     <DemoControlls
                       continousAnimationRun={continousAnimationRun}
                       runMoveCodeAnimation={(from, to, icon) =>
@@ -910,17 +931,84 @@ const Demo = () => {
                       }
                     />
                   </div>
-                  {demoRunMethod === WITH_LIQUID_AI && <OperatingTimeChart />}
-                  {demoRunMethod === WITH_LIQUID_AI && <SpotPriceChart />}
+                </Box>
+              </Grid>
+              <Grid item xs={1} paddingBottom="50px">
+                <Box>
+                  <List
+                    sx={{ width: "94.5%", bgcolor: "background.paper" }}
+                    style={{
+                      position: "absolute",
+                      zIndex: 1000,
+                      border: "1px solid #DCDCDC",
+                      borderRadius: "5px",
+                      boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.2)",
+                      paddingBottom: "0px",
+                      paddingTop: "0px",
+                    }}
+                  >
+                    <ListItemButton
+                      onClick={handleClick}
+                      sx={{ width: "100%" }}
+                    >
+                      <ListItemText
+                        primary={
+                          <Typography style={{ fontWeight: "bolder" }}>
+                            Spot Price Chart
+                          </Typography>
+                        }
+                      />
+                      {open ? <ExpandLess /> : <ExpandMore />}
+                    </ListItemButton>
+                    <Collapse in={open} timeout="auto" unmountOnExit>
+                      <SpotPriceChart />
+                    </Collapse>
+                  </List>
+                </Box>
+              </Grid>
+              <Grid item xs={1} paddingBottom="5px">
+                <Box
+                  style={{
+                    padding: "1vh",
+                    border: "1px solid #DCDCDC",
+                    borderRadius: "5px",
+                    boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.1)",
+                  }}
+                  height="auto"
+                  overflow="hidden"
+                >
                   {demoRunMethod === WITHOUT_LIQUID_AI && (
                     <ElectricityPrice
                       demoTime={demoTime}
                       demoPassedHrs={parseInt(new Date(demoTime).getHours())}
-                      totalConsumption={totalConsumption}
+                      totalConsumption={totalConsumptionCloudBased}
+                    />
+                  )}
+                  {demoRunMethod === WITH_LIQUID_AI && (
+                    <ElectricityPrice
+                      demoTime={demoTime}
+                      demoPassedHrs={parseInt(new Date(demoTime).getHours())}
+                      totalConsumption={totalConsumptionLiquidBased}
                     />
                   )}
                 </Box>
               </Grid>
+              {demoRunMethod === WITH_LIQUID_AI && (
+                <Grid item xs={1} paddingBottom="5px">
+                  <Box
+                    style={{
+                      padding: "1vh",
+                      border: "1px solid #DCDCDC",
+                      borderRadius: "5px",
+                      boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.1)",
+                    }}
+                    height="auto"
+                    overflow="hidden"
+                  >
+                    <OperatingTimeChart />
+                  </Box>
+                </Grid>
+              )}
             </Grid>
           </Grid>
         </Grid>

@@ -57,6 +57,10 @@ function DemoClock() {
             }, speed);
         }
 
+        if (demoRunning && new Date(demoTime).getHours() >= 24) {
+            setDemoRunning(false);
+        }
+
         return () => clearInterval(intervalId);
     }, [
         demoRunning,

@@ -14,7 +14,9 @@ export const cloudBasedPlan = [
     slots: [
       { start: 3, end: 5, value: 0.5 },
       { start: 7, end: 9, value: 0.5 },
+      { start: 12, end: 13, value: 0.5 },
       { start: 19, end: 20, value: 0.5 },
+      { start: 22, end: 23, value: 0.5 },
     ],
   },
   {
@@ -22,6 +24,38 @@ export const cloudBasedPlan = [
     name: 'EV Charger',
     slots: [
       { start: 1, end: 5, value: 5 },
+      { start: 22, end: 24, value: 5 },
+    ],
+  },
+];
+
+export const liquidBasedPlanFinal = [
+  {
+    id: WASHING_MACHINE,
+    name: 'Washing Machine',
+    slots: [
+      { start: 15, end: 17, value: 0.3 },
+    ],
+  },
+  {
+    id: FREEZER,
+    name: 'Freezer',
+    slots: [
+      { start: 3, end: 4, value: 0.5 },
+      { start: 5, end: 6, value: 0.5 },
+      { start: 7, end: 9, value: 0.5 },
+      { start: 12, end: 13, value: 0.5 },
+      { start: 19, end: 20, value: 0.5 },
+      { start: 22, end: 23, value: 0.5 },
+    ],
+  },
+  {
+    id: EV_CHARGER,
+    name: 'EV Charger',
+    slots: [
+      { start: 1, end: 4, value: 5 },
+      { start: 5, end: 6, value: 5 },
+      { start: 22, end: 24, value: 5 },
     ],
   },
 ];

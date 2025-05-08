@@ -3,8 +3,8 @@
 // This source code is licensed under the MIT license. See LICENSE in the repository root directory.
 // Author(s): Lakshan Rathnayaka <lakshan.rathnayaka@tuni.fi>, Ville Heikkilä <ville.heikkila@tuni.fi>.
 
-import { useEffect } from "react";
-import { Button } from "@mui/material";
+import { useEffect, useState } from "react";
+import { Button, Box } from "@mui/material";
 import { useDemoVisualizationContext } from "../../context/demoVisualizationContext/useDemoVisualizationContext";
 import DemoClock from "../DemoClock";
 import PropTypes from "prop-types";
@@ -47,14 +47,16 @@ const ANIMATION_MOVING_TIME = process.env.ANIMATION_MOVING_TIME;
 const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation }) => {
   const {
     deviceStatus,
+    movingDeployments,
     changeHackerVisibility,
     setDayPlans,
     setEv1PluggedIn,
     setEv2PluggedIn,
-    setSpotPriceVisibile,
   } = useDemoVisualizationContext();
   const { demoRunMethod, demoRunning, demoTime, setDemoRunning } =
     useDemoControlContext();
+
+  const [buttonStart, setButtonStart] = useState(false);
 
   /**
    * ML model retraining simulation.
@@ -105,7 +107,6 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation }) => {
       await new Promise((resolve) =>
         setTimeout(resolve, ANIMATION_MOVING_TIME)
       );
-      setSpotPriceVisibile(true);
       runMoveCodeAnimation(ORCHESTRATOR, INTELLIGENT_CONTROL, WasmWithOnnxIcon);
       await new Promise((resolve) => setTimeout(resolve, ANIMATION_MOVING_TIME));
       runMoveCodeAnimation(INTELLIGENT_CONTROL, ORCHESTRATOR, ScheduleIcon);
@@ -265,31 +266,37 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation }) => {
     }
   }, [demoTime]);
 
+  const handleButtonClick = () => {
+    setButtonStart(!buttonStart);
+    if (buttonStart) {
+      setDemoRunning(false);
+    } else {
+      setDemoRunning(true);
+    }
+  }
+
   return (
-    <div>
-      <div>
+    <Box>
+      <Box display="flex" alignItems="center" gap={2} marginBottom={2}>
         <DropdownMenu />
         <Button
           variant="contained"
           color="primary"
-          sx={{ mr: 4, mt: 4 }}
-          onClick={() => setDemoRunning(true)}
+          onClick={() => handleButtonClick()}
+          sx={{
+            backgroundColor: buttonStart ? "red" : "green",
+            color: "white",
+            "&:hover": {
+              backgroundColor: buttonStart ? "darkred" : "darkgreen",
+            },
+          }}
+          disabled={demoRunMethod === WITH_LIQUID_AI && movingDeployments.length > 0}
         >
-          Start
+          {buttonStart ? "Stop" : "Start"}
         </Button>
-        <Button
-          variant="contained"
-          color="primary"
-          sx={{ mr: 4, mt: 4 }}
-          onClick={() => setDemoRunning(false)}
-        >
-          Pause
-        </Button>
-      </div>
-      <div style={{ marginTop: "5%" }}>
-        <DemoClock />
-      </div>
-    </div>
+      </Box>
+      <DemoClock />
+    </Box>
   );
 };
 

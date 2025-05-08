@@ -6,28 +6,38 @@ import { hourlyEnergyData } from "../../assets/mockData/spotPrice";
 const Price = ({ price }) => {
   if (price !== null && price !== undefined) {
     return (
-      <Typography>Current price: {price.toFixed(2)} cents / kWh</Typography>
+      <Typography>• Current price: {price.toFixed(2)} cents / kWh</Typography>
     );
   } else {
-    return <Typography>Loading current price</Typography>;
+    return <Typography>• Loading current price</Typography>;
   }
 };
 
 const Consumption = ({ consumption }) => {
   if (consumption !== null && consumption !== undefined) {
     return (
-      <Typography>Current consumption: {consumption.toFixed(2)} kWh</Typography>
+      <Typography>
+        • Current consumption: {consumption.toFixed(2)} kWh
+      </Typography>
     );
   } else {
-    return <Typography>Loading current consumption</Typography>;
+    return <Typography>• Loading current consumption</Typography>;
   }
 };
 
 const TotalConsumption = ({ total }) => {
   if (total !== null && total !== undefined) {
-    return <Typography>Total consumption: {total.toFixed(2)} kWh</Typography>;
+    return <Typography>• Total consumption: {total.toFixed(2)} kWh</Typography>;
   } else {
-    return <Typography>Loading total consumption</Typography>;
+    return <Typography>• Loading total consumption</Typography>;
+  }
+};
+
+const TotalPrice = ({ totalPrice }) => {
+  if (totalPrice !== null && totalPrice !== undefined) {
+    return <Typography>• Total Price: {totalPrice.toFixed(2)} €</Typography>;
+  } else {
+    return <Typography>• Loading total price</Typography>;
   }
 };
 
@@ -74,10 +84,11 @@ const Chart = memo(function Chart({ consumptionData }) {
 });
 
 function ElectricityPrice({ demoTime, demoPassedHrs, totalConsumption }) {
-  const [prices, setPrices] = useState([]);
   const [currentPrice, setCurrentPrice] = useState(null);
   const [currentConsumption, setCurrentConsumption] = useState(null);
   const [consumptionData, setConsumptionData] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [totalPrice, setTotalPrice] = useState(0);
 
   useEffect(() => {
     const newPrice = updateCurrentPrice(hourlyEnergyData, demoTime);
@@ -105,7 +116,7 @@ function ElectricityPrice({ demoTime, demoPassedHrs, totalConsumption }) {
         };
 
         if (
-          !prev.some((item) => item.time.getTime() === newItem.time.getTime())
+          !prev.some((item) => item.time.getHours() === newItem.time.getHours())
         ) {
           const newData = [...prev, newItem];
           window.sessionStorage.setItem(
@@ -117,7 +128,18 @@ function ElectricityPrice({ demoTime, demoPassedHrs, totalConsumption }) {
         return prev;
       });
     }
-  }, [demoPassedHrs, demoTime, prices, totalConsumption]);
+
+    const total = totalConsumption
+      .filter((entry) => entry.hour <= new Date(demoTime).getHours())
+      .reduce((sum, entry) => sum + entry.value, 0);
+
+    const totalPrice = consumptionData
+      .filter((entry) => entry.time.getHours() <= new Date(demoTime).getHours())
+      .reduce((sum, entry) => sum + entry.total, 0);
+
+    setTotal(total);
+    setTotalPrice(totalPrice);
+  }, [demoPassedHrs, demoTime, totalConsumption]);
 
   function updateCurrentConsumption(totalConsumption, demoTime) {
     const demoTimeFormatted = new Date(demoTime);
@@ -144,24 +166,28 @@ function ElectricityPrice({ demoTime, demoPassedHrs, totalConsumption }) {
     }
   }
 
-  const total = totalConsumption.reduce((a, b) => a + b.value, 0);
-
   return (
     <Box
       sx={{
         height: "44vh",
+        padding: "5px",
       }}
     >
-      <Typography sx={{ marginBottom: "7px", fontWeight: "bold" }}>
+      <Typography style={{ fontWeight: "bolder", marginBottom: "10px" }}>
         Hourly cost of consumed electricity
       </Typography>
-      <Price price={currentPrice} />
-      <Consumption consumption={currentConsumption} />
-      <TotalConsumption total={total} />
+      <Box display="flex" alignItems="center" gap={2} marginBottom={2}>
+        <Price price={currentPrice} />
+        <Consumption consumption={currentConsumption} />
+      </Box>
+      <Box display="flex" alignItems="center" gap={2} marginBottom={2}>
+        <TotalConsumption total={total} />
+        <TotalPrice totalPrice={totalPrice / 100} />
+      </Box>
       <Box
         sx={{
           background: "white",
-          width: "45vh",
+          width: "70vh",
           height: "28vh",
         }}
       >
