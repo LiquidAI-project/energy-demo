@@ -18,6 +18,7 @@
     "axios": "^1.7.2",
     "dotenv": "^16.4.5",
     "framer-motion": "^11.3.2",
+    "react-water-wave": "^2.0.1",
     "recharts": "^2.15.1",
     "uuid": "^11.0.4",
     "ws": "^8.18.0"
