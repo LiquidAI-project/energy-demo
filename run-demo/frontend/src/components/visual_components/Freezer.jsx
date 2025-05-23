@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Popover } from '@mui/material';
+import { useNavigate } from "react-router-dom";
 import freezerImage from '../../assets/freezer.png';
 import activeIcon from '../../assets/active.png';
 import inactiveIcon from '../../assets/inactive.png';
@@ -15,6 +16,8 @@ const Freezer = React.forwardRef((props, ref) => {
   const [deviceInfo, setDeviceInfo] = useState({});
   const [blinkState, setBlinkState] = useState(false);
   const { deviceStatus } = useDemoVisualizationContext();
+
+  const navigate = useNavigate();
 
   const component = {
     id: 'freezer',
@@ -68,6 +71,12 @@ const Freezer = React.forwardRef((props, ref) => {
     setAnchorEl(null);
   };
 
+  const handleClick = () =>
+    navigate(`/component/${component.id}`, {
+      state: { component: component },
+      replace: true,
+    });
+
   const open = Boolean(anchorEl);
 
   return (
@@ -84,6 +93,7 @@ const Freezer = React.forwardRef((props, ref) => {
           padding: "0%",
           zIndex: 2,
         }}
+        onClick={handleClick}
         onMouseEnter={handleHoverOn}
         onMouseLeave={handleHoverAway}
       >

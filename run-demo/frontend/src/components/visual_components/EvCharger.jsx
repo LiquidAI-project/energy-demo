@@ -4,6 +4,7 @@
 // Author(s): Lakshan Rathnayaka <lakshan.rathnayaka@tuni.fi>, Ville Heikkilä <ville.heikkila@tuni.fi>.
 
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import activeIcon from "../../assets/active.png";
 import EVChargerIcon from "../../assets/ev_charger.png";
 import { EV_CHARGER } from "../../../constants";
@@ -14,6 +15,16 @@ const evCharger = React.forwardRef((props, ref) => {
   const [blinkState, setBlinkState] = useState(false);
 
   const evChargerOn = deviceStatus.find((device) => device.deviceName === EV_CHARGER).isEnergyIntensive;
+
+  const navigate = useNavigate();
+
+  const component = {
+    id: "evCharger",
+    name: "Ev Charger",
+    type: "consumer",
+    description: "Electric cars are charged at the charging station.",
+    optimize: false,
+  };
 
   useEffect(() => {
     let intervalId;
@@ -29,6 +40,12 @@ const evCharger = React.forwardRef((props, ref) => {
   
     return () => clearInterval(intervalId);
   }, [evChargerOn]);
+
+  const handleClick = () =>
+    navigate(`/component/${component.id}`, {
+      state: { component: component },
+      replace: true,
+    });
 
   return (
     <div>
@@ -46,6 +63,7 @@ const evCharger = React.forwardRef((props, ref) => {
           padding: "0%",
           zIndex: 2,
         }}
+        onClick={handleClick}
       >
         <img
           id="evCharger"

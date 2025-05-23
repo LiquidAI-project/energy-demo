@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Popover } from "@mui/material";
+import { useNavigate } from "react-router-dom";
 import washingMachineImage from "../../assets/washing_machine.png";
 import activeIcon from "../../assets/active.png";
 import inactiveIcon from '../../assets/inactive.png';
@@ -13,6 +14,8 @@ const WashingMachine = React.forwardRef((props, ref) => {
   const [isActive, setIsActive] = useState(false);
   const [deviceInfo, setDeviceInfo] = useState({});
   const { deviceStatus } = useDemoVisualizationContext();
+
+  const navigate = useNavigate();
 
   const component = {
     id: "washingMachine",
@@ -70,6 +73,12 @@ const WashingMachine = React.forwardRef((props, ref) => {
     setAnchorEl(null);
   };
 
+  const handleClick = () =>
+    navigate(`/component/${component.id}`, {
+      state: { component: component },
+      replace: true,
+    });
+
   const open = Boolean(anchorEl);
 
   return (
@@ -86,6 +95,7 @@ const WashingMachine = React.forwardRef((props, ref) => {
           padding: "0%",
           zIndex: 2,
         }}
+        onClick={handleClick}
         onMouseEnter={handleHoverOn}
         onMouseLeave={handleHoverAway}
       >
