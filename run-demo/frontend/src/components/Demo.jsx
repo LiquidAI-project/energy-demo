@@ -39,9 +39,7 @@ import HackerIcon from "../assets/hacker_icon.png";
 import CloudIcon from "../assets/cloud_icon.png";
 import OptimizedSettingsIcon from "../assets/optimized_settings_icon.png";
 import UserControlUI from "./userControl/UserControlUI";
-import { fetchData } from '../services/apiService';
 import DemoControlls from "./demoControll/DemoControlls";
-import { getDeviceIdMap, getDeviceIdByName } from "../utils/deviceUtils";
 import {
   ORCHESTRATOR,
   STORAGE,
@@ -63,13 +61,11 @@ import { useDemoVisualizationContext } from "../context/demoVisualizationContext
 import { useDemoControlContext } from "../context/demoControlContext/useDemoControlContext";
 import OperatingTimeChart from "./visual_components/OperatingTimeChart";
 import SpotPriceChart from "./visual_components/SpotPriceChart";
+import ElectricityPrice from "./visual_components/ElectricityPrice";
+import { cloudBasedPlan, liquidBasedPlanFinal } from "../assets/mockData/dailyPlan"
+import { List, ListItemButton, ListItemText, Collapse } from "@mui/material";
+import { ExpandLess, ExpandMore } from "@mui/icons-material";
 
-// eslint-disable-next-line no-undef
-const PUBLIC_HOST = process.env.PUBLIC_HOST;
-// eslint-disable-next-line no-undef
-const PUBLIC_PORT = process.env.PUBLIC_PORT;
-// eslint-disable-next-line no-undef
-const DEVICE_CHECK_INTERVAL = process.env.DEVICE_CHECK_INTERVAL;
 // eslint-disable-next-line no-undef
 const ANIMATION_MOVING_TIME = process.env.ANIMATION_MOVING_TIME;
 
@@ -93,14 +89,49 @@ const Demo = () => {
   const flexibilityServiceRef = useRef(null);
   const evChargerRef = useRef(null);
   const hackerRef = useRef(null);
-  const logsQueueRef = useRef([]);
-  const healthLogTimerRef = useRef(null);
 
   const [activeDeployments, setActiveDeployments] = useState([]);
   const [warningBorderVisible, setWarningBorderVisible] = useState(false);
+  const [open, setOpen] = useState(false);
   const [shouldBlink, setShouldBlink] = useState(false);
   const { hackerVisibility, movingDeployments, setMovingDeployments } = useDemoVisualizationContext();
-  const { demoRunMethod } = useDemoControlContext();
+  const { demoRunMethod, demoTime } = useDemoControlContext();
+
+  let totalConsumptionCloudBased = [];
+  let totalConsumptionLiquidBased = [];
+
+  for (let i = 0; i <= 23; i++) {
+    totalConsumptionCloudBased.push({ hour: i, value: 0 });
+    totalConsumptionLiquidBased.push({ hour: i, value: 0 });
+  }
+
+  cloudBasedPlan.forEach((c) => {
+    const data = c.slots;
+    data.forEach((d) => {
+      for (let hour = d.start; hour < d.end; hour++) {
+        const consumptionHour = totalConsumptionCloudBased.find((obj) => obj.hour === hour);
+        if (consumptionHour) {
+          consumptionHour.value += d.value;
+        }
+      }
+    });
+  });
+
+  liquidBasedPlanFinal.forEach((c) => {
+    const data = c.slots;
+    data.forEach((d) => {
+      for (let hour = d.start; hour < d.end; hour++) {
+        const consumptionHour = totalConsumptionLiquidBased.find((obj) => obj.hour === hour);
+        if (consumptionHour) {
+          consumptionHour.value += d.value;
+        }
+      }
+    });
+  });
+
+  const handleClick = () => {
+    setOpen(!open);
+  };
 
   // This function will make the house border blink in order to indicate the warning state when data is going outside
   const startBlinking = () => {
@@ -214,28 +245,6 @@ const Demo = () => {
     [getDeviceReference]
   );
 
-  // Reset the device storage after 3 minutes of inactivity
-  const resetDeviceStorage = () => {
-    const existingDevices = JSON.parse(localStorage.getItem("devices")) || [];
-    const now = Date.now();
-    const expiryTime = parseInt(DEVICE_CHECK_INTERVAL) + 2000;
-
-    const updatedDevices = existingDevices.filter(
-      (device) => now - device.lastUpdateTime < expiryTime
-    );
-
-    localStorage.setItem("devices", JSON.stringify(updatedDevices));
-  };
-
-  // Reset the health log timer after 3 minutes
-  const resetHealthLogTimer = useCallback(() => {
-    clearTimeout(healthLogTimerRef.current);
-    healthLogTimerRef.current = setTimeout(() => {
-      resetDeviceStorage();
-      resetHealthLogTimer();
-    }, parseInt(DEVICE_CHECK_INTERVAL));
-  }, []);
-
   // Handle animation of icon movements
   const continousAnimationRun = async () => {
     const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -282,230 +291,6 @@ const Demo = () => {
       moveCodeAnimation(SERVICE_PROVIDER2, EV_CHARGER, OptimizedSettingsIcon);
     }
   };
-
-  // Update the deployment details for the device
-  const updateDeployment = useCallback(
-    async (device, deviceName, deployments) => {
-      const deviceSpecificDeployment = deployments.find((item) =>
-        item.sequence.some((seq) => seq.device === device.deviceId)
-      );
-
-      if (deviceSpecificDeployment) {
-        // Accessing the modules inside fullManifest using the deviceId
-        const deviceManifest =
-          deviceSpecificDeployment.fullManifest[device.deviceId];
-
-        device.deploymentId = deviceSpecificDeployment._id;
-        device.existingModuleId = deviceManifest.modules[0].id;
-        device.existingModuleName = deviceManifest.modules[0].name;
-        device.isModuleActive = Boolean(deviceSpecificDeployment.active);
-
-        const deviceRef = getDeviceReference(deviceName);
-
-        if (deviceRef.current && device.isModuleActive) {
-          const deviceBounds = deviceRef.current.getBoundingClientRect();
-
-          const wasmModuleIconPosition = {
-            x: deviceBounds.left + deviceBounds.width / 2,
-            y: deviceBounds.top + deviceBounds.height / 2,
-          };
-
-          setActiveDeployments((prevActiveDeployments) => {
-            const existingDeploymentIds = prevActiveDeployments.map(
-              (dep) => dep.id
-            );
-
-            if (!existingDeploymentIds.includes(deviceSpecificDeployment._id)) {
-              return [
-                ...prevActiveDeployments,
-                {
-                  id: deviceSpecificDeployment._id,
-                  wasmModuleIconPosition: wasmModuleIconPosition,
-                  deviceId: device.deviceId,
-                },
-              ];
-            }
-            return prevActiveDeployments;
-          });
-        }
-      } else {
-        device.deploymentId = null;
-        device.existingModuleId = null;
-        device.existingModuleName = null;
-        device.isModuleActive = false;
-
-        setActiveDeployments((prevActiveDeployments) => {
-          return prevActiveDeployments.filter(
-            (dep) => dep.deviceId !== device.deviceId
-          );
-        });
-      }
-    },
-    [getDeviceReference]
-  );
-
-  // Collect logs in a queue and process them in batch
-  const processLogsQueue = useCallback(async () => {
-    const logs = logsQueueRef.current;
-    if (logs.length === 0) return;
-
-    // Get the existing devices from local storage
-    let existingDevices = JSON.parse(localStorage.getItem("devices")) || [];
-
-    // Convert the array to a map for efficient updates
-    const deviceMap = new Map(
-      existingDevices.map((device) => [device.name, device])
-    );
-
-    const now = Date.now();
-    const expiryTime = parseInt(DEVICE_CHECK_INTERVAL) + 2000;
-
-    const updatePromises = [];
-
-    const deployments = await fetchData("/file/manifest"); // Fetch all the deployments available in orchestrator
-
-    for (const log of logs) {
-      const deviceId = getDeviceIdByName(log.deviceName);
-      const logReceivedTime = new Date(log.dateReceived).getTime(); // This is in milliseconds
-
-      if (log.funcName === "thingi_health") {
-        if (!deviceMap.has(log.deviceName)) {
-          deviceMap.set(log.deviceName, {
-            name: log.deviceName,
-            lastUpdateTime: now,
-            deviceId: deviceId,
-            deploymentId: null,
-            existingModuleId: null,
-            existingModuleName: null,
-            isModuleActive: false,
-          });
-        } else {
-          const device = deviceMap.get(log.deviceName);
-          device.lastUpdateTime = now;
-          device.deviceId = deviceId;
-
-          // This will make sure any changes to deployment are updated in local storage
-          updatePromises.push(
-            updateDeployment(
-              deviceMap.get(log.deviceName),
-              log.deviceName,
-              deployments
-            )
-          );
-        }
-        // Added log time and current time difference check to prevent to create multiple moving object for old logs when refreshing the page
-      } else if (
-        log.funcName === "deployment_create" &&
-        now - logReceivedTime < 5000
-      ) {
-        await moveCodeAnimation(ORCHESTRATOR, log.deviceName, WebAssembly_Icon);
-        updatePromises.push(
-          updateDeployment(
-            deviceMap.get(log.deviceName),
-            log.deviceName,
-            deployments
-          )
-        );
-      }
-    }
-
-    // Wait for all updateDeployment calls to complete
-    await Promise.all(updatePromises);
-
-    // Filter out devices that haven't been updated within the expiry time
-    const updatedDevices = Array.from(deviceMap.values()).filter(
-      (device) => now - device.lastUpdateTime < expiryTime
-    );
-
-    // Update the local storage with the new devices array
-    localStorage.setItem("devices", JSON.stringify(updatedDevices));
-
-    // Clear the queue
-    logsQueueRef.current = [];
-  }, [getDeviceIdByName, moveCodeAnimation, updateDeployment]);
-
-  // Trigger processing when deviceIdMap changes
-  useEffect(() => {
-    if (getDeviceIdMap.size > 0) {
-      processLogsQueue();
-    }
-  }, [getDeviceIdMap, processLogsQueue]);
-
-  // Get the devices health at the moment
-  const getInitialDeviceHealth = useCallback(async () => {
-    try {
-      const currentDate = new Date();
-
-      // Subtract 3 minutes from the current date and time because health check is done every 3 minutes from the orchestrator
-      currentDate.setTime(
-        currentDate.getTime() - parseInt(DEVICE_CHECK_INTERVAL)
-      );
-
-      // Convert to ISO 8601 format (e.g., "2024-07-24T13:21:35.776Z")
-      const formattedDate = currentDate.toISOString();
-
-      const logs = await fetchData("/device/logs?after=" + formattedDate);
-
-      logs.forEach((log) => logsQueueRef.current.push(log));
-      setTimeout(processLogsQueue, 500);
-    } catch (error) {
-      console.error("Error fetching data:", error);
-    }
-  }, [processLogsQueue]);
-
-  // Fetch the device data from the API
-  const fetchDeviceData = async () => {
-    try {
-      const devicesFromAPI = await fetchData("/file/device");
-      const deviceMap = new Map(
-        devicesFromAPI.map((device) => [device.name, device._id])
-      );
-      localStorage.setItem(
-        "deviceIdMap",
-        JSON.stringify(Array.from(deviceMap.entries()))
-      );
-    } catch (error) {
-      console.error("Error fetching device data:", error);
-    }
-  };
-
-  useEffect(() => {
-    fetchDeviceData();
-    getInitialDeviceHealth();
-    resetHealthLogTimer();
-  }, [getInitialDeviceHealth, resetHealthLogTimer]);
-
-  // WebSocket setup to receive new logs
-  useEffect(() => {
-    const wsHost = PUBLIC_HOST.replace(/^http/, "ws");
-    const ws = new WebSocket(`${wsHost}:${PUBLIC_PORT}`);
-
-    ws.onopen = () => {
-      console.log("Connected to the WebSocket server");
-    };
-
-    ws.onmessage = (event) => {
-      const newLog = JSON.parse(event.data);
-
-      // Add new logs to the queue
-      logsQueueRef.current.push(newLog);
-
-      // Process the queue after a short delay
-      setTimeout(processLogsQueue, 500);
-    };
-
-    ws.onclose = () => {
-      console.log("Disconnected from the WebSocket server");
-    };
-
-    ws.onerror = (error) => {
-      console.error("WebSocket error:", error);
-    };
-
-    return () => {
-      ws.close();
-    };
-  }, [processLogsQueue]);
 
   useEffect(() => {
     // This logic will draw a line between the orchestrator and the equipment
@@ -1138,7 +923,7 @@ const Demo = () => {
                   height="auto"
                   overflow="hidden"
                 >
-                  <div style={{ marginBottom: "5%" }}>
+                  <div style={{ marginBottom: "1%" }}>
                     <DemoControlls
                       continousAnimationRun={continousAnimationRun}
                       runMoveCodeAnimation={(from, to, icon) =>
@@ -1146,10 +931,84 @@ const Demo = () => {
                       }
                     />
                   </div>
-                  {demoRunMethod === WITH_LIQUID_AI && <OperatingTimeChart />}
-                  {demoRunMethod === WITH_LIQUID_AI && <SpotPriceChart />}
                 </Box>
               </Grid>
+              <Grid item xs={1} paddingBottom="50px">
+                <Box>
+                  <List
+                    sx={{ width: "94.5%", bgcolor: "background.paper" }}
+                    style={{
+                      position: "absolute",
+                      zIndex: 1000,
+                      border: "1px solid #DCDCDC",
+                      borderRadius: "5px",
+                      boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.2)",
+                      paddingBottom: "0px",
+                      paddingTop: "0px",
+                    }}
+                  >
+                    <ListItemButton
+                      onClick={handleClick}
+                      sx={{ width: "100%" }}
+                    >
+                      <ListItemText
+                        primary={
+                          <Typography style={{ fontWeight: "bolder" }}>
+                            Spot Price Chart
+                          </Typography>
+                        }
+                      />
+                      {open ? <ExpandLess /> : <ExpandMore />}
+                    </ListItemButton>
+                    <Collapse in={open} timeout="auto" unmountOnExit>
+                      <SpotPriceChart />
+                    </Collapse>
+                  </List>
+                </Box>
+              </Grid>
+              <Grid item xs={1} paddingBottom="5px">
+                <Box
+                  style={{
+                    padding: "1vh",
+                    border: "1px solid #DCDCDC",
+                    borderRadius: "5px",
+                    boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.1)",
+                  }}
+                  height="auto"
+                  overflow="hidden"
+                >
+                  {demoRunMethod === WITHOUT_LIQUID_AI && (
+                    <ElectricityPrice
+                      demoTime={demoTime}
+                      demoPassedHrs={parseInt(new Date(demoTime).getHours())}
+                      totalConsumption={totalConsumptionCloudBased}
+                    />
+                  )}
+                  {demoRunMethod === WITH_LIQUID_AI && (
+                    <ElectricityPrice
+                      demoTime={demoTime}
+                      demoPassedHrs={parseInt(new Date(demoTime).getHours())}
+                      totalConsumption={totalConsumptionLiquidBased}
+                    />
+                  )}
+                </Box>
+              </Grid>
+              {demoRunMethod === WITH_LIQUID_AI && (
+                <Grid item xs={1} paddingBottom="5px">
+                  <Box
+                    style={{
+                      padding: "1vh",
+                      border: "1px solid #DCDCDC",
+                      borderRadius: "5px",
+                      boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.1)",
+                    }}
+                    height="auto"
+                    overflow="hidden"
+                  >
+                    <OperatingTimeChart />
+                  </Box>
+                </Grid>
+              )}
             </Grid>
           </Grid>
         </Grid>

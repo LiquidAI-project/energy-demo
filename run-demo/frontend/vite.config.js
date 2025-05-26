@@ -16,11 +16,6 @@ export default defineConfig({
   },
   define: {
     'process.env': {
-      PUBLIC_HOST: `${process.env.PUBLIC_HOST}`,
-      PUBLIC_PORT: `${process.env.PUBLIC_PORT}`,
-      INTELLIGENT_CONTROLLER_HOST: `${process.env.INTELLIGENT_CONTROLLER_HOST}`,
-      INTELLIGENT_CONTROLLER_PORT: `${process.env.INTELLIGENT_CONTROLLER_PORT}`,
-      DEVICE_CHECK_INTERVAL: `${process.env.DEVICE_CHECK_INTERVAL}`,
       ANIMATION_MOVING_TIME: `${process.env.ANIMATION_MOVING_TIME}`,
       // Add other environment variables here
     }
