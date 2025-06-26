@@ -12,7 +12,7 @@ The initial idea for the demonstrator was inspired by a previous project develop
 
 The application illustrates **two modes** of operation:
 
-### 1. Traditional Cloud-Based Optimization
+### 1. Traditional Cloud-Based Optimization Simulation
 - Energy consumption data from household devices is sent to cloud servers.
 - Optimization decisions are made externally and then pushed back to the house.
 - This mode demonstrates:
@@ -20,18 +20,19 @@ The application illustrates **two modes** of operation:
   - Limited adaptability due to centralized decision-making.
   - Delayed responses to sudden changes in price or user behavior.
 
-### 2. Liquid AI-Based Optimization
+### 2. Liquid AI-Based Optimization Simulation
 - Optimization intelligence is **moved to the edge**, using **WebAssembly (WASM)** modules.
 - The orchestrator sends intelligence (WASM) to local smart devices and controllers.
 - The system adapts **in real-time** to:
   - **Spot electricity prices**
   - **Grid demand fluctuations**
-  - **User comfort preferences**
+  - **Intelligent Scheduling**
 
 This mode highlights:
-- Privacy-preserving local decision-making
-- Real-time responsiveness
-- Dynamic scheduling of devices with updated energy use graphs
+- Decentralized local computation and data protection
+- Local decision-making and adaptability
+- Energy cost optimization through intelligent scheduling
+- Demonstrating the practical benefits using energy as use case
 
   
 <img width="564" alt="Screenshot 2025-06-26 at 7 21 02 AM" src="https://github.com/user-attachments/assets/0072e62c-f3b8-4fce-859b-c65104577de3" />
@@ -75,3 +76,5 @@ npm start
 - **Docker & Docker Compose** – To run the demo UI in an isolated environment
 
 ---
+
+Note - Main branch consist changes with initiations for the integration of Orchestrator and Supervisor. The branch https://github.com/LiquidAI-project/energy-demo/tree/dev-demo-UI-only-branch only contains the simulation with animations. 
