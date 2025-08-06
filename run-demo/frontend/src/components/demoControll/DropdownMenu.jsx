@@ -6,6 +6,7 @@
 import { WITHOUT_LIQUID_AI, WITH_LIQUID_AI } from '../../../constants';
 import { useDemoControlContext } from '../../context/demoControlContext/useDemoControlContext';
 import { useDemoVisualizationContext } from '../../context/demoVisualizationContext/useDemoVisualizationContext';
+import { FormControl, InputLabel, Select, MenuItem, Box } from "@mui/material";
 
 const DropdownMenu = () => {
   const { demoRunMethod, changeDemoRunMethod, setDemoRunning, setDemoTime } = useDemoControlContext();
@@ -22,12 +23,33 @@ const DropdownMenu = () => {
   };
 
   return (
-    <div>
-      <select value={demoRunMethod} onChange={handleChange}>
-        <option value={WITHOUT_LIQUID_AI}>{WITHOUT_LIQUID_AI}</option>
-        <option value={WITH_LIQUID_AI}>{WITH_LIQUID_AI}</option>
-      </select>
-    </div>
+    <Box sx={{ minWidth: 300 }}>
+      <FormControl fullWidth>
+        <InputLabel id="demo-select-label">Choose Method</InputLabel>
+        <Select
+          labelId="demo-select-label"
+          value={demoRunMethod}
+          label="Choose Method"
+          onChange={handleChange}
+          sx={{
+            backgroundColor: "#fff",
+            borderRadius: "8px",
+            "& .MuiOutlinedInput-notchedOutline": {
+              borderColor: "#ccc",
+            },
+            "&:hover .MuiOutlinedInput-notchedOutline": {
+              borderColor: "#888",
+            },
+            "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+              borderColor: "#1976d2",
+            },
+          }}
+        >
+          <MenuItem value={WITHOUT_LIQUID_AI}>{WITHOUT_LIQUID_AI}</MenuItem>
+          <MenuItem value={WITH_LIQUID_AI}>{WITH_LIQUID_AI}</MenuItem>
+        </Select>
+      </FormControl>
+    </Box>
   );
 };
 

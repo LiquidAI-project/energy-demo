@@ -993,22 +993,20 @@ const Demo = () => {
                   )}
                 </Box>
               </Grid>
-              {demoRunMethod === WITH_LIQUID_AI && (
-                <Grid item xs={1} paddingBottom="5px">
-                  <Box
-                    style={{
-                      padding: "1vh",
-                      border: "1px solid #DCDCDC",
-                      borderRadius: "5px",
-                      boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.1)",
-                    }}
-                    height="auto"
-                    overflow="hidden"
-                  >
-                    <OperatingTimeChart />
-                  </Box>
-                </Grid>
-              )}
+              <Grid item xs={1} paddingBottom="5px">
+                <Box
+                  style={{
+                    padding: "1vh",
+                    border: "1px solid #DCDCDC",
+                    borderRadius: "5px",
+                    boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.1)",
+                  }}
+                  height="auto"
+                  overflow="hidden"
+                >
+                  <OperatingTimeChart />
+                </Box>
+              </Grid>
             </Grid>
           </Grid>
         </Grid>

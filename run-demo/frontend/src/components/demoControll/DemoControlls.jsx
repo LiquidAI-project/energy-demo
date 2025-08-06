@@ -241,23 +241,51 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation }) => {
   };
 
   useEffect(() => {
+    const currentDate = new Date(demoTime);
+    const currentHour = currentDate.getHours();
+    const currentMinute = currentDate.getMinutes();
+
     if (demoRunMethod === WITHOUT_LIQUID_AI && demoRunning) {
 
-      if (new Date(demoTime).getMinutes() % 20 === 0) {
+      if (currentMinute % 20 === 0) {
         continousAnimationRun();
       }
 
-      if (new Date(demoTime).getMinutes() === 40) {
+      if (currentHour == 0 && currentMinute === 30) {
+        setDayPlans(predefinedDayPlan1);
+      }
+
+      if (currentMinute === 40) {
         changeHackerVisibility(true);
       }
 
-      if (new Date(demoTime).getMinutes() === 50) {
+      if (currentMinute === 50) {
         runMoveCodeAnimation(SERVICE_PROVIDER1, HACKER, UnsafeDataIcon);
         runMoveCodeAnimation(SERVICE_PROVIDER2, HACKER, UnsafeDataIcon);
       }
 
-      if (new Date(demoTime).getMinutes() === 20) {
+      if (currentMinute === 20) {
         changeHackerVisibility(false);
+      }
+
+      if (currentHour == 4 && currentMinute === 0) {
+        setDayPlans(predefinedDayPlan2);
+      }
+
+      if (currentHour == 10 && currentMinute === 0) {
+        setDayPlans(predefinedDayPlan3);
+      }
+
+      if (currentHour == 13 && currentMinute === 0) {
+        setDayPlans(predefinedDayPlan4);
+      }
+
+      if (currentHour == 18 && currentMinute === 0) {
+        setDayPlans(predefinedDayPlan5);
+      }
+
+      if (currentHour == 21 && currentMinute === 0) {
+        setDayPlans(predefinedDayPlan6);
       }
     }
 
