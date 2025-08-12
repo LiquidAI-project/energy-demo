@@ -5,21 +5,17 @@
 
 import { WITHOUT_LIQUID_AI, WITH_LIQUID_AI } from '../../../constants';
 import { useDemoControlContext } from '../../context/demoControlContext/useDemoControlContext';
-import { useDemoVisualizationContext } from '../../context/demoVisualizationContext/useDemoVisualizationContext';
 import { FormControl, InputLabel, Select, MenuItem, Box } from "@mui/material";
 
-const DropdownMenu = () => {
-  const { demoRunMethod, changeDemoRunMethod, setDemoRunning, setDemoTime } = useDemoControlContext();
-  const { setMovingDeployments } = useDemoVisualizationContext();
+const DropdownMenu = ({ resetDemoTimer, setDemoStatus }) => {
+  const { demoRunMethod, demoRunning, changeDemoRunMethod } = useDemoControlContext();
+  
 
   const handleChange = (e) => {
     const selectedValue = e.target.value;
     changeDemoRunMethod(selectedValue);
-    const resetDemoTime = new Date();
-    resetDemoTime.setHours(0, 0, 0, 0);
-    setDemoTime(resetDemoTime);
-    setDemoRunning(false);
-    setMovingDeployments([]);
+    setDemoStatus("idle");
+    resetDemoTimer();
   };
 
   return (
@@ -31,9 +27,10 @@ const DropdownMenu = () => {
           value={demoRunMethod}
           label="Choose Method"
           onChange={handleChange}
+          disabled={demoRunning}
           sx={{
             backgroundColor: "#fff",
-            borderRadius: "8px",
+            borderRadius: "4px",
             "& .MuiOutlinedInput-notchedOutline": {
               borderColor: "#ccc",
             },

@@ -33,6 +33,7 @@ import OnnxFileIcon from "../../assets/onnx_file.png";
 import DropdownMenu from "./DropdownMenu";
 import { useDemoControlContext } from "../../context/demoControlContext/useDemoControlContext";
 import {
+  initialDayPlan,
   predefinedDayPlan1,
   predefinedDayPlan2,
   predefinedDayPlan3,
@@ -53,10 +54,9 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation }) => {
     setEv1PluggedIn,
     setEv2PluggedIn,
   } = useDemoVisualizationContext();
-  const { demoRunMethod, demoRunning, demoTime, setDemoRunning } =
-    useDemoControlContext();
-
-  const [buttonStart, setButtonStart] = useState(false);
+  const { demoRunMethod, demoRunning, demoTime, setDemoRunning, setDemoTime } = useDemoControlContext();
+  const { setMovingDeployments } = useDemoVisualizationContext();
+  const [demoStatus, setDemoStatus] = useState("idle"); // idle | running | stopped
 
   /**
    * ML model retraining simulation.
@@ -294,34 +294,110 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation }) => {
     }
   }, [demoTime]);
 
-  const handleButtonClick = () => {
-    setButtonStart(!buttonStart);
-    if (buttonStart) {
-      setDemoRunning(false);
-    } else {
-      setDemoRunning(true);
-    }
+  const handleStart = () => {
+    setDemoStatus("running");
+    setDemoRunning(true);
+  };
+
+  const handleStop = () => {
+    setDemoStatus("stopped");
+    setDemoRunning(false);
+  };
+
+  const handleResume = () => {
+    setDemoStatus("running");
+    setDemoRunning(true);
+  };
+
+  const handleRestart = () => {
+    resetDemoTimer();
+    setDemoStatus("running");
+    setDemoRunning(true);
+  };
+
+  const resetDemoTimer = () => {
+    const resetDemoTime = new Date();
+    resetDemoTime.setHours(0, 0, 0, 0);
+    setDemoTime(resetDemoTime);
+    setDemoRunning(false);
+    setMovingDeployments([]);
+    setDayPlans(initialDayPlan);
   }
 
   return (
     <Box>
       <Box display="flex" alignItems="center" gap={2} marginBottom={2}>
-        <DropdownMenu />
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={() => handleButtonClick()}
-          sx={{
-            backgroundColor: buttonStart ? "red" : "green",
-            color: "white",
-            "&:hover": {
-              backgroundColor: buttonStart ? "darkred" : "darkgreen",
-            },
-          }}
-          disabled={demoRunMethod === WITH_LIQUID_AI && movingDeployments.length > 0}
-        >
-          {buttonStart ? "Stop" : "Start"}
-        </Button>
+        <DropdownMenu resetDemoTimer={resetDemoTimer} setDemoStatus={setDemoStatus} />
+        {demoStatus === "idle" && (
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleStart}
+            sx={{
+              backgroundColor: "green",
+              color: "white",
+              height: "50px",
+              fontSize: "1rem",
+              "&:hover": { backgroundColor: "darkgreen" },
+            }}
+          >
+            Start
+          </Button>
+        )}
+
+        {demoStatus === "running" && (
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleStop}
+            sx={{
+              backgroundColor: "red",
+              color: "white",
+              height: "50px",
+              fontSize: "1rem",
+              "&:hover": { backgroundColor: "darkred" },
+            }}
+            disabled={
+              demoRunMethod === WITH_LIQUID_AI && movingDeployments.length > 0
+            }
+          >
+            Stop
+          </Button>
+        )}
+
+        {demoStatus === "stopped" && (
+          <>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={handleResume}
+              sx={{
+                backgroundColor: "orange",
+                color: "white",
+                height: "50px",
+                fontSize: "1rem",
+                "&:hover": { backgroundColor: "darkorange" },
+              }}
+            >
+              Resume
+            </Button>
+
+            <Button
+              variant="contained"
+              color="secondary"
+              onClick={handleRestart}
+              sx={{
+                backgroundColor: "lightblue",
+                color: "white",
+                height: "50px",
+                fontSize: "1rem",
+                "&:hover": { backgroundColor: "skyblue" },
+              }}
+            >
+              Restart
+            </Button>
+          </>
+        )}
       </Box>
       <DemoClock />
     </Box>
