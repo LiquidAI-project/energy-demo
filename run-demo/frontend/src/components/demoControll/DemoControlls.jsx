@@ -51,6 +51,7 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
     movingDeployments,
     changeHackerVisibility,
     setDayPlans,
+    setHistoricalDayPlans,
     setEv1PluggedIn,
     setEv2PluggedIn,
   } = useDemoVisualizationContext();
@@ -123,6 +124,7 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       runMoveCodeAnimation(ORCHESTRATOR, EV_CHARGER, ScheduleIcon);
       await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
       setDayPlans(predefinedDayPlan2);
+      setHistoricalDayPlans(prev => [...prev, predefinedDayPlan1]);
     }
 
     // EV unplug simulation
@@ -143,6 +145,7 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       runMoveCodeAnimation(ORCHESTRATOR, WASHING_MACHINE, ScheduleIcon);
       await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
       setDayPlans(predefinedDayPlan3);
+      setHistoricalDayPlans(prev => [...prev, predefinedDayPlan2]);
     }
 
     // Demand spike simulation
@@ -157,6 +160,7 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       runMoveCodeAnimation(ORCHESTRATOR, WASHING_MACHINE, ScheduleIcon);
       await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
       setDayPlans(predefinedDayPlan4);
+      setHistoricalDayPlans(prev => [...prev, predefinedDayPlan3]);
     }
 
     // EV plug back in simulation
@@ -172,6 +176,7 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       runMoveCodeAnimation(ORCHESTRATOR, EV_CHARGER, ScheduleIcon);
       await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
       setDayPlans(predefinedDayPlan5);
+      setHistoricalDayPlans(prev => [...prev, predefinedDayPlan4]);
     }
 
     // Demand spike simulation
@@ -186,7 +191,11 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       runMoveCodeAnimation(ORCHESTRATOR, EV_CHARGER, ScheduleIcon);
       await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
       setDayPlans(predefinedDayPlan6);
+      setHistoricalDayPlans(prev => [...prev, predefinedDayPlan5]);
     }
+
+    if (currentHour == 23 && currentMinute == 50)
+      handleRestart();
   };
 
   useEffect(() => {
@@ -219,23 +228,31 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
 
       if (currentHour == 4 && currentMinute === 0) {
         setDayPlans(predefinedDayPlan2);
+        setHistoricalDayPlans(prev => [...prev, predefinedDayPlan1]);
       }
 
       if (currentHour == 10 && currentMinute === 0) {
         setDayPlans(predefinedDayPlan3);
+        setHistoricalDayPlans(prev => [...prev, predefinedDayPlan2]);
       }
 
       if (currentHour == 13 && currentMinute === 0) {
         setDayPlans(predefinedDayPlan4);
+        setHistoricalDayPlans(prev => [...prev, predefinedDayPlan3]);
       }
 
       if (currentHour == 18 && currentMinute === 0) {
         setDayPlans(predefinedDayPlan5);
+        setHistoricalDayPlans(prev => [...prev, predefinedDayPlan4]);
       }
 
       if (currentHour == 21 && currentMinute === 0) {
         setDayPlans(predefinedDayPlan6);
+        setHistoricalDayPlans(prev => [...prev, predefinedDayPlan5]);
       }
+
+      if (currentHour == 23 && currentMinute == 50)
+        handleRestart();
     }
 
     if (demoRunMethod === WITH_LIQUID_AI && demoRunning) {
@@ -277,6 +294,7 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
     setEv1PluggedIn(true);
     setEv2PluggedIn(true);
     setPaused(false);
+    setHistoricalDayPlans([initialDayPlan]);
   }
 
   return (

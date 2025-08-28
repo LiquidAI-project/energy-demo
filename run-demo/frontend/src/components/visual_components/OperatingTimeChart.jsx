@@ -12,8 +12,31 @@ const calculateDurationInHours = (start, end) => {
   return end - start;
 };
 
+// Merge slots: prioritize dayPlans over historical
+const mergeSlots = (historicalSlots, currentSlots) => {
+  const merged = [];
+
+  // Add historical slots first
+  historicalSlots.forEach((slot) => {
+    // Check if current slots have same time
+    const isOverridden = currentSlots.some(
+      (c) => c.start === slot.start && c.end === slot.end
+    );
+    if (!isOverridden) {
+      merged.push({ ...slot, type: "historical" });
+    }
+  });
+
+  // Add current slots (always win)
+  currentSlots.forEach((slot) => {
+    merged.push({ ...slot, type: "current" });
+  });
+
+  return merged;
+};
+
 const OperatingTimeChart = () => {
-  const { dayPlans } = useDemoVisualizationContext();
+  const { dayPlans, historicalDayPlans } = useDemoVisualizationContext();
   const { demoTime } = useDemoControlContext();
   const chartWidth = "100%";
   const hourWidth = 100 / 24;
@@ -24,8 +47,16 @@ const OperatingTimeChart = () => {
     (new Date(demoTime).getMinutes() / 60) * (100 / 24);
 
   // Render the dayPlans with slots
-  const renderDayPlans = dayPlans.map((devicePlan, index) => {
-    const renderSlots = devicePlan.slots.map((slot, slotIndex) => {
+  const renderDeviceRows = dayPlans.map((devicePlan, index) => {
+    // Historical plan for this device (if exists)
+    const historicalSlotsForDevice = historicalDayPlans
+    .map((plan) => plan[index])
+    .filter(Boolean)
+    .flatMap((devicePlan) => devicePlan.slots);
+
+    const mergedSlots = mergeSlots(historicalSlotsForDevice, devicePlan.slots);
+
+    const renderSlots = mergedSlots.map((slot, slotIndex) => {
       const taskDuration = calculateDurationInHours(slot.start, slot.end);
       const taskOffset = slot.start * hourWidth;
 
@@ -37,7 +68,7 @@ const OperatingTimeChart = () => {
             left: `${taskOffset}%`,
             width: `${taskDuration * hourWidth}%`,
             height: "30px",
-            backgroundColor: "#1976d2",
+            backgroundColor: slot.type === "current" ? "#1976d2" : "#b0bec5",
             borderRadius: "4px",
           }}
         />
@@ -109,10 +140,7 @@ const OperatingTimeChart = () => {
             width: chartWidth,
           }}
         >
-          {/* Device Rows */}
-          <Box sx={{ position: "relative", marginTop: 2 }}>
-            {renderDayPlans}
-          </Box>
+          {renderDeviceRows}
 
           {/* Vertical Grid Lines (X-Axis) */}
           <Box

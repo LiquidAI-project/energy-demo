@@ -14,12 +14,14 @@ const DemoVisualizationContext = createContext({
   hackerVisibility: false,
   movingDeployments: [],
   dayPlans: initialDayPlan,
+  historicalDayPlans: [initialDayPlan],
   ev1PluggedIn: true,
   ev2PluggedIn: true,
   deviceStatus: [],
   changeHackerVisibility: () => {},
   setMovingDeployments: () => {},
   setDayPlans: () => {},
+  setHistoricalDayPlans: () => {},
   setEv1PluggedIn: () => {},
   setEv2PluggedIn: () => {},
   setDeviceStatus: () => {},
@@ -30,6 +32,7 @@ export const DemoVisualizationProvider = ({ children }) => {
   const [hackerVisibility, setHackerVisibility] = useState(false);
   const [movingDeployments, setMovingDeployments] = useState([]);
   const [dayPlans, setDayPlans] = useState(initialDayPlan);
+  const [historicalDayPlans, setHistoricalDayPlans] = useState([initialDayPlan]);
   const [ev1PluggedIn, setEv1PluggedIn] = useState(true);
   const [ev2PluggedIn, setEv2PluggedIn] = useState(true);
   const [deviceStatus, setDeviceStatus] = useState([
@@ -78,12 +81,14 @@ export const DemoVisualizationProvider = ({ children }) => {
       hackerVisibility,
       movingDeployments,
       dayPlans,
+      historicalDayPlans,
       ev1PluggedIn,
       ev2PluggedIn,
       deviceStatus,
       changeHackerVisibility,
       setMovingDeployments,
       setDayPlans,
+      setHistoricalDayPlans,
       setEv1PluggedIn,
       setEv2PluggedIn,
     }),
@@ -91,6 +96,7 @@ export const DemoVisualizationProvider = ({ children }) => {
       hackerVisibility,
       movingDeployments,
       dayPlans,
+      historicalDayPlans,
       ev1PluggedIn,
       ev2PluggedIn,
       deviceStatus,
