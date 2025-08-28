@@ -89,6 +89,7 @@ const Demo = () => {
   const flexibilityServiceRef = useRef(null);
   const evChargerRef = useRef(null);
   const hackerRef = useRef(null);
+  
 
   const [activeDeployments, setActiveDeployments] = useState([]);
   const [warningBorderVisible, setWarningBorderVisible] = useState(false);
@@ -96,6 +97,8 @@ const Demo = () => {
   const [shouldBlink, setShouldBlink] = useState(false);
   const { hackerVisibility, movingDeployments, setMovingDeployments } = useDemoVisualizationContext();
   const { demoRunMethod, demoTime } = useDemoControlContext();
+  const [paused, setPaused] = useState(false);
+  const pausedRef = useRef(paused); 
 
   let totalConsumptionCloudBased = [];
   let totalConsumptionLiquidBased = [];
@@ -128,6 +131,22 @@ const Demo = () => {
       }
     });
   });
+
+  const pauseAwareDelay = (ms, isPausedRef) => {
+    return new Promise((resolve) => {
+      let elapsed = 0;
+      const interval = 50; // check every 50ms
+      const timer = setInterval(() => {
+        if (!isPausedRef.current) {
+          elapsed += interval;
+        }
+        if (elapsed >= ms) {
+          clearInterval(timer);
+          resolve();
+        }
+      }, interval);
+    });
+  };
 
   const handleClick = () => {
     setOpen(!open);
@@ -219,10 +238,11 @@ const Demo = () => {
             iconSource: iconSource,
             changingIconSource: changingIconSource,
             startTime: Date.now(), // Track start time for the animation
-            endTime: Date.now() + animationDuration, // Calculate the end time
+            elapsedTime: 0
+            //endTime: Date.now() + animationDuration, // Calculate the end time
           };
   
-          setMovingDeployments((prevDeployments) => {
+          /* setMovingDeployments((prevDeployments) => {
             // Add the new deployment to the state
             const updatedDeployments = [...prevDeployments, newMovingDeployments];
   
@@ -236,7 +256,26 @@ const Demo = () => {
             }, animationDuration);
   
             return updatedDeployments;
-          });
+          }); */
+
+          setMovingDeployments((prev) => [...prev, newMovingDeployments]);
+
+          // Pause-aware timer for removal
+          let elapsed = 0;
+          const interval = 50; // check every 50ms
+
+          const timer = setInterval(() => {
+            if (!pausedRef.current) {
+              elapsed += interval;
+            }
+            if (elapsed >= animationDuration) {
+              clearInterval(timer);
+              setMovingDeployments((current) =>
+                current.filter((dep) => dep.id !== uniqueId)
+              );
+              resolve();
+            }
+          }, interval);
         } else {
           resolve(); // Resolve immediately if the end device is not found
         }
@@ -293,6 +332,7 @@ const Demo = () => {
   };
 
   useEffect(() => {
+    pausedRef.current = paused;
     // This logic will draw a line between the orchestrator and the equipment
     const drawLines = (
       point_A_ref,
@@ -565,7 +605,7 @@ const Demo = () => {
         }
       }
     };
-  }, [demoRunMethod, hackerVisibility]);
+  }, [demoRunMethod, hackerVisibility, paused]);
 
   return (
     <div>
@@ -628,7 +668,7 @@ const Demo = () => {
             </>
           )}
           {movingDeployments.map((deployment) => (
-            <MovingIcon key={deployment.id} deployment={deployment} />
+            <MovingIcon key={deployment.id} deployment={deployment} paused={paused} />
           ))}
           {demoRunMethod === WITH_LIQUID_AI &&
             activeDeployments.map((deployment, index) => (
@@ -929,6 +969,9 @@ const Demo = () => {
                       runMoveCodeAnimation={(from, to, icon) =>
                         moveCodeAnimation(from, to, icon)
                       }
+                      setPaused={setPaused}
+                      pausedRef={pausedRef}
+                      pauseAwareDelay={pauseAwareDelay}
                     />
                   </div>
                 </Box>
