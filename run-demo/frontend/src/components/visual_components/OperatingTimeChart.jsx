@@ -160,7 +160,7 @@ const OperatingTimeChart = () => {
                 width: "100%",
               }}
             >
-              {[...Array(24).keys()].map((hour) => (
+              {[...Array(23).keys()].map((hour) => (
                 <Typography
                   key={hour}
                   variant="body2"

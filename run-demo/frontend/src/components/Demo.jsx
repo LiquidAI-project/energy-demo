@@ -3,11 +3,7 @@
 // This source code is licensed under the MIT license. See LICENSE in the repository root directory.
 // Author(s): Lakshan Rathnayaka <lakshan.rathnayaka@tuni.fi>, Ville Heikkilä <ville.heikkila@tuni.fi>.
 
-import {
-  Box,
-  Grid,
-  Typography,
-} from "@mui/material";
+import { Box, Grid, Typography } from "@mui/material";
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import backgroundImage from "./../assets/yard.png";
@@ -90,6 +86,10 @@ const Demo = () => {
   const evChargerRef = useRef(null);
   const hackerRef = useRef(null);
 
+  const [referenceLineEnabled, setReferenceLineEnabled] = useState(false);
+  const [referenceLinePosition, setReferenceLinePosition] = useState(50); // start middle
+  const containerRef = useRef(null);
+
   const [activeDeployments, setActiveDeployments] = useState([]);
   const [warningBorderVisible, setWarningBorderVisible] = useState(false);
   const [open, setOpen] = useState(false);
@@ -128,6 +128,16 @@ const Demo = () => {
       }
     });
   });
+
+  const handleDrag = (e) => {
+    if (!referenceLineEnabled || !containerRef.current) return;
+
+    const bounds = containerRef.current.getBoundingClientRect();
+    const x = ((e.clientX - bounds.left) / bounds.width) * 100;
+    if (x >= 0 && x <= 100) {
+      setReferenceLinePosition(x);
+    }
+  };
 
   const handleClick = () => {
     setOpen(!open);
@@ -912,13 +922,13 @@ const Demo = () => {
           </Grid>
           <Grid item xs={2} style={{ position: "relative", marginTop: "15px" }}>
             <Grid container spacing={1.5} columns={1}>
-              <Grid item xs={1} minWidth="50vh">
+              <Grid item xs={1} minWidth="50vh" paddingBottom="5px" paddingLeft="0px">
                 <Box
-                  style={{
+                  sx={{
                     padding: "1vh",
                     border: "1px solid #DCDCDC",
                     borderRadius: "5px",
-                    boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.1)",
+                    boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.1)"
                   }}
                   height="auto"
                   overflow="hidden"
@@ -929,84 +939,111 @@ const Demo = () => {
                       runMoveCodeAnimation={(from, to, icon) =>
                         moveCodeAnimation(from, to, icon)
                       }
+                      referenceLineEnabled={referenceLineEnabled}
+                      setReferenceLineEnabled={setReferenceLineEnabled}
                     />
                   </div>
                 </Box>
               </Grid>
-              <Grid item xs={1} paddingBottom="50px">
-                <Box>
-                  <List
-                    sx={{ width: "94.5%", bgcolor: "background.paper" }}
+              <Box
+                ref={containerRef}
+                sx={{ position: "relative", width: "100%" }}
+                onMouseDown={handleDrag}
+                onMouseMove={(e) => e.buttons === 1 && handleDrag(e)}
+              >
+                <Grid item xs={1} paddingBottom="5px">
+                  <Box>
+                    <List
+                      sx={{ 
+                        width: "100%", 
+                        bgcolor: "background.paper",
+                        border: "1px solid #DCDCDC",
+                        borderRadius: "5px",
+                        boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.2)",
+                        paddingBottom: 0,
+                        paddingTop: 0,
+                      }}
+                    >
+                      <ListItemButton
+                        onClick={handleClick}
+                        sx={{ width: "100%" }}
+                      >
+                        <ListItemText
+                          primary={
+                            <Typography style={{ fontWeight: "bolder" }}>
+                              Spot Price Chart
+                            </Typography>
+                          }
+                        />
+                        {open ? <ExpandLess /> : <ExpandMore />}
+                      </ListItemButton>
+                      <Collapse in={open} timeout="auto" unmountOnExit>
+                        <SpotPriceChart />
+                      </Collapse>
+                    </List>
+                  </Box>
+                </Grid>
+                <Grid item xs={1} paddingBottom="5px">
+                  <Box
                     style={{
-                      position: "absolute",
-                      zIndex: 1000,
+                      padding: "1vh",
                       border: "1px solid #DCDCDC",
                       borderRadius: "5px",
-                      boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.2)",
-                      paddingBottom: "0px",
-                      paddingTop: "0px",
+                      boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.1)",
                     }}
+                    height="auto"
+                    overflow="hidden"
                   >
-                    <ListItemButton
-                      onClick={handleClick}
-                      sx={{ width: "100%" }}
-                    >
-                      <ListItemText
-                        primary={
-                          <Typography style={{ fontWeight: "bolder" }}>
-                            Spot Price Chart
-                          </Typography>
-                        }
+                    {demoRunMethod === WITHOUT_LIQUID_AI && (
+                      <ElectricityPrice
+                        demoTime={demoTime}
+                        demoPassedHrs={parseInt(new Date(demoTime).getHours())}
+                        totalConsumption={totalConsumptionCloudBased}
                       />
-                      {open ? <ExpandLess /> : <ExpandMore />}
-                    </ListItemButton>
-                    <Collapse in={open} timeout="auto" unmountOnExit>
-                      <SpotPriceChart />
-                    </Collapse>
-                  </List>
-                </Box>
-              </Grid>
-              <Grid item xs={1} paddingBottom="5px">
-                <Box
-                  style={{
-                    padding: "1vh",
-                    border: "1px solid #DCDCDC",
-                    borderRadius: "5px",
-                    boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.1)",
-                  }}
-                  height="auto"
-                  overflow="hidden"
-                >
-                  {demoRunMethod === WITHOUT_LIQUID_AI && (
-                    <ElectricityPrice
-                      demoTime={demoTime}
-                      demoPassedHrs={parseInt(new Date(demoTime).getHours())}
-                      totalConsumption={totalConsumptionCloudBased}
-                    />
-                  )}
-                  {demoRunMethod === WITH_LIQUID_AI && (
-                    <ElectricityPrice
-                      demoTime={demoTime}
-                      demoPassedHrs={parseInt(new Date(demoTime).getHours())}
-                      totalConsumption={totalConsumptionLiquidBased}
-                    />
-                  )}
-                </Box>
-              </Grid>
-              <Grid item xs={1} paddingBottom="5px">
-                <Box
-                  style={{
-                    padding: "1vh",
-                    border: "1px solid #DCDCDC",
-                    borderRadius: "5px",
-                    boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.1)",
-                  }}
-                  height="auto"
-                  overflow="hidden"
-                >
-                  <OperatingTimeChart />
-                </Box>
-              </Grid>
+                    )}
+                    {demoRunMethod === WITH_LIQUID_AI && (
+                      <ElectricityPrice
+                        demoTime={demoTime}
+                        demoPassedHrs={parseInt(new Date(demoTime).getHours())}
+                        totalConsumption={totalConsumptionLiquidBased}
+                      />
+                    )}
+                  </Box>
+                </Grid>
+                <Grid item xs={1} paddingBottom="5px">
+                  <Box
+                    style={{
+                      padding: "1vh",
+                      border: "1px solid #DCDCDC",
+                      borderRadius: "5px",
+                      boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.1)",
+                    }}
+                    height="auto"
+                    overflow="hidden"
+                  >
+                    <OperatingTimeChart />
+                  </Box>
+                </Grid>
+                {referenceLineEnabled && (
+                  <Box
+                    sx={{
+                      position: "absolute",
+                      top: 0,
+                      left: `calc(${referenceLinePosition}% - 30px)`,
+                      height: "100%",
+                      width: "20px", 
+                      backgroundColor: "rgba(255, 205, 205, 0.5)", 
+                      border: "2px solid rgba(192, 64, 64, 0.9)",
+                      cursor: "grab",
+                      backdropFilter: "brightness(1.1)",
+                      boxShadow: "inset 0 0 15px rgba(0,0,0,0.6)",
+                      zIndex: 10,
+                      transition: "left 0.05s linear",
+                      userSelect: "none"
+                    }}
+                  />
+                )}
+              </Box>
             </Grid>
           </Grid>
         </Grid>

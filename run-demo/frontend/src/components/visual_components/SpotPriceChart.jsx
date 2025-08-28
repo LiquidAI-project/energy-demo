@@ -13,7 +13,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import { Box, Typography } from "@mui/material";
+import { Box } from "@mui/material";
 import { hourlyEnergyData } from "../../assets/mockData/spotPrice";
 
 const SpotPriceChart = () => {
@@ -21,10 +21,13 @@ const SpotPriceChart = () => {
   return (
     <>
       <Box sx={{ width: "100%", display: "flex" }}>
-        <ResponsiveContainer width="92%" height={200}>
+        <ResponsiveContainer width="98%" height={200}>
           <BarChart data={hourlyEnergyData}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="hour" />
+            <XAxis 
+              dataKey="hour" 
+              interval={0}
+            />
             <YAxis />
             <Tooltip />
             <Legend />
