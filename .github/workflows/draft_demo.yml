@@ -64,6 +64,12 @@ jobs:
       packages: read
 
     steps:
+      - name: Store full image name
+        id: repo_lowercase
+        run: |
+          export REPO_NAME=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')
+          echo "FULL_IMAGE_NAME=${{ env.REGISTRY }}/${REPO_NAME}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}" >> $GITHUB_ENV
+
       - name: SSH to the server and deploy the new image
         uses: appleboy/ssh-action@v1
         with:
