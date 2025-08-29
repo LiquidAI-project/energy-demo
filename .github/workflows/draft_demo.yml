@@ -56,3 +56,48 @@ jobs:
             platforms: ${{ env.PLATFORMS }}
             push: ${{ github.event_name != 'pull_request' }}
             labels: ${{ steps.meta.labels }}
+
+  deploy_demo:
+    needs: build_image
+    runs-on: ubuntu-latest
+    permissions:
+      packages: read
+
+    steps:
+      - name: SSH to the server and deploy the new image
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USERNAME }}
+          port: ${{ secrets.SERVER_SSH_PORT }}
+          key: ${{ secrets.SERVER_SSH_PRIVATE_KEY }}
+          passphrase: ${{ secrets.SERVER_SSH_PASSPHRASE }}
+          script: |
+            docker login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ${{ env.REGISTRY }}
+            docker pull ${{ env.FULL_IMAGE_NAME }}
+            docker stop ${{ secrets.SERVER_DRAFT_CONTAINER_NAME }} || true
+            docker rm ${{ secrets.SERVER_DRAFT_CONTAINER_NAME }} || true
+            docker run
+              --detach \
+              --name ${{ secrets.SERVER_DRAFT_CONTAINER_NAME }} \
+              --env ANIMATION_MOVING_TIME=${{ secrets.ANIMATION_MOVING_TIME }} \
+              --publish ${{ secrets.SERVER_DRAFT_FRONTEND_PORT }}:${{ secrets.SERVER_FRONTEND_INTERNAL_PORT }} \
+              ${{ env.FULL_IMAGE_NAME }}
+
+            sleep 10  # Wait for the container to start
+
+            # Verify the container is running
+            if docker ps | grep --quiet ${{ secrets.SERVER_DRAFT_CONTAINER_NAME }}; then
+              echo "Container is running."
+            else
+              echo "Container failed to start."
+              exit 1
+            fi
+
+            # Check if the application is responsive (HTTP check)
+            if curl -f http://localhost:${{ secrets.SERVER_DRAFT_FRONTEND_PORT }}; then
+              echo "Application is up and running."
+            else
+              echo "Application is not responding."
+              exit 1
+            fi
