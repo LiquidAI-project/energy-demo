@@ -83,12 +83,7 @@ jobs:
             docker pull ${{ env.FULL_IMAGE_NAME }}
             docker stop ${{ secrets.SERVER_DRAFT_CONTAINER_NAME }} || true
             docker rm ${{ secrets.SERVER_DRAFT_CONTAINER_NAME }} || true
-            docker run
-              --detach \
-              --name ${{ secrets.SERVER_DRAFT_CONTAINER_NAME }} \
-              --env ANIMATION_MOVING_TIME=${{ secrets.ANIMATION_MOVING_TIME }} \
-              --publish ${{ secrets.SERVER_DRAFT_FRONTEND_PORT }}:${{ secrets.SERVER_FRONTEND_INTERNAL_PORT }} \
-              ${{ env.FULL_IMAGE_NAME }}
+            docker run --detach --name ${{ secrets.SERVER_DRAFT_CONTAINER_NAME }} --env ANIMATION_MOVING_TIME=${{ secrets.ANIMATION_MOVING_TIME }} --publish ${{ secrets.SERVER_DRAFT_FRONTEND_PORT }}:${{ secrets.SERVER_FRONTEND_INTERNAL_PORT }} ${{ env.FULL_IMAGE_NAME }}
 
             sleep 10  # Wait for the container to start
 
