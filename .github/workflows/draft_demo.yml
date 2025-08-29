@@ -7,7 +7,7 @@ on:
       - "draft"
 
 env:
-  DOCKER_CONTEXT: ./run-demo/frontend
+  DOCKER_CONTEXT: run-demo/frontend
   DOCKER_FILENAME: Dockerfile
   IMAGE_NAME: energy-demo
   IMAGE_TAG: draft
@@ -45,7 +45,8 @@ jobs:
         uses: docker/build-push-action@v4
         with:
             context: ${{ env.DOCKER_CONTEXT }}
-            file: ${{ env.DOCKER_FILENAME }}
+            file: ${{ env.DOCKER_CONTEXT }}/${{ env.DOCKER_FILENAME }}
+            tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+            platforms: ${{ env.PLATFORMS }}
             push: ${{ github.event_name != 'pull_request' }}
-            tags: ${{ env.IMAGE_TAG }}
             labels: ${{ steps.meta.labels }}
