@@ -1,0 +1,51 @@
+name: Deploy draft version of the energy demo
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - "draft"
+
+env:
+  DOCKER_CONTEXT: ./run-demo/frontend
+  DOCKER_FILENAME: Dockerfile
+  IMAGE_NAME: energy-demo
+  IMAGE_TAG: draft
+  PLATFORMS: linux/amd64
+  REGISTRY: ghcr.io
+
+jobs:
+  build_image:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Docker buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Log into container registry
+        uses: docker/login-action@v2
+        with:
+            registry: ${{ env.REGISTRY }}
+            username: ${{ github.actor }}
+            password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Get container meta information
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+            images: ${{ env.REGISTRY }}/${{ github.repository }}/${{ env.IMAGE_NAME }}
+
+      - name: Build and push Docker image for energy demo frontend
+        uses: docker/build-push-action@v4
+        with:
+            context: ${{ env.DOCKER_CONTEXT }}
+            file: ${{ env.DOCKER_FILENAME }}
+            push: ${{ github.event_name != 'pull_request' }}
+            tags: ${{ env.IMAGE_TAG }}
+            labels: ${{ steps.meta.labels }}
