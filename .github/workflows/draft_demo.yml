@@ -9,7 +9,7 @@ on:
 env:
   IMAGE_CONTEXT: run-demo/frontend
   IMAGE_FILENAME: Dockerfile
-  IMAGE_NAME: energy-demo
+  IMAGE_NAME: frontend
   IMAGE_TAG: draft
   PLATFORMS: linux/amd64
   REGISTRY: ghcr.io
@@ -22,6 +22,12 @@ jobs:
       packages: write
 
     steps:
+      - name: Store full image name
+        id: repo_lowercase
+        run: |
+          export REPO_NAME=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')
+          echo "FULL_IMAGE_NAME=${{ env.REGISTRY }}/${REPO_NAME}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}" >> $GITHUB_ENV
+
       - name: Checkout
         uses: actions/checkout@v3
 
@@ -46,7 +52,7 @@ jobs:
         with:
             context: ${{ env.IMAGE_CONTEXT }}
             file: ${{ env.IMAGE_CONTEXT }}/${{ env.IMAGE_FILENAME }}
-            tags: ${{ env.REGISTRY }}/${{ github.repository }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+            tags: ${{ env.FULL_IMAGE_NAME }}
             platforms: ${{ env.PLATFORMS }}
             push: ${{ github.event_name != 'pull_request' }}
             labels: ${{ steps.meta.labels }}
