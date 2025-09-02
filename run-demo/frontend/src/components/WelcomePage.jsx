@@ -78,7 +78,7 @@ const WelcomePage = () => {
               }}
             >
               <Typography variant="h4" sx={{ margin: 2, fontWeight: "bold" }}>
-                Welcome to Energy Demo with LiquidAI
+                Welcome to the <span style={{ color: 'red' }}>development version</span> of the Energy Demo with LiquidAI
               </Typography>
               <Typography
                 variant="text"
