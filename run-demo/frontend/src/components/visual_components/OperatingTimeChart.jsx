@@ -117,7 +117,7 @@ const OperatingTimeChart = () => {
             display: "flex",
             flexDirection: "column",
             justifyContent: "space-evenly",
-            marginRight: 2,
+            width: "90px"
           }}
         >
           {dayPlans.map((devicePlan) => (
@@ -152,12 +152,12 @@ const OperatingTimeChart = () => {
               height: "100%",
             }}
           >
-            {[...Array(24).keys()].map((hour) => (
+            {[...Array(23).keys()].map((hour) => (
               <div
                 key={hour}
                 style={{
                   position: "absolute",
-                  left: `${(hour / 24) * 100}%`,
+                  left: `${(hour / 23) * 100}%`,
                   top: 0,
                   bottom: 0,
                   width: "1px",
@@ -196,10 +196,10 @@ const OperatingTimeChart = () => {
                     width: `${100 / 24}%`,
                     textAlign: "center",
                     position: "absolute",
-                    left: `${((hour + 0.5) / 24) * 100}%`,
+                    left:`${((hour - 0.5) / 24) * 100}%`, // center others
                   }}
                 >
-                  {hour + 1}
+                  {hour}
                 </Typography>
               ))}
             </div>
