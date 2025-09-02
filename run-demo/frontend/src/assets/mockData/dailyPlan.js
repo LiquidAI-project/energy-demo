@@ -3,7 +3,7 @@ import { WASHING_MACHINE, FREEZER, EV_CHARGER } from "../../../constants";
 export const cloudBasedPlan = [
   {
     id: WASHING_MACHINE,
-    name: 'WM',
+    name: 'Washing Machine',
     slots: [
       { start: 0, end: 13, value: 0 },
       { start: 13, end: 15, value: 0.3 },
@@ -29,7 +29,7 @@ export const cloudBasedPlan = [
   },
   {
     id: EV_CHARGER,
-    name: 'EV',
+    name: 'EV Charger',
     slots: [
       { start: 0, end: 1, value: 0 },
       { start: 1, end: 5, value: 5 },
@@ -42,7 +42,7 @@ export const cloudBasedPlan = [
 export const liquidBasedPlanFinal = [
   {
     id: WASHING_MACHINE,
-    name: 'WM',
+    name: 'Washing Machine',
     slots: [
       { start: 15, end: 17, value: 0.3 },
     ],
@@ -61,7 +61,7 @@ export const liquidBasedPlanFinal = [
   },
   {
     id: EV_CHARGER,
-    name: 'EV',
+    name: 'EV Charger',
     slots: [
       { start: 1, end: 4, value: 5 },
       { start: 5, end: 6, value: 5 },
@@ -73,7 +73,7 @@ export const liquidBasedPlanFinal = [
 export const initialDayPlan = [
     {
       id: WASHING_MACHINE,
-      name: 'WM',
+      name: 'Washing Machine',
       slots: [],
     },
     {
@@ -83,7 +83,7 @@ export const initialDayPlan = [
     },
     {
       id: EV_CHARGER,
-      name: 'EV',
+      name: 'EV Charger',
       slots: [],
     },
   ];
@@ -91,7 +91,7 @@ export const initialDayPlan = [
   export const predefinedDayPlan1 = [
     {
       id: WASHING_MACHINE,
-      name: 'WM',
+      name: 'Washing Machine',
       slots: [],
     },
     {
@@ -105,7 +105,7 @@ export const initialDayPlan = [
     },
     {
       id: EV_CHARGER,
-      name: 'EV',
+      name: 'EV Charger',
       slots: [
         { start: 1, end: 5 }
       ],
@@ -115,7 +115,7 @@ export const initialDayPlan = [
   export const predefinedDayPlan2 = [
     {
       id: WASHING_MACHINE,
-      name: 'WM',
+      name: 'Washing Machine',
       slots: [],
     },
     {
@@ -129,7 +129,7 @@ export const initialDayPlan = [
     },
     {
       id: EV_CHARGER,
-      name: 'EV',
+      name: 'EV Charger',
       slots: [
         { start: 5, end: 6 }
       ],
@@ -139,7 +139,7 @@ export const initialDayPlan = [
   export const predefinedDayPlan3 = [
     {
       id: WASHING_MACHINE,
-      name: 'WM',
+      name: 'Washing Machine',
       slots: [
         { start: 13, end: 15 },
       ],
@@ -154,7 +154,7 @@ export const initialDayPlan = [
     },
     {
       id: EV_CHARGER,
-      name: 'EV',
+      name: 'EV Charger',
       slots: [],
     },
   ];
@@ -162,7 +162,7 @@ export const initialDayPlan = [
   export const predefinedDayPlan4 = [
     {
       id: WASHING_MACHINE,
-      name: 'WM',
+      name: 'Washing Machine',
       slots: [
         { start: 15, end: 17 },
       ],
@@ -176,7 +176,7 @@ export const initialDayPlan = [
     },
     {
       id: EV_CHARGER,
-      name: 'EV',
+      name: 'EV Charger',
       slots: [],
     },
   ];
@@ -184,7 +184,7 @@ export const initialDayPlan = [
   export const predefinedDayPlan5 = [
     {
       id: WASHING_MACHINE,
-      name: 'WM',
+      name: 'Washing Machine',
       slots: [],
     },
     {
@@ -196,7 +196,7 @@ export const initialDayPlan = [
     },
     {
       id: EV_CHARGER,
-      name: 'EV',
+      name: 'EV Charger',
       slots: [
         { start: 23, end: 24 },
       ],
@@ -206,7 +206,7 @@ export const initialDayPlan = [
   export const predefinedDayPlan6 = [
     {
       id: WASHING_MACHINE,
-      name: 'WM',
+      name: 'Washing Machine',
       slots: [],
     },
     {
@@ -218,7 +218,7 @@ export const initialDayPlan = [
     },
     {
       id: EV_CHARGER,
-      name: 'EV',
+      name: 'EV Charger',
       slots: [
         { start: 22, end: 24 },
       ],

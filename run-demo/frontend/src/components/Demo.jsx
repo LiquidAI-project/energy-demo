@@ -3,7 +3,11 @@
 // This source code is licensed under the MIT license. See LICENSE in the repository root directory.
 // Author(s): Lakshan Rathnayaka <lakshan.rathnayaka@tuni.fi>, Ville Heikkilä <ville.heikkila@tuni.fi>.
 
-import { Box, Grid, Typography } from "@mui/material";
+import {
+  Box,
+  Grid,
+  Typography,
+} from "@mui/material";
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import backgroundImage from "./../assets/yard.png";
@@ -85,10 +89,7 @@ const Demo = () => {
   const flexibilityServiceRef = useRef(null);
   const evChargerRef = useRef(null);
   const hackerRef = useRef(null);
-
-  const [referenceLineEnabled, setReferenceLineEnabled] = useState(false);
-  const [referenceLinePosition, setReferenceLinePosition] = useState(50); // start middle
-  const containerRef = useRef(null);
+  
 
   const [activeDeployments, setActiveDeployments] = useState([]);
   const [warningBorderVisible, setWarningBorderVisible] = useState(false);
@@ -96,6 +97,11 @@ const Demo = () => {
   const [shouldBlink, setShouldBlink] = useState(false);
   const { hackerVisibility, movingDeployments, setMovingDeployments } = useDemoVisualizationContext();
   const { demoRunMethod, demoTime } = useDemoControlContext();
+  const [paused, setPaused] = useState(false);
+  const pausedRef = useRef(paused); 
+  const [referenceLineEnabled, setReferenceLineEnabled] = useState(false);
+  const [referenceLinePosition, setReferenceLinePosition] = useState(50); // start middle
+  const containerRef = useRef(null);
 
   let totalConsumptionCloudBased = [];
   let totalConsumptionLiquidBased = [];
@@ -137,6 +143,22 @@ const Demo = () => {
     if (x >= 0 && x <= 100) {
       setReferenceLinePosition(x);
     }
+  };
+
+  const pauseAwareDelay = (ms, isPausedRef) => {
+    return new Promise((resolve) => {
+      let elapsed = 0;
+      const interval = 50; // check every 50ms
+      const timer = setInterval(() => {
+        if (!isPausedRef.current) {
+          elapsed += interval;
+        }
+        if (elapsed >= ms) {
+          clearInterval(timer);
+          resolve();
+        }
+      }, interval);
+    });
   };
 
   const handleClick = () => {
@@ -229,10 +251,11 @@ const Demo = () => {
             iconSource: iconSource,
             changingIconSource: changingIconSource,
             startTime: Date.now(), // Track start time for the animation
-            endTime: Date.now() + animationDuration, // Calculate the end time
+            elapsedTime: 0
+            //endTime: Date.now() + animationDuration, // Calculate the end time
           };
   
-          setMovingDeployments((prevDeployments) => {
+          /* setMovingDeployments((prevDeployments) => {
             // Add the new deployment to the state
             const updatedDeployments = [...prevDeployments, newMovingDeployments];
   
@@ -246,7 +269,26 @@ const Demo = () => {
             }, animationDuration);
   
             return updatedDeployments;
-          });
+          }); */
+
+          setMovingDeployments((prev) => [...prev, newMovingDeployments]);
+
+          // Pause-aware timer for removal
+          let elapsed = 0;
+          const interval = 50; // check every 50ms
+
+          const timer = setInterval(() => {
+            if (!pausedRef.current) {
+              elapsed += interval;
+            }
+            if (elapsed >= animationDuration) {
+              clearInterval(timer);
+              setMovingDeployments((current) =>
+                current.filter((dep) => dep.id !== uniqueId)
+              );
+              resolve();
+            }
+          }, interval);
         } else {
           resolve(); // Resolve immediately if the end device is not found
         }
@@ -303,6 +345,7 @@ const Demo = () => {
   };
 
   useEffect(() => {
+    pausedRef.current = paused;
     // This logic will draw a line between the orchestrator and the equipment
     const drawLines = (
       point_A_ref,
@@ -575,7 +618,7 @@ const Demo = () => {
         }
       }
     };
-  }, [demoRunMethod, hackerVisibility]);
+  }, [demoRunMethod, hackerVisibility, paused]);
 
   return (
     <div>
@@ -638,7 +681,7 @@ const Demo = () => {
             </>
           )}
           {movingDeployments.map((deployment) => (
-            <MovingIcon key={deployment.id} deployment={deployment} />
+            <MovingIcon key={deployment.id} deployment={deployment} paused={paused} />
           ))}
           {demoRunMethod === WITH_LIQUID_AI &&
             activeDeployments.map((deployment, index) => (
@@ -920,15 +963,15 @@ const Demo = () => {
               </div>
             </Box>
           </Grid>
-          <Grid item xs={2} style={{ position: "relative", marginTop: "15px" }}>
+          <Grid item xs={2} style={{ position: "relative", marginTop: "15px"}}>
             <Grid container spacing={1.5} columns={1}>
-              <Grid item xs={1} minWidth="50vh" paddingBottom="5px" paddingLeft="0px">
+              <Grid item xs={1} minWidth="50vh" style={{paddingLeft: "0px", marginBottom: "10px"}}>
                 <Box
-                  sx={{
+                  style={{
                     padding: "1vh",
                     border: "1px solid #DCDCDC",
                     borderRadius: "5px",
-                    boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.1)"
+                    boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.1)",
                   }}
                   height="auto"
                   overflow="hidden"
@@ -939,6 +982,9 @@ const Demo = () => {
                       runMoveCodeAnimation={(from, to, icon) =>
                         moveCodeAnimation(from, to, icon)
                       }
+                      setPaused={setPaused}
+                      pausedRef={pausedRef}
+                      pauseAwareDelay={pauseAwareDelay}
                       referenceLineEnabled={referenceLineEnabled}
                       setReferenceLineEnabled={setReferenceLineEnabled}
                     />
@@ -954,14 +1000,13 @@ const Demo = () => {
                 <Grid item xs={1} paddingBottom="5px">
                   <Box>
                     <List
-                      sx={{ 
-                        width: "100%", 
-                        bgcolor: "background.paper",
-                        border: "1px solid #DCDCDC",
-                        borderRadius: "5px",
-                        boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.2)",
-                        paddingBottom: 0,
-                        paddingTop: 0,
+                      sx={{ width: "100%", 
+                      bgcolor: "background.paper",
+                      border: "1px solid #DCDCDC",
+                      borderRadius: "5px",
+                      boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.2)",
+                      paddingBottom: "0px",
+                      paddingTop: "0px"
                       }}
                     >
                       <ListItemButton
@@ -1037,7 +1082,7 @@ const Demo = () => {
                       cursor: "grab",
                       backdropFilter: "brightness(1.1)",
                       boxShadow: "inset 0 0 15px rgba(0,0,0,0.6)",
-                      zIndex: 10,
+                      zIndex: 100,
                       transition: "left 0.05s linear",
                       userSelect: "none"
                     }}

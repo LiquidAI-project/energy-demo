@@ -45,12 +45,13 @@ import {
 // eslint-disable-next-line no-undef
 const ANIMATION_MOVING_TIME = process.env.ANIMATION_MOVING_TIME;
 
-const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, referenceLineEnabled, setReferenceLineEnabled }) => {
+const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused, pausedRef, pauseAwareDelay, referenceLineEnabled, setReferenceLineEnabled }) => {
   const {
     deviceStatus,
     movingDeployments,
     changeHackerVisibility,
     setDayPlans,
+    setHistoricalDayPlans,
     setEv1PluggedIn,
     setEv2PluggedIn,
   } = useDemoVisualizationContext();
@@ -98,50 +99,32 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, referenceL
 
     // Spot price fetch simulation
     if (currentHour == 0 && currentMinute === 30) {
-      setDemoRunning(false);
-      runMoveCodeAnimation(
-        ENERGY_COMPANY,
-        INTELLIGENT_CONTROL,
-        SpotPriceDataIcon
-      );
-      await new Promise((resolve) =>
-        setTimeout(resolve, ANIMATION_MOVING_TIME)
-      );
+      //setDemoRunning(false);
+      runMoveCodeAnimation(ENERGY_COMPANY, INTELLIGENT_CONTROL, SpotPriceDataIcon);
+      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
       runMoveCodeAnimation(ORCHESTRATOR, INTELLIGENT_CONTROL, WasmWithOnnxIcon);
-      await new Promise((resolve) => setTimeout(resolve, ANIMATION_MOVING_TIME));
+      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
       runMoveCodeAnimation(INTELLIGENT_CONTROL, ORCHESTRATOR, ScheduleIcon);
-      await new Promise((resolve) => setTimeout(resolve, ANIMATION_MOVING_TIME));
+      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
       runMoveCodeAnimation(ORCHESTRATOR, FREEZER, ScheduleIcon);
       runMoveCodeAnimation(ORCHESTRATOR, EV_CHARGER, ScheduleIcon);
-      await new Promise((resolve) =>
-        setTimeout(resolve, ANIMATION_MOVING_TIME)
-      );
-      setDemoRunning(true);
+      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
       setDayPlans(predefinedDayPlan1);
     }
 
     // Demand spike simulation
     if (currentHour == 4 && currentMinute === 0) {
-      setDemoRunning(false);
-      runMoveCodeAnimation(
-        FLEXIBILITY_SERVICE,
-        INTELLIGENT_CONTROL,
-        DemandSpikeIcon
-      );
-      await new Promise((resolve) =>
-        setTimeout(resolve, ANIMATION_MOVING_TIME)
-      );
+      runMoveCodeAnimation(FLEXIBILITY_SERVICE, INTELLIGENT_CONTROL, DemandSpikeIcon);
+      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
       runMoveCodeAnimation(ORCHESTRATOR, INTELLIGENT_CONTROL, WasmWithOnnxIcon);
-      await new Promise((resolve) => setTimeout(resolve, ANIMATION_MOVING_TIME));
+      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
       runMoveCodeAnimation(INTELLIGENT_CONTROL, ORCHESTRATOR, ScheduleIcon);
-      await new Promise((resolve) => setTimeout(resolve, ANIMATION_MOVING_TIME));
+      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
       runMoveCodeAnimation(ORCHESTRATOR, FREEZER, ScheduleIcon);
       runMoveCodeAnimation(ORCHESTRATOR, EV_CHARGER, ScheduleIcon);
-      await new Promise((resolve) =>
-        setTimeout(resolve, ANIMATION_MOVING_TIME)
-      );
-      setDemoRunning(true);
+      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
       setDayPlans(predefinedDayPlan2);
+      setHistoricalDayPlans(prev => [...prev, predefinedDayPlan1]);
     }
 
     // EV unplug simulation
@@ -152,92 +135,67 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, referenceL
 
     // Washing machine set to simulation
     if (currentHour == 10 && currentMinute === 0) {
-      setDemoRunning(false);
       runMoveCodeAnimation(USER_CONTROL, INTELLIGENT_CONTROL, UserInputIcon);
-      await new Promise((resolve) =>
-        setTimeout(resolve, ANIMATION_MOVING_TIME)
-      );
+      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
       runMoveCodeAnimation(ORCHESTRATOR, INTELLIGENT_CONTROL, WasmWithOnnxIcon);
-      await new Promise((resolve) => setTimeout(resolve, ANIMATION_MOVING_TIME));
+      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
       runMoveCodeAnimation(INTELLIGENT_CONTROL, ORCHESTRATOR, ScheduleIcon);
-      await new Promise((resolve) => setTimeout(resolve, ANIMATION_MOVING_TIME));
+      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
       runMoveCodeAnimation(ORCHESTRATOR, FREEZER, ScheduleIcon);
       runMoveCodeAnimation(ORCHESTRATOR, WASHING_MACHINE, ScheduleIcon);
-      await new Promise((resolve) =>
-        setTimeout(resolve, ANIMATION_MOVING_TIME)
-      );
-      setDemoRunning(true);
+      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
       setDayPlans(predefinedDayPlan3);
+      setHistoricalDayPlans(prev => [...prev, predefinedDayPlan2]);
     }
 
     // Demand spike simulation
     if (currentHour == 13 && currentMinute === 0) {
-      setDemoRunning(false);
-      runMoveCodeAnimation(
-        FLEXIBILITY_SERVICE,
-        INTELLIGENT_CONTROL,
-        DemandSpikeIcon
-      );
-      await new Promise((resolve) =>
-        setTimeout(resolve, ANIMATION_MOVING_TIME)
-      );
+      runMoveCodeAnimation(FLEXIBILITY_SERVICE, INTELLIGENT_CONTROL, DemandSpikeIcon);
+      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
       runMoveCodeAnimation(ORCHESTRATOR, INTELLIGENT_CONTROL, WasmWithOnnxIcon);
-      await new Promise((resolve) => setTimeout(resolve, ANIMATION_MOVING_TIME));
+      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
       runMoveCodeAnimation(INTELLIGENT_CONTROL, ORCHESTRATOR, ScheduleIcon);
-      await new Promise((resolve) => setTimeout(resolve, ANIMATION_MOVING_TIME));
+      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
       runMoveCodeAnimation(ORCHESTRATOR, FREEZER, ScheduleIcon);
       runMoveCodeAnimation(ORCHESTRATOR, WASHING_MACHINE, ScheduleIcon);
-      await new Promise((resolve) =>
-        setTimeout(resolve, ANIMATION_MOVING_TIME)
-      );
-      setDemoRunning(true);
+      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
       setDayPlans(predefinedDayPlan4);
+      setHistoricalDayPlans(prev => [...prev, predefinedDayPlan3]);
     }
 
     // EV plug back in simulation
     if (currentHour == 18 && currentMinute === 0) {
-      setDemoRunning(false);
       setEv1PluggedIn(true);
       setEv2PluggedIn(true);
-      await new Promise((resolve) =>
-        setTimeout(resolve, ANIMATION_MOVING_TIME)
-      );
+      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
       runMoveCodeAnimation(ORCHESTRATOR, INTELLIGENT_CONTROL, WasmWithOnnxIcon);
-      await new Promise((resolve) => setTimeout(resolve, ANIMATION_MOVING_TIME));
+      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
       runMoveCodeAnimation(INTELLIGENT_CONTROL, ORCHESTRATOR, ScheduleIcon);
-      await new Promise((resolve) => setTimeout(resolve, ANIMATION_MOVING_TIME));
+      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
       runMoveCodeAnimation(ORCHESTRATOR, FREEZER, ScheduleIcon);
       runMoveCodeAnimation(ORCHESTRATOR, EV_CHARGER, ScheduleIcon);
-      await new Promise((resolve) =>
-        setTimeout(resolve, ANIMATION_MOVING_TIME)
-      );
-      setDemoRunning(true);
+      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
       setDayPlans(predefinedDayPlan5);
+      setHistoricalDayPlans(prev => [...prev, predefinedDayPlan4]);
     }
 
     // Demand spike simulation
     if (currentHour == 21 && currentMinute === 0) {
-      setDemoRunning(false);
-      runMoveCodeAnimation(
-        FLEXIBILITY_SERVICE,
-        INTELLIGENT_CONTROL,
-        DemandSpikeIcon
-      );
-      await new Promise((resolve) =>
-        setTimeout(resolve, ANIMATION_MOVING_TIME)
-      );
+      runMoveCodeAnimation(FLEXIBILITY_SERVICE, INTELLIGENT_CONTROL, DemandSpikeIcon);
+      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
       runMoveCodeAnimation(ORCHESTRATOR, INTELLIGENT_CONTROL, WasmWithOnnxIcon);
-      await new Promise((resolve) => setTimeout(resolve, ANIMATION_MOVING_TIME));
+      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
       runMoveCodeAnimation(INTELLIGENT_CONTROL, ORCHESTRATOR, ScheduleIcon);
-      await new Promise((resolve) => setTimeout(resolve, ANIMATION_MOVING_TIME));
+      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
       runMoveCodeAnimation(ORCHESTRATOR, FREEZER, ScheduleIcon);
       runMoveCodeAnimation(ORCHESTRATOR, EV_CHARGER, ScheduleIcon);
-      await new Promise((resolve) =>
-        setTimeout(resolve, ANIMATION_MOVING_TIME)
-      );
-      setDemoRunning(true);
+      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
       setDayPlans(predefinedDayPlan6);
+      setHistoricalDayPlans(prev => [...prev, predefinedDayPlan5]);
     }
+
+    if (currentHour == 23 && currentMinute == 50)
+      handleRestart();
   };
 
   useEffect(() => {
@@ -270,23 +228,31 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, referenceL
 
       if (currentHour == 4 && currentMinute === 0) {
         setDayPlans(predefinedDayPlan2);
+        setHistoricalDayPlans(prev => [...prev, predefinedDayPlan1]);
       }
 
       if (currentHour == 10 && currentMinute === 0) {
         setDayPlans(predefinedDayPlan3);
+        setHistoricalDayPlans(prev => [...prev, predefinedDayPlan2]);
       }
 
       if (currentHour == 13 && currentMinute === 0) {
         setDayPlans(predefinedDayPlan4);
+        setHistoricalDayPlans(prev => [...prev, predefinedDayPlan3]);
       }
 
       if (currentHour == 18 && currentMinute === 0) {
         setDayPlans(predefinedDayPlan5);
+        setHistoricalDayPlans(prev => [...prev, predefinedDayPlan4]);
       }
 
       if (currentHour == 21 && currentMinute === 0) {
         setDayPlans(predefinedDayPlan6);
+        setHistoricalDayPlans(prev => [...prev, predefinedDayPlan5]);
       }
+
+      if (currentHour == 23 && currentMinute == 50)
+        handleRestart();
     }
 
     if (demoRunMethod === WITH_LIQUID_AI && demoRunning) {
@@ -297,16 +263,19 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, referenceL
   const handleStart = () => {
     setDemoStatus("running");
     setDemoRunning(true);
+    setPaused(false);
   };
 
   const handleStop = () => {
     setDemoStatus("stopped");
     setDemoRunning(false);
+    setPaused(true);
   };
 
   const handleResume = () => {
     setDemoStatus("running");
     setDemoRunning(true);
+    setPaused(false);
   };
 
   const handleRestart = () => {
@@ -322,6 +291,10 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, referenceL
     setDemoRunning(false);
     setMovingDeployments([]);
     setDayPlans(initialDayPlan);
+    setEv1PluggedIn(true);
+    setEv2PluggedIn(true);
+    setPaused(false);
+    setHistoricalDayPlans([initialDayPlan]);
   }
 
   return (
@@ -357,9 +330,6 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, referenceL
               fontSize: "1rem",
               "&:hover": { backgroundColor: "darkred" },
             }}
-            disabled={
-              demoRunMethod === WITH_LIQUID_AI && movingDeployments.length > 0
-            }
           >
             Stop
           </Button>

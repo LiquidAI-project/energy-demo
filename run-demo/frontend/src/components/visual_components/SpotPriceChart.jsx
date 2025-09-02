@@ -20,15 +20,12 @@ const SpotPriceChart = () => {
 
   return (
     <>
-      <Box sx={{ width: "100%", display: "flex" }}>
+      <Box sx={{ width: "100%", display: "flex", paddingLeft:"10px"}}>
         <ResponsiveContainer width="98%" height={200}>
           <BarChart data={hourlyEnergyData}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis 
-              dataKey="hour" 
-              interval={0}
-            />
-            <YAxis />
+            <XAxis dataKey="hour" interval={0} tick={{ fontSize: 14 }} />
+            <YAxis tick={{ fontSize: 14 }} />
             <Tooltip />
             <Legend />
             <Bar dataKey="price" fill="#8884d8" name="Price (c/kWh)" />

@@ -12,8 +12,31 @@ const calculateDurationInHours = (start, end) => {
   return end - start;
 };
 
+// Merge slots: prioritize dayPlans over historical
+const mergeSlots = (historicalSlots, currentSlots) => {
+  const merged = [];
+
+  // Add historical slots first
+  historicalSlots.forEach((slot) => {
+    // Check if current slots have same time
+    const isOverridden = currentSlots.some(
+      (c) => c.start === slot.start && c.end === slot.end
+    );
+    if (!isOverridden) {
+      merged.push({ ...slot, type: "historical" });
+    }
+  });
+
+  // Add current slots (always win)
+  currentSlots.forEach((slot) => {
+    merged.push({ ...slot, type: "current" });
+  });
+
+  return merged;
+};
+
 const OperatingTimeChart = () => {
-  const { dayPlans } = useDemoVisualizationContext();
+  const { dayPlans, historicalDayPlans } = useDemoVisualizationContext();
   const { demoTime } = useDemoControlContext();
   const chartWidth = "100%";
   const hourWidth = 100 / 24;
@@ -24,8 +47,16 @@ const OperatingTimeChart = () => {
     (new Date(demoTime).getMinutes() / 60) * (100 / 24);
 
   // Render the dayPlans with slots
-  const renderDayPlans = dayPlans.map((devicePlan, index) => {
-    const renderSlots = devicePlan.slots.map((slot, slotIndex) => {
+  const renderDeviceRows = dayPlans.map((devicePlan, index) => {
+    // Historical plan for this device (if exists)
+    const historicalSlotsForDevice = historicalDayPlans
+    .map((plan) => plan[index])
+    .filter(Boolean)
+    .flatMap((devicePlan) => devicePlan.slots);
+
+    const mergedSlots = mergeSlots(historicalSlotsForDevice, devicePlan.slots);
+
+    const renderSlots = mergedSlots.map((slot, slotIndex) => {
       const taskDuration = calculateDurationInHours(slot.start, slot.end);
       const taskOffset = slot.start * hourWidth;
 
@@ -37,7 +68,7 @@ const OperatingTimeChart = () => {
             left: `${taskOffset}%`,
             width: `${taskDuration * hourWidth}%`,
             height: "30px",
-            backgroundColor: "#1976d2",
+            backgroundColor: slot.type === "current" ? "#1976d2" : "#b0bec5",
             borderRadius: "4px",
           }}
         />
@@ -86,7 +117,7 @@ const OperatingTimeChart = () => {
             display: "flex",
             flexDirection: "column",
             justifyContent: "space-evenly",
-            marginRight: 2,
+            width: "90px"
           }}
         >
           {dayPlans.map((devicePlan) => (
@@ -109,10 +140,7 @@ const OperatingTimeChart = () => {
             width: chartWidth,
           }}
         >
-          {/* Device Rows */}
-          <Box sx={{ position: "relative", marginTop: 2 }}>
-            {renderDayPlans}
-          </Box>
+          {renderDeviceRows}
 
           {/* Vertical Grid Lines (X-Axis) */}
           <Box
@@ -124,12 +152,12 @@ const OperatingTimeChart = () => {
               height: "100%",
             }}
           >
-            {[...Array(24).keys()].map((hour) => (
+            {[...Array(23).keys()].map((hour) => (
               <div
                 key={hour}
                 style={{
                   position: "absolute",
-                  left: `${(hour / 24) * 100}%`,
+                  left: `${(hour / 23) * 100}%`,
                   top: 0,
                   bottom: 0,
                   width: "1px",
@@ -160,7 +188,7 @@ const OperatingTimeChart = () => {
                 width: "100%",
               }}
             >
-              {[...Array(23).keys()].map((hour) => (
+              {[...Array(24).keys()].map((hour) => (
                 <Typography
                   key={hour}
                   variant="body2"
@@ -168,10 +196,10 @@ const OperatingTimeChart = () => {
                     width: `${100 / 24}%`,
                     textAlign: "center",
                     position: "absolute",
-                    left: `${((hour + 0.5) / 24) * 100}%`,
+                    left:`${((hour - 0.5) / 24) * 100}%`, // center others
                   }}
                 >
-                  {hour + 1}
+                  {hour}
                 </Typography>
               ))}
             </div>
