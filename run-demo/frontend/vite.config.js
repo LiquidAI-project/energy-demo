@@ -23,6 +23,7 @@ export default defineConfig({
   define: {
     'process.env': {
       ANIMATION_MOVING_TIME: `${process.env.ANIMATION_MOVING_TIME}`,
+      VITE_DEV_VERSION: `${process.env.VITE_DEV_VERSION}`,
       // Add other environment variables here
     }
   }
