@@ -152,12 +152,12 @@ const OperatingTimeChart = () => {
               height: "100%",
             }}
           >
-            {[...Array(23).keys()].map((hour) => (
+            {[...Array(24).keys()].map((hour) => (
               <div
                 key={hour}
                 style={{
                   position: "absolute",
-                  left: `${(hour / 23) * 100}%`,
+                  left: `${(hour / 24) * 100}%`,
                   top: 0,
                   bottom: 0,
                   width: "1px",
