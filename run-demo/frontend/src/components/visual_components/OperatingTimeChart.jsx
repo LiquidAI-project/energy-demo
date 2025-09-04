@@ -117,7 +117,7 @@ const OperatingTimeChart = () => {
             display: "flex",
             flexDirection: "column",
             justifyContent: "space-evenly",
-            marginRight: 2,
+            width: "90px"
           }}
         >
           {dayPlans.map((devicePlan) => (
@@ -196,10 +196,10 @@ const OperatingTimeChart = () => {
                     width: `${100 / 24}%`,
                     textAlign: "center",
                     position: "absolute",
-                    left: `${((hour + 0.5) / 24) * 100}%`,
+                    left:`${((hour - 0.5) / 24) * 100}%`, // center others
                   }}
                 >
-                  {hour + 1}
+                  {hour}
                 </Typography>
               ))}
             </div>

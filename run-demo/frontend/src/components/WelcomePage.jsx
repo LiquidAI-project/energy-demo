@@ -23,6 +23,7 @@ const theme = createTheme({
 
 const WelcomePage = () => {
   const navigate = useNavigate();
+  const isDevVersion = import.meta.env.VITE_DEV_VERSION === 'true';
 
   return (
     <div className="welcome">
@@ -78,7 +79,13 @@ const WelcomePage = () => {
               }}
             >
               <Typography variant="h4" sx={{ margin: 2, fontWeight: "bold" }}>
-                Welcome to Energy Demo with LiquidAI
+                {isDevVersion ? (
+                  <>
+                    Welcome to the <span style={{ color: 'red' }}>development version</span> of the Energy Demo with LiquidAI
+                  </>
+                ) : (
+                  "Welcome to the Energy Demo with LiquidAI"
+                )}
               </Typography>
               <Typography
                 variant="text"

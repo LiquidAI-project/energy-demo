@@ -4,7 +4,7 @@
 // Author(s): Lakshan Rathnayaka <lakshan.rathnayaka@tuni.fi>, Ville Heikkilä <ville.heikkila@tuni.fi>.
 
 import { useEffect, useState } from "react";
-import { Button, Box } from "@mui/material";
+import { Button, Box, FormControlLabel, Switch } from "@mui/material";
 import { useDemoVisualizationContext } from "../../context/demoVisualizationContext/useDemoVisualizationContext";
 import DemoClock from "../DemoClock";
 import PropTypes from "prop-types";
@@ -45,7 +45,7 @@ import {
 // eslint-disable-next-line no-undef
 const ANIMATION_MOVING_TIME = process.env.ANIMATION_MOVING_TIME;
 
-const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused, pausedRef, pauseAwareDelay }) => {
+const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused, pausedRef, pauseAwareDelay, referenceLineEnabled, setReferenceLineEnabled }) => {
   const {
     deviceStatus,
     movingDeployments,
@@ -370,6 +370,16 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
         )}
       </Box>
       <DemoClock />
+      <FormControlLabel
+        control={
+          <Switch
+            checked={referenceLineEnabled}
+            onChange={(e) => setReferenceLineEnabled(e.target.checked)}
+            color="primary"
+          />
+        }
+        label="Toggle Reference Line"
+      />
     </Box>
   );
 };
@@ -377,6 +387,8 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
 DemoControlls.propTypes = {
   continousAnimationRun: PropTypes.func.isRequired,
   runMoveCodeAnimation: PropTypes.func.isRequired,
+  referenceLineEnabled: PropTypes.bool.isRequired,
+  setReferenceLineEnabled: PropTypes.func.isRequired
 };
 
 export default DemoControlls;

@@ -7,16 +7,23 @@ import { resolve } from 'path';
 // Load environment variables from the .env file
 dotenv.config({ path: resolve(__dirname, '../.env') });
 
+// Parse the allowed hosts from the environment variable
+const allowedHosts = process.env.VITE_ALLOWED_HOSTS
+  ? process.env.VITE_ALLOWED_HOSTS.split(',')
+  : [];
+
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
   server: {
+    allowedHosts: allowedHosts,
     host: '0.0.0.0',
     port: 5173,
   },
   define: {
     'process.env': {
       ANIMATION_MOVING_TIME: `${process.env.ANIMATION_MOVING_TIME}`,
+      VITE_DEV_VERSION: `${process.env.VITE_DEV_VERSION}`,
       // Add other environment variables here
     }
   }
