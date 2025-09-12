@@ -3,11 +3,8 @@
 // This source code is licensed under the MIT license. See LICENSE in the repository root directory.
 // Author(s): Lakshan Rathnayaka <lakshan.rathnayaka@tuni.fi>, Ville Heikkilä <ville.heikkila@tuni.fi>.
 
-import {
-  Box,
-  Grid,
-  Typography,
-} from "@mui/material";
+import { Accordion, AccordionSummary,
+  AccordionDetails, Box, Grid, Typography, Popover, IconButton } from "@mui/material";
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import backgroundImage from "./../assets/yard.png";
@@ -64,7 +61,10 @@ import SpotPriceChart from "./visual_components/SpotPriceChart";
 import ElectricityPrice from "./visual_components/ElectricityPrice";
 import { cloudBasedPlan, liquidBasedPlanFinal } from "../assets/mockData/dailyPlan"
 import { List, ListItemButton, ListItemText, Collapse } from "@mui/material";
-import { ExpandLess, ExpandMore } from "@mui/icons-material";
+import { ExpandLess, ExpandMore, ArrowBackIos, ArrowForwardIos } from "@mui/icons-material";
+import HourglassFullIcon from "@mui/icons-material/HourglassFull";
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import { keyframes } from "@mui/system";
 
 // eslint-disable-next-line no-undef
 const ANIMATION_MOVING_TIME = process.env.ANIMATION_MOVING_TIME;
@@ -72,6 +72,10 @@ const ANIMATION_MOVING_TIME = process.env.ANIMATION_MOVING_TIME;
 const DATA_ICONS_MOVING_FROM_WM = [EnergyUsageIcon, userPreferenceIcon];
 const DATA_ICONS_MOVING_FROM_FREEZER = [EnergyUsageIcon, userPreferenceIcon, TemperatureDataIcon];
 const DATA_ICONS_MOVING_FROM_EV = [EnergyUsageIcon, userPreferenceIcon];
+const spin = keyframes`
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+`;
 
 const Demo = () => {
   const orchestratorRef = useRef(null);
@@ -89,19 +93,23 @@ const Demo = () => {
   const flexibilityServiceRef = useRef(null);
   const evChargerRef = useRef(null);
   const hackerRef = useRef(null);
-  
+  const containerRef = useRef(null);
+  const hourglassRef = useRef(null);
 
   const [activeDeployments, setActiveDeployments] = useState([]);
   const [warningBorderVisible, setWarningBorderVisible] = useState(false);
   const [open, setOpen] = useState(false);
   const [shouldBlink, setShouldBlink] = useState(false);
   const { hackerVisibility, movingDeployments, setMovingDeployments } = useDemoVisualizationContext();
-  const { demoRunMethod, demoTime } = useDemoControlContext();
+  const { demoRunMethod, demoTime, scheduleProcessing } = useDemoControlContext();
   const [paused, setPaused] = useState(false);
   const pausedRef = useRef(paused); 
   const [referenceLineEnabled, setReferenceLineEnabled] = useState(false);
   const [referenceLinePosition, setReferenceLinePosition] = useState(50); // start middle
-  const containerRef = useRef(null);
+  const [activePopover, setActivePopover] = useState(null);
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [index, setIndex] = useState(0);
+  const [rescheduleHistory, setRescheduleHistory] = useState([]);
 
   let totalConsumptionCloudBased = [];
   let totalConsumptionLiquidBased = [];
@@ -163,6 +171,16 @@ const Demo = () => {
 
   const handleClick = () => {
     setOpen(!open);
+  };
+
+  const handlePopOverClick = (event, id) => {
+    setAnchorEl(event.currentTarget);
+    setActivePopover(id);
+  };
+
+  const handlePopOverClose = () => {
+    setAnchorEl(null);
+    setActivePopover(null);
   };
 
   // This function will make the house border blink in order to indicate the warning state when data is going outside
@@ -795,10 +813,7 @@ const Demo = () => {
                     }}
                   />
                   {demoRunMethod === WITH_LIQUID_AI && (
-                    <img
-                      src={Orchestrator}
-                      alt="Orchestrator"
-                      ref={orchestratorRef}
+                    <div
                       style={{
                         position: "absolute",
                         top: "57%",
@@ -807,7 +822,66 @@ const Demo = () => {
                         height: "7%",
                         zIndex: 2,
                       }}
-                    />
+                      ref={orchestratorRef}
+                    >
+                      <img
+                        src={Orchestrator}
+                        alt="Orchestrator"
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                        }}
+                      />
+                      {scheduleProcessing && (
+                        <>
+                          <motion.div
+                            ref={hourglassRef}
+                            initial={{ rotate: 0 }}
+                            animate={{ rotate: 360 }}
+                            transition={{ repeat: Infinity, duration: 4, ease: "linear" }}
+                            style={{
+                              position: "absolute",
+                              padding: "10px",
+                              bottom: "-18%",    
+                              right: "-20%",
+                              width: "34%",       
+                              height: "34%",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              background: "rgba(166, 221, 175, 0.85)",
+                              borderRadius: "50%",
+                              boxShadow: "0 2px 6px rgba(0,0,0,0.3)",
+                              cursor: "pointer"
+                            }}
+                            onClick={(e) => handlePopOverClick(e, "orchestrator")}
+                          >
+                            <HourglassFullIcon style={{ fontSize: "1.0rem", color: "#167356" }} />
+                          </motion.div>
+                          <Popover
+                            open={activePopover === "orchestrator"}
+                            anchorEl={anchorEl}
+                            onClose={handlePopOverClose}
+                            anchorOrigin={{
+                              vertical: "bottom",
+                              horizontal: "center",
+                            }}
+                            transformOrigin={{
+                              vertical: "top",
+                              horizontal: "center",
+                            }}
+                          >
+                            <Box p={2} sx={{ maxWidth: 250 }}>
+                              <strong>Orchestrator</strong>
+                              <p>
+                                Orchestrator gets schedule information from intelligence control.<br />
+                                Then, it forwards the schedule times to the concerned devices.
+                              </p>
+                            </Box>
+                          </Popover>
+                        </>
+                      )}
+                    </div>
                   )}
                   {demoRunMethod === WITH_LIQUID_AI && (
                     <img
@@ -825,10 +899,7 @@ const Demo = () => {
                     />
                   )}
                   {demoRunMethod === WITH_LIQUID_AI && (
-                    <img
-                      src={IntelligentControlIcon}
-                      alt="IntelligentControl"
-                      ref={intelligentControlRef}
+                    <div
                       style={{
                         position: "absolute",
                         top: "57%",
@@ -837,16 +908,71 @@ const Demo = () => {
                         height: "7%",
                         zIndex: 2,
                       }}
-                    />
+                      ref={intelligentControlRef}
+                    >
+                      <img
+                        src={IntelligentControlIcon}
+                        alt="IntelligentControl"
+                        style={{
+                          width: "100%",
+                          height: "100%"
+                        }}
+                      />
+                      {scheduleProcessing && (
+                        <>
+                          <motion.div
+                            initial={{ rotate: 0 }}
+                            animate={{ rotate: 360 }}
+                            transition={{ repeat: Infinity, duration: 4, ease: "linear" }}
+                            style={{
+                              position: "absolute",
+                              padding: "10px",
+                              top: "-10%",    
+                              right: "-22%",
+                              width: "34%",       
+                              height: "34%",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              background: "rgba(166, 221, 175, 0.85)",
+                              borderRadius: "50%",
+                              boxShadow: "0 2px 6px rgba(0,0,0,0.3)",
+                              cursor: "pointer"
+                            }}
+                            onClick={(e) => handlePopOverClick(e, "intelligence")}
+                          >
+                            <HourglassFullIcon style={{ fontSize: "1.0rem", color: "#167356" }} />
+                          </motion.div>
+                          <Popover
+                            open={activePopover === "intelligence"}
+                            anchorEl={anchorEl}
+                            onClose={handlePopOverClose}
+                            anchorOrigin={{
+                              vertical: "bottom",
+                              horizontal: "center",
+                            }}
+                            transformOrigin={{
+                              vertical: "top",
+                              horizontal: "center",
+                            }}
+                          >
+                            <Box p={2} sx={{ maxWidth: 250 }}>
+                              <strong>Intelligence Control</strong>
+                              <p>
+                                Intelligence Control gets spot price information from spot price controller.<br />
+                                It then sends the optimal electricity consumption times to the Orchestrator.
+                              </p>
+                            </Box>
+                          </Popover>
+                        </>
+                      )}
+                    </div>
                   )}
                   {demoRunMethod === WITH_LIQUID_AI && (
-                    <UserControlUI ref={userControlRef} />
+                    <UserControlUI ref={userControlRef} anchorPopOverEl={anchorEl} activePopover={activePopover} handlePopOverClick={handlePopOverClick} handlePopOverClose={handlePopOverClose} />
                   )}
                   {demoRunMethod === WITH_LIQUID_AI && (
-                    <img
-                      src={Energy_Company_Icon}
-                      alt="energyCompany"
-                      ref={energyCompanyRef}
+                    <div
                       style={{
                         position: "absolute",
                         top: "90%",
@@ -855,13 +981,67 @@ const Demo = () => {
                         height: "10%",
                         zIndex: 2,
                       }}
-                    />
+                      ref={energyCompanyRef}
+                    >
+                      <img
+                        src={Energy_Company_Icon}
+                        alt="energyCompany"
+                        style={{
+                          width: "100%",
+                          height: "100%"
+                        }}
+                      />
+                      {scheduleProcessing && ((new Date(demoTime).getHours() === 0 && new Date(demoTime).getMinutes() === 30)) && (
+                        <>
+                          <motion.div
+                            initial={{ rotate: 0 }}
+                            animate={{ rotate: 360 }}
+                            transition={{ repeat: Infinity, duration: 4, ease: "linear" }}
+                            style={{
+                              position: "absolute",
+                              padding: "10px",
+                              bottom: "-4%",    
+                              right: "-4%",
+                              width: "18%",       
+                              height: "30%",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              background: "rgba(166, 221, 175, 0.85)",
+                              borderRadius: "50%",
+                              boxShadow: "0 2px 6px rgba(0,0,0,0.3)",
+                              cursor: "pointer"
+                            }}
+                            onClick={(e) => handlePopOverClick(e, "energy")}
+                          >
+                            <HourglassFullIcon style={{ fontSize: "1.0rem", color: "#167356" }} />
+                          </motion.div>
+                          <Popover
+                            open={activePopover === "energy"}
+                            anchorEl={anchorEl}
+                            onClose={handlePopOverClose}
+                            anchorOrigin={{
+                              vertical: "bottom",
+                              horizontal: "center",
+                            }}
+                            transformOrigin={{
+                              vertical: "top",
+                              horizontal: "center",
+                            }}
+                          >
+                            <Box p={2} sx={{ maxWidth: 250 }}>
+                              <strong>Energy Provider</strong>
+                              <p>
+                                Energy provider sends the new price information (for the current hour) to Intelligence control.
+                              </p>
+                            </Box>
+                          </Popover>
+                        </>
+                      )}
+                    </div>
                   )}
                   {demoRunMethod === WITH_LIQUID_AI && (
-                    <img
-                      src={FlexibilityServiceIcon}
-                      alt="FlexibilityServiceIcon"
-                      ref={flexibilityServiceRef}
+                    <div
                       style={{
                         position: "absolute",
                         top: "90%",
@@ -870,7 +1050,181 @@ const Demo = () => {
                         height: "10%",
                         zIndex: 2,
                       }}
-                    />
+                      ref={flexibilityServiceRef}
+                    >
+                      <img
+                        src={FlexibilityServiceIcon}
+                        alt="FlexibilityServiceIcon"
+                        style={{
+                          width: "100%",
+                          height: "100%"
+                        }}
+                      />
+                      {scheduleProcessing && (((new Date(demoTime).getHours() === 4 || new Date(demoTime).getHours() === 13 || new Date(demoTime).getHours() === 21) && new Date(demoTime).getMinutes() === 0)) && ( 
+                        <>
+                          <motion.div
+                            initial={{ rotate: 0 }}
+                            animate={{ rotate: 360 }}
+                            transition={{ repeat: Infinity, duration: 4, ease: "linear" }}
+                            style={{
+                              position: "absolute",
+                              padding: "10px",
+                              top: "-8%",    
+                              right: "-10%",
+                              width: "28%",       
+                              height: "30%",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              background: "rgba(166, 221, 175, 0.85)",
+                              borderRadius: "50%",
+                              boxShadow: "0 2px 6px rgba(0,0,0,0.3)",
+                              cursor: "pointer"
+                            }}
+                            onClick={(e) => handlePopOverClick(e, "flexibility")}
+                          >
+                            <HourglassFullIcon style={{ fontSize: "1.0rem", color: "#167356" }} />
+                          </motion.div>
+                          <Popover
+                            open={activePopover === "flexibility"}
+                            anchorEl={anchorEl}
+                            onClose={handlePopOverClose}
+                            anchorOrigin={{
+                              vertical: "bottom",
+                              horizontal: "center",
+                            }}
+                            transformOrigin={{
+                              vertical: "top",
+                              horizontal: "center",
+                            }}
+                          >
+                            <Box p={2} sx={{ maxWidth: 250 }}>
+                              <strong>Flexibility Service</strong>
+                              <p>
+                                The Flexibility Service compares the new price data with previous values and identifies any significant changes, such as price spikes. <br />
+                                This information is then communicated to the Intelligence Control.
+                              </p>
+                            </Box>
+                          </Popover>
+                        </>
+                      )}
+                    </div>
+                  )}
+                  {demoRunMethod === WITH_LIQUID_AI && rescheduleHistory.length > 0 && (
+                    <Accordion
+                      sx={{
+                        position: "absolute",
+                        top: "84%",
+                        left: "60.2%",
+                        width: "40%",
+                        zIndex: 2,
+                        backgroundColor: "#7bc7d1",
+                        border: "1px solid #ccc",
+                        borderRadius: "8px",
+                        boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
+                      }}
+                    >
+                      <AccordionSummary
+                        expandIcon={<ExpandMore sx={{ color: "white" }} />}
+                        sx={{
+                          backgroundColor: "#2b717a",
+                          color: "white",
+                          borderRadius: "8px 8px 0px 0px",
+                        
+  
+                        }}
+                      >
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                          <InfoOutlinedIcon fontSize="small" />
+                          <Typography variant="h6" sx={{ fontWeight: "bold", lineHeight: 1 }}>
+                            Device Schedule Info
+                          </Typography>
+                        </Box>
+                      </AccordionSummary>               
+                      <AccordionDetails
+                        sx={{
+                          display: "flex",
+                          flexDirection: "column",
+                          padding: "10px",
+                        }}
+                      >
+                        <Typography variant="body1" sx={{ marginBottom: 2, textAlign: "justify" }}>
+                          When energy price changes occur, the system dynamically adjusts device
+                          schedules to optimize consumption. The recalculation process happens on
+                          the following times:
+                        </Typography>
+                        <Box
+                          sx={{
+                            flexGrow: 1,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            position: "relative",
+                            padding: "8px",
+                          }}
+                        >
+                          {/* Left Arrow */}
+                          <IconButton
+                            onClick={() => setIndex((prev) => Math.max(prev - 1, 0))}
+                            disabled={index === 0}
+                            sx={{
+                              position: "absolute",
+                              left: "4px",
+                              top: "20%",
+                              height: "30px",
+                              width: "30px",
+                              zIndex: 3,
+                              backgroundColor: "rgba(255,255,255,0.7)",
+                            }}
+                          >
+                            <ArrowBackIos sx={{ paddingLeft: "4px", fontSize: "18px", cursor: "pointer" }} />
+                          </IconButton>
+                  
+                          {/* Step Text */}
+                          <Box
+                            sx={{
+                              position: "relative",
+                              top: "-30px",
+                              width: "100%",
+                              height: "100%",
+                              padding: "20px",
+                              overflow: "hidden",
+                            }}
+                          >
+                            <Typography
+                              variant="h6"
+                              sx={{
+                                fontWeight: "bold",
+                                marginBottom: 2,
+                                backgroundColor: "lightgrey",
+                                textAlign: "center",
+                              }}
+                            >
+                              {rescheduleHistory[index] && rescheduleHistory[index].title}
+                            </Typography>
+                            <Typography variant="body1" sx={{ padding: "10px", textAlign: "center" }}>
+                              {rescheduleHistory[index] && rescheduleHistory[index].content}
+                            </Typography>
+                          </Box>
+                  
+                          {/* Right Arrow */}
+                          <IconButton
+                            onClick={() => setIndex((prev) => Math.min(prev + 1, rescheduleHistory.length - 1))}
+                            disabled={index === rescheduleHistory.length - 1}
+                            sx={{
+                              position: "absolute",
+                              right: "4px",
+                              top: "20%",
+                              height: "30px",
+                              width: "30px",
+                              backgroundColor: "rgba(255,255,255,0.7)",
+                            }}
+                          >
+                            <ArrowForwardIos sx={{ fontSize: "14px", cursor: "pointer" }} />
+                          </IconButton>
+                        </Box>
+                      </AccordionDetails>
+                    </Accordion>
                   )}
                   {demoRunMethod === WITHOUT_LIQUID_AI && (
                     <>
@@ -987,6 +1341,8 @@ const Demo = () => {
                       pauseAwareDelay={pauseAwareDelay}
                       referenceLineEnabled={referenceLineEnabled}
                       setReferenceLineEnabled={setReferenceLineEnabled}
+                      handlePopOverClose={handlePopOverClose}
+                      setRescheduleHistory={setRescheduleHistory}
                     />
                   </div>
                 </Box>

@@ -45,7 +45,7 @@ import {
 // eslint-disable-next-line no-undef
 const ANIMATION_MOVING_TIME = process.env.ANIMATION_MOVING_TIME;
 
-const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused, pausedRef, pauseAwareDelay, referenceLineEnabled, setReferenceLineEnabled }) => {
+const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused, pausedRef, pauseAwareDelay, referenceLineEnabled, setReferenceLineEnabled, handlePopOverClose, setRescheduleHistory }) => {
   const {
     deviceStatus,
     movingDeployments,
@@ -55,7 +55,7 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
     setEv1PluggedIn,
     setEv2PluggedIn,
   } = useDemoVisualizationContext();
-  const { demoRunMethod, demoRunning, demoTime, setDemoRunning, setDemoTime } = useDemoControlContext();
+  const { demoRunMethod, demoRunning, scheduleProcessing, demoTime, setDemoRunning, setScheduleProcessing, setDemoTime } = useDemoControlContext();
   const { setMovingDeployments } = useDemoVisualizationContext();
   const [demoStatus, setDemoStatus] = useState("idle"); // idle | running | stopped
 
@@ -99,7 +99,16 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
 
     // Spot price fetch simulation
     if (currentHour == 0 && currentMinute === 30) {
-      //setDemoRunning(false);
+      setRescheduleHistory((prev) => [
+        ...prev, 
+        {
+          title: "00:30",
+          content:
+            "The energy provider transmits electricity price information for the current hour to the Intelligence Control. The Intelligence Control then sends the optimal schedules to the Orchestrator, which forwards them to target devices for efficient energy use."
+        }
+      ]);
+      setDemoRunning(false);
+      setScheduleProcessing(true);
       runMoveCodeAnimation(ENERGY_COMPANY, INTELLIGENT_CONTROL, SpotPriceDataIcon);
       await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
       runMoveCodeAnimation(ORCHESTRATOR, INTELLIGENT_CONTROL, WasmWithOnnxIcon);
@@ -110,10 +119,23 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       runMoveCodeAnimation(ORCHESTRATOR, EV_CHARGER, ScheduleIcon);
       await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
       setDayPlans(predefinedDayPlan1);
+      setDemoRunning(true);
+      setScheduleProcessing(false);
+      handlePopOverClose();
     }
 
     // Demand spike simulation
     if (currentHour == 4 && currentMinute === 0) {
+      setDemoRunning(false);
+      setScheduleProcessing(true);
+      setRescheduleHistory((prev) => [
+        ...prev, 
+        {
+          title: "04:00",
+          content:
+            "The Flexibility Service analyzes new price data for significant changes, such as spikes, and informs the Intelligence Control, which recalculates optimal schedules and forwards them to the Orchestrator. The Orchestrator then distributes the updated schedules to target devices for efficient energy use."
+        }
+      ]);
       runMoveCodeAnimation(FLEXIBILITY_SERVICE, INTELLIGENT_CONTROL, DemandSpikeIcon);
       await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
       runMoveCodeAnimation(ORCHESTRATOR, INTELLIGENT_CONTROL, WasmWithOnnxIcon);
@@ -125,6 +147,9 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
       setDayPlans(predefinedDayPlan2);
       setHistoricalDayPlans(prev => [...prev, predefinedDayPlan1]);
+      setDemoRunning(true);
+      setScheduleProcessing(false);
+      handlePopOverClose();
     }
 
     // EV unplug simulation
@@ -135,6 +160,16 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
 
     // Washing machine set to simulation
     if (currentHour == 10 && currentMinute === 0) {
+      setDemoRunning(false);
+      setScheduleProcessing(true);
+      setRescheduleHistory((prev) => [
+        ...prev, 
+        {
+          title: "10:00",
+          content:
+            "The user requests optimal schedules from the Intelligence Control, which recalculates them and forwards them to the Orchestrator. The Orchestrator then distributes the updated schedules to target devices for efficient energy use."
+        }
+      ]);
       runMoveCodeAnimation(USER_CONTROL, INTELLIGENT_CONTROL, UserInputIcon);
       await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
       runMoveCodeAnimation(ORCHESTRATOR, INTELLIGENT_CONTROL, WasmWithOnnxIcon);
@@ -146,10 +181,23 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
       setDayPlans(predefinedDayPlan3);
       setHistoricalDayPlans(prev => [...prev, predefinedDayPlan2]);
+      setDemoRunning(true);
+      setScheduleProcessing(false);
+      handlePopOverClose();
     }
 
     // Demand spike simulation
     if (currentHour == 13 && currentMinute === 0) {
+      setDemoRunning(false);
+      setScheduleProcessing(true);
+      setRescheduleHistory((prev) => [
+        ...prev, 
+        {
+          title: "13:00",
+          content:
+            "The Flexibility Service analyzes new price data for significant changes, such as spikes, and informs the Intelligence Control, which recalculates optimal schedules and forwards them to the Orchestrator. The Orchestrator then distributes the updated schedules to target devices for efficient energy use."
+        }
+      ]);
       runMoveCodeAnimation(FLEXIBILITY_SERVICE, INTELLIGENT_CONTROL, DemandSpikeIcon);
       await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
       runMoveCodeAnimation(ORCHESTRATOR, INTELLIGENT_CONTROL, WasmWithOnnxIcon);
@@ -161,12 +209,25 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
       setDayPlans(predefinedDayPlan4);
       setHistoricalDayPlans(prev => [...prev, predefinedDayPlan3]);
+      setDemoRunning(true);
+      setScheduleProcessing(false);
+      handlePopOverClose();
     }
 
     // EV plug back in simulation
     if (currentHour == 18 && currentMinute === 0) {
+      setDemoRunning(false);
+      setScheduleProcessing(true);
       setEv1PluggedIn(true);
       setEv2PluggedIn(true);
+      setRescheduleHistory((prev) => [
+        ...prev, 
+        {
+          title: "18:00",
+          content:
+            "The Intelligence control receives the updated electricity price information for the current hour from the enerygy company. It then recalculates and sends the optimal schedules to the Orchestrator, which forwards them to target devices for efficient energy use."
+        }
+      ]);
       await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
       runMoveCodeAnimation(ORCHESTRATOR, INTELLIGENT_CONTROL, WasmWithOnnxIcon);
       await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
@@ -177,10 +238,23 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
       setDayPlans(predefinedDayPlan5);
       setHistoricalDayPlans(prev => [...prev, predefinedDayPlan4]);
+      setDemoRunning(true);
+      setScheduleProcessing(false);
+      handlePopOverClose();
     }
 
     // Demand spike simulation
     if (currentHour == 21 && currentMinute === 0) {
+      setDemoRunning(false);
+      setScheduleProcessing(true);
+      setRescheduleHistory((prev) => [
+        ...prev, 
+        {
+          title: "21:00",
+          content:
+            "The Flexibility Service analyzes new price data for significant changes, such as spikes, and informs the Intelligence Control, which recalculates optimal schedules and forwards them to the Orchestrator. The Orchestrator then distributes the updated schedules to target devices for efficient energy use."
+        }
+      ]);
       runMoveCodeAnimation(FLEXIBILITY_SERVICE, INTELLIGENT_CONTROL, DemandSpikeIcon);
       await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
       runMoveCodeAnimation(ORCHESTRATOR, INTELLIGENT_CONTROL, WasmWithOnnxIcon);
@@ -192,6 +266,9 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
       setDayPlans(predefinedDayPlan6);
       setHistoricalDayPlans(prev => [...prev, predefinedDayPlan5]);
+      setDemoRunning(true);
+      setScheduleProcessing(false);
+      handlePopOverClose();
     }
 
     if (currentHour == 23 && currentMinute == 50)
@@ -273,8 +350,9 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
   };
 
   const handleResume = () => {
+    if (!scheduleProcessing) 
+      setDemoRunning(true);
     setDemoStatus("running");
-    setDemoRunning(true);
     setPaused(false);
   };
 
@@ -295,6 +373,7 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
     setEv2PluggedIn(true);
     setPaused(false);
     setHistoricalDayPlans([initialDayPlan]);
+    setRescheduleHistory([]);
   }
 
   return (

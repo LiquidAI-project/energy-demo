@@ -5,11 +5,21 @@
 
 import React, { useState } from 'react';
 import { Popover, Tab, Tabs, Box } from '@mui/material';
+import { AnimatePresence, motion } from "framer-motion";
+import HourglassFullIcon from "@mui/icons-material/HourglassFull";
+import { keyframes } from "@mui/system";
 import userControlIcon from '../../assets/userControl.png';
+import { useDemoControlContext } from "../../context/demoControlContext/useDemoControlContext";
 
-const UserControlUI = React.forwardRef((props, ref) => {
+const spin = keyframes`
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+`;
+
+const UserControlUI = React.forwardRef(({anchorPopOverEl, activePopover, handlePopOverClick, handlePopOverClose}, ref) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedTab, setSelectedTab] = useState(0);
+  const { demoTime, scheduleProcessing } = useDemoControlContext();
 
   // Handle click to open the popover
   const handleClickOpen = (event) => {
@@ -32,7 +42,7 @@ const UserControlUI = React.forwardRef((props, ref) => {
   return (
     <div>
       <button
-        onClick={handleClickOpen}
+        onClick={(!(new Date(demoTime).getHours() === 10 && new Date(demoTime).getMinutes() === 0)) ? handleClickOpen : undefined}
         ref={ref}
         style={{
           position: "absolute",
@@ -55,6 +65,53 @@ const UserControlUI = React.forwardRef((props, ref) => {
             objectFit: "cover",
           }}
         />
+        {scheduleProcessing && ((new Date(demoTime).getHours() === 10 && new Date(demoTime).getMinutes() === 0)) && (
+          <>
+            <motion.div
+              initial={{ rotate: 0 }}
+              animate={{ rotate: 360 }}
+              transition={{ repeat: Infinity, duration: 4, ease: "linear" }}
+              style={{
+                position: "absolute",
+                padding: "10px",
+                bottom: "-4%",    
+                right: "-4%",
+                width: "18%",       
+                height: "30%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                background: "rgba(166, 221, 175, 0.85)",
+                borderRadius: "50%",
+                boxShadow: "0 2px 6px rgba(0,0,0,0.3)",
+                cursor: "pointer"
+              }}
+              onClick={(e) => handlePopOverClick(e, "user")}
+            >
+              <HourglassFullIcon style={{ fontSize: "1.0rem", color: "#167356" }} />
+            </motion.div>
+            <Popover
+              open={activePopover === "user"}
+              anchorEl={anchorPopOverEl}
+              onClose={handlePopOverClose}
+              anchorOrigin={{
+                vertical: "bottom",
+                horizontal: "center",
+              }}
+              transformOrigin={{
+                vertical: "top",
+                horizontal: "center",
+              }}
+            >
+              <Box p={2} sx={{ maxWidth: 250 }}>
+                <strong>User Control</strong>
+                <p>
+                  User initiates the scheduling process by requesting the optimal schedules from the Intelligence control.
+                </p>
+              </Box>
+            </Popover>
+          </>
+        )}
       </button>
 
       <Popover

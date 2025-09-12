@@ -10,6 +10,7 @@ import { WITHOUT_LIQUID_AI } from "../../../constants";
 const DemoControlContext = createContext({
   demoRunMethod: WITHOUT_LIQUID_AI,
   demoRunning: false,
+  scheduleProcessing: false,
   demoTime: new Date().setHours(0, 0, 0, 0),
   changeDemoRunMethod: () => {},
   setDemoRunning: () => {},
@@ -19,6 +20,7 @@ const DemoControlContext = createContext({
 export const DemoControlProvider = ({ children }) => {
   const [demoRunMethod, setDemoRunMethod] = useState(WITHOUT_LIQUID_AI);
   const [demoRunning, setDemoRunning] = useState(false);
+  const [scheduleProcessing, setScheduleProcessing] = useState(false);
   const [demoTime, setDemoTime] = useState(new Date().setHours(0, 0, 0, 0));
 
 
@@ -28,8 +30,8 @@ export const DemoControlProvider = ({ children }) => {
   };
 
   const value = useMemo(
-    () => ({ demoRunMethod, demoRunning, demoTime, changeDemoRunMethod, setDemoRunning, setDemoTime }),
-    [demoRunMethod, demoRunning, demoTime]
+    () => ({ demoRunMethod, demoRunning, scheduleProcessing, demoTime, changeDemoRunMethod, setDemoRunning, setScheduleProcessing, setDemoTime }),
+    [demoRunMethod, demoRunning, scheduleProcessing, demoTime]
   );
   return (
     <DemoControlContext.Provider value={value}>
