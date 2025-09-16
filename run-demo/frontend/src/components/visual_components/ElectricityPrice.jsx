@@ -174,7 +174,7 @@ function ElectricityPrice({ demoTime, demoPassedHrs, totalConsumption }) {
       };
       setConsumptionData(initialData);
       window.sessionStorage.setItem("consumptionData", JSON.stringify(consumptionData));
-    } else if (demoPassedHrs < 24){
+    } else if (demoPassedHrs < 24 && new Date(demoTime).getMinutes() === 50) {
       setConsumptionData((prev) => {
         const newItem = {
           hour: new Date(demoTime).getHours(),
@@ -188,18 +188,20 @@ function ElectricityPrice({ demoTime, demoPassedHrs, totalConsumption }) {
         window.sessionStorage.setItem("consumptionData", JSON.stringify(updated));
         return updated;
       });
+
+      const total = totalConsumption
+        .filter((entry) => entry.hour <= new Date(demoTime).getHours())
+        .reduce((sum, entry) => sum + entry.value, 0);
+
+      const totalPrice = consumptionData
+        .filter((entry) => entry.hour <= new Date(demoTime).getHours())
+        .reduce((sum, entry) => sum + entry.total, 0);
+
+      setTotal(total);
+      setTotalPrice(totalPrice);
     }
 
-    const total = totalConsumption
-      .filter((entry) => entry.hour <= new Date(demoTime).getHours())
-      .reduce((sum, entry) => sum + entry.value, 0);
-
-    const totalPrice = consumptionData
-      .filter((entry) => entry.hour <= new Date(demoTime).getHours())
-      .reduce((sum, entry) => sum + entry.total, 0);
-
-    setTotal(total);
-    setTotalPrice(totalPrice);
+    
   }, [demoPassedHrs, demoTime, totalConsumption]);
 
   function updateCurrentConsumption(totalConsumption, demoTime) {
