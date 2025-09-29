@@ -105,9 +105,15 @@ const Freezer = React.forwardRef((props, ref) => {
           style={{
             width: "100%",
             height: "100%",
-            border: blinkState ? "5px solid red" : "5px solid green",
+            border: isActive ? blinkState
+            ? "5px solid rgb(34, 195, 34)"
+            : "5px solid green"
+            : "5px solid red",
             borderRadius: "8px",
-            transition: "border 0.2s", 
+            boxShadow: isActive && blinkState
+              ? "0 0 12px 6px rgba(34, 195, 34)"
+              : "none",
+            transition: "all 0.3s ease-in-out",
           }}
         />
       </button>

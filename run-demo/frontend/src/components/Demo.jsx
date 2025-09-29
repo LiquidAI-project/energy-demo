@@ -37,6 +37,8 @@ import CloudIcon from "../assets/cloud_icon.png";
 import OptimizedSettingsIcon from "../assets/optimized_settings_icon.png";
 import UserControlUI from "./userControl/UserControlUI";
 import DemoControlls from "./demoControll/DemoControlls";
+import { getDeviceIdMap } from "../utils/deviceUtils";
+//import { fetchData } from '../services/apiService';
 import {
   ORCHESTRATOR,
   STORAGE,
@@ -96,6 +98,7 @@ const Demo = () => {
   const hackerRef = useRef(null);
   const containerRef = useRef(null);
   const hourglassRef = useRef(null);
+  const logsQueueRef = useRef([]);
 
   const [activeDeployments, setActiveDeployments] = useState([]);
   const [warningBorderVisible, setWarningBorderVisible] = useState(false);
@@ -362,6 +365,26 @@ const Demo = () => {
       moveCodeAnimation(SERVICE_PROVIDER2, EV_CHARGER, OptimizedSettingsIcon);
     }
   };
+
+  // Fetch the device data from the API
+  const fetchDeviceData = async () => {
+    try {
+      const devicesFromAPI = await fetchData("/file/device");
+      const deviceMap = new Map(
+        devicesFromAPI.map((device) => [device.name, device._id])
+      );
+      localStorage.setItem(
+        "deviceIdMap",
+        JSON.stringify(Array.from(deviceMap.entries()))
+      );
+    } catch (error) {
+      console.error("Error fetching device data:", error);
+    }
+  };
+
+  useEffect(() => {
+    //fetchDeviceData();
+  }, []);
 
   useEffect(() => {
     pausedRef.current = paused;
