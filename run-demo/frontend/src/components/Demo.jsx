@@ -65,6 +65,7 @@ import { ExpandLess, ExpandMore, ArrowBackIos, ArrowForwardIos } from "@mui/icon
 import HourglassFullIcon from "@mui/icons-material/HourglassFull";
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { keyframes } from "@mui/system";
+import socket from "./WebSocket";
 
 // eslint-disable-next-line no-undef
 const ANIMATION_MOVING_TIME = process.env.ANIMATION_MOVING_TIME;
@@ -547,7 +548,14 @@ const Demo = () => {
       }
     }
 
+    const handleMessage = (event) => {
+      console.log("📩 Message:", JSON.parse(event.data));
+    };
+
+    socket.addEventListener("message", handleMessage);
+
     return () => {
+      socket.removeEventListener("message", handleMessage);
       if (demoRunMethod === WITH_LIQUID_AI) {
         window.removeEventListener("resize", () =>
           drawLines(
