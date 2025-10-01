@@ -7,7 +7,7 @@ import inactiveIcon from '../../assets/inactive.png';
 import EnergyComponent from '../EnergyComponent';
 import { FREEZER } from '../../../constants';
 import { useDemoVisualizationContext } from "../../context/demoVisualizationContext/useDemoVisualizationContext";
-
+import { speak } from "../../utils/deviceUtils";
 
 const Freezer = React.forwardRef((props, ref) => {
 
@@ -16,6 +16,8 @@ const Freezer = React.forwardRef((props, ref) => {
   const [deviceInfo, setDeviceInfo] = useState({});
   const [blinkState, setBlinkState] = useState(false);
   const { deviceStatus } = useDemoVisualizationContext();
+
+  const getDeviceStatus = deviceStatus.find((device) => device.deviceName === FREEZER);
 
   const navigate = useNavigate();
 
@@ -27,41 +29,38 @@ const Freezer = React.forwardRef((props, ref) => {
     optimize: false,
     isActive:  isActive,
     deviceInfo: deviceInfo,
+    supervisorName: getDeviceStatus.supervisorName
   };
 
-  const freezerMaxOn = deviceStatus.find((device) => device.deviceName === FREEZER).isEnergyIntensive;
-
+  
   useEffect(() => {
     const checkEquipment = () => {
       const devices = JSON.parse(localStorage.getItem('devices') || '[]');
-      const deviceFound = devices.find(device => device.name === component.id);
-      // Added hardcoded true until the development of dynamic health check developed
-      setIsActive(true);
-      //setIsActive(deviceFound !== undefined);
+      const deviceFound = devices.find(device => device.name === getDeviceStatus.supervisorName);
+      setIsActive(deviceFound && deviceFound.isActive);
       setDeviceInfo(deviceFound || {});
     };
-
     checkEquipment();
-
     // Set up the interval to check every 2 seconds
     const intervalId = setInterval(checkEquipment, 2000);
-
     return () => clearInterval(intervalId);
   }, [component.id]);
 
-    useEffect(() => {
-      let intervalId;
-
-      if (freezerMaxOn) {
-        intervalId = setInterval(() => {
-          setBlinkState((prevState) => !prevState);
-        }, 500);
-      } else {
-        setBlinkState(false);
-        clearInterval(intervalId);
-      }
-      return () => clearInterval(intervalId);
-    }, [freezerMaxOn]);
+  // Sets blinkState when the appliance is in running state
+  useEffect(() => {
+    let intervalId;
+    if (getDeviceStatus.isEnergyIntensive) {
+      speak("Freezer is turned on");
+      intervalId = setInterval(() => {
+        setBlinkState((prevState) => !prevState);
+      }, 500);
+    } else {
+      speak("Freezer is turned off");
+      setBlinkState(false);
+      clearInterval(intervalId);
+    }
+    return () => clearInterval(intervalId);
+  }, [getDeviceStatus.isEnergyIntensive]);
 
   const handleHoverOn = (event) => {
     setAnchorEl(event.currentTarget);

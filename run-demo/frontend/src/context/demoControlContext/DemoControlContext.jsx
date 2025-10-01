@@ -22,7 +22,7 @@ export const DemoControlProvider = ({ children }) => {
   const [demoRunning, setDemoRunning] = useState(false);
   const [scheduleProcessing, setScheduleProcessing] = useState(false);
   const [demoTime, setDemoTime] = useState(new Date().setHours(0, 0, 0, 0));
-
+  const [voiceEnabled, setVoiceEnabled] = useState(false);
 
   // Change the demo run method (With liquid AI or without liquid AI)
   const changeDemoRunMethod = (method) => {
@@ -30,8 +30,8 @@ export const DemoControlProvider = ({ children }) => {
   };
 
   const value = useMemo(
-    () => ({ demoRunMethod, demoRunning, scheduleProcessing, demoTime, changeDemoRunMethod, setDemoRunning, setScheduleProcessing, setDemoTime }),
-    [demoRunMethod, demoRunning, scheduleProcessing, demoTime]
+    () => ({ demoRunMethod, demoRunning, scheduleProcessing, demoTime, voiceEnabled, changeDemoRunMethod, setDemoRunning, setScheduleProcessing, setDemoTime, setVoiceEnabled }),
+    [demoRunMethod, demoRunning, scheduleProcessing, demoTime, voiceEnabled]
   );
   return (
     <DemoControlContext.Provider value={value}>

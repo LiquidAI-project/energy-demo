@@ -7,6 +7,7 @@ import inactiveIcon from '../../assets/inactive.png';
 import EnergyComponent from "../EnergyComponent";
 import { WASHING_MACHINE } from '../../../constants';
 import { useDemoVisualizationContext } from "../../context/demoVisualizationContext/useDemoVisualizationContext";
+import { speak } from "../../utils/deviceUtils";
 
 const WashingMachine = React.forwardRef((props, ref) => {
 
@@ -14,6 +15,8 @@ const WashingMachine = React.forwardRef((props, ref) => {
   const [isActive, setIsActive] = useState(false);
   const [deviceInfo, setDeviceInfo] = useState({});
   const { deviceStatus } = useDemoVisualizationContext();
+
+  const getDeviceStatus = deviceStatus.find((device) => device.deviceName === WASHING_MACHINE);
 
   const navigate = useNavigate();
 
@@ -25,43 +28,39 @@ const WashingMachine = React.forwardRef((props, ref) => {
     optimize: false,
     isActive:  isActive,
     deviceInfo: deviceInfo,
+    supervisorName: getDeviceStatus.supervisorName
   };
 
-  const washingMachineOn = deviceStatus.find((device) => device.deviceName === WASHING_MACHINE).isEnergyIntensive;
-
+  
   useEffect(() => {
     const checkEquipment = () => {
       const devices = JSON.parse(localStorage.getItem("devices") || "[]");
       const deviceFound = devices.find(
-        (device) => device.name === component.id
+        (device) => device.name === getDeviceStatus.supervisorName
       );
-      // Added hardcoded true until the development of dynamic health check developed
-      setIsActive(true);
-      //setIsActive(deviceFound !== undefined);
+      setIsActive(deviceFound && deviceFound.isActive);
       setDeviceInfo(deviceFound || {});
     };
-
     checkEquipment();
-
     // Set up the interval to check every 2 seconds
-    const intervalId = setInterval(checkEquipment, 2000);
-
+    const intervalId = setInterval(checkEquipment, 5000);
     return () => clearInterval(intervalId);
   }, [component.id]);
 
   useEffect(() => {
     let intervalId;
-
-    if (washingMachineOn) {
+    if (getDeviceStatus.isEnergyIntensive) {
+      speak("Washing machine is turned on");
       intervalId = setInterval(() => {
         setBlinkState(prevState => !prevState);
       }, 500);
     } else {
+      speak("Freezer is turned off");
       setBlinkState(false); 
       clearInterval(intervalId);
     }
     return () => clearInterval(intervalId);
-  }, [washingMachineOn]);
+  }, [getDeviceStatus.isEnergyIntensive]);
 
   const [blinkState, setBlinkState] = useState(false);
 
@@ -107,9 +106,15 @@ const WashingMachine = React.forwardRef((props, ref) => {
           style={{
             width: "100%",
             height: "100%",
-            border: blinkState ? "5px solid red" : "5px solid green",
+            border: isActive ? blinkState
+            ? "5px solid rgb(34, 195, 34)"
+            : "5px solid green"
+            : "5px solid red",
             borderRadius: "8px",
-            transition: "border 0.2s", 
+            boxShadow: isActive && blinkState
+              ? "0 0 12px 6px rgba(34, 195, 34)"
+              : "none",
+            transition: "all 0.3s ease-in-out",
           }}
         />
       </button>

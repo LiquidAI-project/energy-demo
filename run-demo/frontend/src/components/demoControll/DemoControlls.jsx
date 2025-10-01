@@ -41,6 +41,7 @@ import {
   predefinedDayPlan5,
   predefinedDayPlan6,
 } from "../../assets/mockData/dailyPlan";
+import { speak } from "../../utils/deviceUtils";
 
 // eslint-disable-next-line no-undef
 const ANIMATION_MOVING_TIME = process.env.ANIMATION_MOVING_TIME;
@@ -54,9 +55,9 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
     setHistoricalDayPlans,
     setEv1PluggedIn,
     setEv2PluggedIn,
+    setMovingDeployments
   } = useDemoVisualizationContext();
-  const { demoRunMethod, demoRunning, scheduleProcessing, demoTime, setDemoRunning, setScheduleProcessing, setDemoTime } = useDemoControlContext();
-  const { setMovingDeployments } = useDemoVisualizationContext();
+  const { voiceEnabled, demoRunMethod, demoRunning, scheduleProcessing, demoTime, setDemoRunning, setScheduleProcessing, setDemoTime, setVoiceEnabled } = useDemoControlContext();
   const [demoStatus, setDemoStatus] = useState("idle"); // idle | running | stopped
 
   /**
@@ -376,6 +377,18 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
     setRescheduleHistory([]);
   }
 
+  const handleVoiceFeedback = () => {
+    setVoiceEnabled((prev) => {
+      const newState = !prev;
+      if (newState) {
+        speak("Voice feedback enabled");
+      } else {
+        speak("Voice feedback disabled");
+      }
+      return newState;
+    });
+  }
+
   return (
     <Box>
       <Box display="flex" alignItems="center" gap={2} marginBottom={2}>
@@ -458,6 +471,16 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
           />
         }
         label="Toggle Reference Line"
+      />
+      <FormControlLabel
+        control={
+          <Switch
+            checked={voiceEnabled}
+            onChange={handleVoiceFeedback}
+            color="primary"
+          />
+        }
+        label="Toggle Voice Feedback"
       />
     </Box>
   );

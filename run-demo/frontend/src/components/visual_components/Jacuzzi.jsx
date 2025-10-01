@@ -17,6 +17,7 @@ const Jacuzzi = React.forwardRef((props, ref) => {
     optimize: false,
     isActive:  isActive,
     deviceInfo: deviceInfo,
+    supervisorName: "-"
   };
 
   const handleHoverOn = (event) => {

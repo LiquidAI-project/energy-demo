@@ -69,3 +69,22 @@ export const isDeviceOperating = (deviceId, currentPlan, currentDemoTime) => {
     return currentHour >= slot.start && currentHour < slot.end;
   });
 };
+
+/**
+ * Triggers a voiceover announcement using the Web Speech API.
+ * This function is called whenever an action is performed or an event occurs,
+ * providing auditory feedback to the user.
+ *
+ * @param {string} text - The message to be spoken aloud.
+ */
+export const speak = (text) => {
+  if ("speechSynthesis" in window) {
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "en-US";
+    utterance.rate = 1;
+    utterance.pitch = 1;
+    window.speechSynthesis.speak(utterance);
+  } else {
+    console.error("Speech Synthesis not supported in this browser.");
+  }
+};

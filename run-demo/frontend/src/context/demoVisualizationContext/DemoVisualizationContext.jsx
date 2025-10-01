@@ -37,14 +37,21 @@ export const DemoVisualizationProvider = ({ children }) => {
   const [ev2PluggedIn, setEv2PluggedIn] = useState(true);
   const [deviceStatus, setDeviceStatus] = useState([
     {
+      supervisorName: 'supervisor-python-local',
+      //isSupervisorDetected: false,
       deviceName: EV_CHARGER,
       isEnergyIntensive: false,
+      
     },
     {
+      supervisorName: 'supervisor-python-extra',
+      //isSupervisorDetected: false,
       deviceName: WASHING_MACHINE,
       isEnergyIntensive: false,
     },
     {
+      supervisorName: 'supervisor-python-docker',
+      //isSupervisorDetected: false,
       deviceName: FREEZER,
       isEnergyIntensive: false,
     },
@@ -55,8 +62,27 @@ export const DemoVisualizationProvider = ({ children }) => {
     setHackerVisibility(isHackerVisible);
   };
 
+ /*  useEffect(() => {
+    const handleStorageChange = () => {
+      console.log("change detected");
+      const deviceIdMapRaw = JSON.parse(localStorage.getItem("deviceIdMap") || "[]");
+      const deviceIdMap = deviceIdMapRaw.reduce((acc, [deviceName, supervisorId]) => {
+        acc[deviceName] = supervisorId;
+        return acc;
+      }, {});
+      setDeviceStatus((prevStatus) =>
+        prevStatus.map((device) => ({
+          ...device,
+          isSupervisorDetected: deviceIdMap[device.supervisorName] ? true : false
+        }))
+      );
+    };
+    window.addEventListener("deviceIdMapChanged", handleStorageChange);
+    return () => window.removeEventListener("deviceIdMapChanged", handleStorageChange);
+  }, []); */
+
   useEffect(() => {
-    setDeviceStatus([
+    /* setDeviceStatus([
       {
         deviceName: EV_CHARGER,
         isEnergyIntensive: isDeviceOperating(EV_CHARGER, dayPlans, demoTime),
@@ -73,7 +99,14 @@ export const DemoVisualizationProvider = ({ children }) => {
         deviceName: FREEZER,
         isEnergyIntensive: isDeviceOperating(FREEZER, dayPlans, demoTime),
       },
-    ]);
+    ]); */
+    
+    setDeviceStatus((prevStatus) =>
+      prevStatus.map((device) => ({
+        ...device,
+        isEnergyIntensive: isDeviceOperating(device.deviceName, dayPlans, demoTime),
+      }))
+    );
   }, [dayPlans, demoTime]);
 
   const value = useMemo(
@@ -91,6 +124,7 @@ export const DemoVisualizationProvider = ({ children }) => {
       setHistoricalDayPlans,
       setEv1PluggedIn,
       setEv2PluggedIn,
+      setDeviceStatus
     }),
     [
       hackerVisibility,
