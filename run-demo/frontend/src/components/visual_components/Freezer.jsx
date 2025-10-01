@@ -7,6 +7,7 @@ import inactiveIcon from '../../assets/inactive.png';
 import EnergyComponent from '../EnergyComponent';
 import { FREEZER } from '../../../constants';
 import { useDemoVisualizationContext } from "../../context/demoVisualizationContext/useDemoVisualizationContext";
+import { useDemoControlContext } from "../../context/demoControlContext/useDemoControlContext";
 import { speak } from "../../utils/deviceUtils";
 
 const Freezer = React.forwardRef((props, ref) => {
@@ -16,6 +17,7 @@ const Freezer = React.forwardRef((props, ref) => {
   const [deviceInfo, setDeviceInfo] = useState({});
   const [blinkState, setBlinkState] = useState(false);
   const { deviceStatus } = useDemoVisualizationContext();
+  const {voiceEnabled} = useDemoControlContext();
 
   const getDeviceStatus = deviceStatus.find((device) => device.deviceName === FREEZER);
 
@@ -50,12 +52,14 @@ const Freezer = React.forwardRef((props, ref) => {
   useEffect(() => {
     let intervalId;
     if (getDeviceStatus.isEnergyIntensive) {
-      speak("Freezer is turned on");
+      if(voiceEnabled)
+        speak("Freezer is turned on");
       intervalId = setInterval(() => {
         setBlinkState((prevState) => !prevState);
       }, 500);
     } else {
-      speak("Freezer is turned off");
+      if(voiceEnabled)
+        speak("Freezer is turned off");
       setBlinkState(false);
       clearInterval(intervalId);
     }

@@ -7,6 +7,7 @@ import inactiveIcon from '../../assets/inactive.png';
 import EnergyComponent from "../EnergyComponent";
 import { WASHING_MACHINE } from '../../../constants';
 import { useDemoVisualizationContext } from "../../context/demoVisualizationContext/useDemoVisualizationContext";
+import { useDemoControlContext } from "../../context/demoControlContext/useDemoControlContext";
 import { speak } from "../../utils/deviceUtils";
 
 const WashingMachine = React.forwardRef((props, ref) => {
@@ -15,6 +16,7 @@ const WashingMachine = React.forwardRef((props, ref) => {
   const [isActive, setIsActive] = useState(false);
   const [deviceInfo, setDeviceInfo] = useState({});
   const { deviceStatus } = useDemoVisualizationContext();
+  const {voiceEnabled} = useDemoControlContext();
 
   const getDeviceStatus = deviceStatus.find((device) => device.deviceName === WASHING_MACHINE);
 
@@ -50,12 +52,14 @@ const WashingMachine = React.forwardRef((props, ref) => {
   useEffect(() => {
     let intervalId;
     if (getDeviceStatus.isEnergyIntensive) {
-      speak("Washing machine is turned on");
+      if(voiceEnabled)
+        speak("Washing machine is turned on");
       intervalId = setInterval(() => {
         setBlinkState(prevState => !prevState);
       }, 500);
     } else {
-      speak("Freezer is turned off");
+      if(voiceEnabled)
+        speak("Freezer is turned off");
       setBlinkState(false); 
       clearInterval(intervalId);
     }
@@ -124,7 +128,7 @@ const WashingMachine = React.forwardRef((props, ref) => {
         style={{
           position: "absolute",
           top: "18.1%",
-          left: "28.6%",
+          left: "29.2%",
           width: "8%",
           height: "10%",
           transform: "scale(0.2)",

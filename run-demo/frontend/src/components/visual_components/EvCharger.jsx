@@ -12,11 +12,13 @@ import EVChargerIcon from "../../assets/ev_charger.png";
 import { EV_CHARGER } from "../../../constants";
 import EnergyComponent from "../EnergyComponent";
 import { useDemoVisualizationContext } from "../../context/demoVisualizationContext/useDemoVisualizationContext";
+import { useDemoControlContext } from "../../context/demoControlContext/useDemoControlContext";
 import { speak } from "../../utils/deviceUtils";
 
 const evCharger = React.forwardRef((props, ref) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const {deviceStatus} = useDemoVisualizationContext();
+  const {voiceEnabled} = useDemoControlContext();
   const [blinkState, setBlinkState] = useState(false);
   const [isActive, setIsActive] = useState(false);
   const [deviceInfo, setDeviceInfo] = useState({});
@@ -53,12 +55,14 @@ const evCharger = React.forwardRef((props, ref) => {
   useEffect(() => {
     let intervalId;
     if (getDeviceStatus.isEnergyIntensive) {
-      speak("Electric cars are connected for charging");
+      if(voiceEnabled)
+        speak("Electric cars are connected for charging");
       intervalId = setInterval(() => {
         setBlinkState((prevState) => !prevState);
       }, 500);
     } else {
-      speak("Electric cars are removed from charging");
+      if(voiceEnabled)
+        speak("Electric cars are removed from charging");
       setBlinkState(false); 
       clearInterval(intervalId);
     }
