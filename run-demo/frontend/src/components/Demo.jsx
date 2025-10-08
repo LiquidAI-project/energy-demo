@@ -70,9 +70,9 @@ import { keyframes } from "@mui/system";
 import socket from "./WebSocket";
 
 // eslint-disable-next-line no-undef
-const PUBLIC_HOST = import.meta.env.PUBLIC_HOST;
+const PUBLIC_HOST = import.meta.env.VITE_PUBLIC_HOST;
 // eslint-disable-next-line no-undef
-const PUBLIC_PORT = import.meta.env.PUBLIC_PORT;
+const PUBLIC_PORT = import.meta.env.VITE_PUBLIC_PORT;
 // eslint-disable-next-line no-undef
 const DEVICE_CHECK_INTERVAL = import.meta.env.VITE_DEVICE_CHECK_INTERVAL;
 // eslint-disable-next-line no-undef
@@ -111,7 +111,7 @@ const Demo = () => {
   const [warningBorderVisible, setWarningBorderVisible] = useState(false);
   const [open, setOpen] = useState(false);
   const [shouldBlink, setShouldBlink] = useState(false);
-  const { hackerVisibility, movingDeployments, setMovingDeployments } = useDemoVisualizationContext();
+  const { deviceStatus, hackerVisibility, movingDeployments, setMovingDeployments } = useDemoVisualizationContext();
   const { demoRunMethod, demoTime, scheduleProcessing, voiceEnabled } = useDemoControlContext();
   const [paused, setPaused] = useState(false);
   const pausedRef = useRef(paused); 
@@ -280,7 +280,7 @@ const Demo = () => {
             iconSource: iconSource,
             changingIconSource: changingIconSource,
             startTime: Date.now(), // Track start time for the animation
-            elapsedTime: 0
+            elapsedTime: 0,
             //endTime: Date.now() + animationDuration, // Calculate the end time
           };
   
@@ -333,7 +333,6 @@ const Demo = () => {
     if (demoRunMethod === WITH_LIQUID_AI) {
       moveCodeAnimation(ENERGY_COMPANY, INTELLIGENT_CONTROL, SpotPriceDataIcon);
     } else {
-
         // Randomly pick an icon from each set
         const randomIconsFromWM = DATA_ICONS_MOVING_FROM_WM[Math.floor(Math.random() * DATA_ICONS_MOVING_FROM_WM.length)];
         const randomIconsFromFreezer = DATA_ICONS_MOVING_FROM_FREEZER[Math.floor(Math.random() * DATA_ICONS_MOVING_FROM_FREEZER.length)];
@@ -394,6 +393,71 @@ const Demo = () => {
     }
   };
 
+  // Update the deployment details for the device
+  const updateDeployment = useCallback(
+    async (device, deviceName, deployments) => {
+      const deviceSpecificDeployment = deployments.find((item) =>
+        item.sequence.some((seq) => seq.device === device.deviceId)
+      );
+
+      if (deviceSpecificDeployment) {
+        // Accessing the modules inside fullManifest using the deviceId
+        const deviceManifest =
+          deviceSpecificDeployment.fullManifest[device.deviceId];
+        console.log(deviceSpecificDeployment)
+        device.deploymentId = deviceSpecificDeployment._id;
+        device.existingModuleId = deviceManifest.modules[0].id;
+        device.existingModuleName = deviceManifest.modules[0].name;
+        //device.isModuleActive = Boolean(deviceSpecificDeployment.active);
+        device.isModuleActive = true;
+
+        const demoDeviceName = deviceStatus.find((item) =>
+          item.supervisorName === deviceName
+        ).deviceName;
+        const deviceRef = getDeviceReference(demoDeviceName);
+
+        if (deviceRef.current && device.isModuleActive) {
+          const deviceBounds = deviceRef.current.getBoundingClientRect();
+
+          const wasmModuleIconPosition = {
+            x: deviceBounds.left + deviceBounds.width / 2,
+            y: deviceBounds.top + deviceBounds.height / 2,
+          };
+
+          setActiveDeployments((prevActiveDeployments) => {
+            const existingDeploymentIds = prevActiveDeployments.map(
+              (dep) => dep.id
+            );
+
+            if (!existingDeploymentIds.includes(deviceSpecificDeployment._id)) {
+              return [
+                ...prevActiveDeployments,
+                {
+                  id: deviceSpecificDeployment._id,
+                  wasmModuleIconPosition: wasmModuleIconPosition,
+                  deviceId: device.deviceId,
+                },
+              ];
+            }
+            return prevActiveDeployments;
+          });
+        }
+      } else {
+        device.deploymentId = null;
+        device.existingModuleId = null;
+        device.existingModuleName = null;
+        device.isModuleActive = false;
+
+        setActiveDeployments((prevActiveDeployments) => {
+          return prevActiveDeployments.filter(
+            (dep) => dep.deviceId !== device.deviceId
+          );
+        });
+      }
+    },
+    [getDeviceReference]
+  );
+
   // Collect logs in a queue and process them in batch
   const processLogsQueue = useCallback(async () => {
     const logs = logsQueueRef.current;
@@ -431,6 +495,10 @@ const Demo = () => {
       }
     });
 
+    //const updatePromises = [];
+    //const deployments = await fetchData("/file/manifest");
+    //localStorage.setItem("deployments", deployments);
+
     // Process logs and update devices accordingly
     for (const log of logs) {
       if (log.funcName === "thingi_health" && log.loglevel === "INFO") {
@@ -458,7 +526,18 @@ const Demo = () => {
             isActive: true,
           });
         }
-      }
+      } /* else if (log.funcName === "deployment_create" && now - logReceivedTime < 5000
+      ) {
+        moveCodeAnimation(ORCHESTRATOR, log.deviceName, WebAssembly_Icon);
+        await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
+        updatePromises.push(
+          updateDeployment(
+            deviceMap.get(log.deviceName),
+            log.deviceName,
+            deployments
+          )
+        );
+      } */
     }
 
     // Optional: filter out stale devices based on expiryTime
@@ -469,7 +548,6 @@ const Demo = () => {
         isActive: device.isActive && isStillActive,
       };
     });
-
       
     // Save updated list back to localStorage
     localStorage.setItem("devices", JSON.stringify(updatedDevices));
@@ -496,10 +574,21 @@ const Demo = () => {
   }, [processLogsQueue]);
  
   useEffect(() => {
-    if (!hasRun.current) {
+    const handleMessage = (event) => {
+      console.log("📩 Message:", JSON.parse(event.data));
+      logsQueueRef.current.push(JSON.parse(event.data));
+      setTimeout(processLogsQueue, 500);
+    };
+
+   // if (!hasRun.current) {
       fetchDeviceData();   
       getInitialDeviceHealth();
-      hasRun.current = true;
+      socket.addEventListener("message", handleMessage);
+   //   hasRun.current = true;
+   // }
+
+    return() => {
+      //socket.removeEventListener("message", handleMessage);
     }
   }, []);
 
@@ -688,16 +777,7 @@ const Demo = () => {
       }
     }
 
-    const handleMessage = (event) => {
-      console.log("📩 Message:", JSON.parse(event.data));
-      logsQueueRef.current.push(JSON.parse(event.data));
-      setTimeout(processLogsQueue, 500);
-    };
-
-    socket.addEventListener("message", handleMessage);
-
     return () => {
-      //socket.removeEventListener("message", handleMessage);
       if (demoRunMethod === WITH_LIQUID_AI) {
         window.removeEventListener("resize", () =>
           drawLines(

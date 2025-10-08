@@ -44,7 +44,7 @@ import {
 import { speak } from "../../utils/deviceUtils";
 
 // eslint-disable-next-line no-undef
-const ANIMATION_MOVING_TIME = process.env.ANIMATION_MOVING_TIME;
+const ANIMATION_MOVING_TIME = import.meta.env.VITE_ANIMATION_MOVING_TIME;
 
 const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused, pausedRef, pauseAwareDelay, referenceLineEnabled, setReferenceLineEnabled, handlePopOverClose, setRescheduleHistory }) => {
   const {
@@ -111,6 +111,7 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       setDemoRunning(false);
       setScheduleProcessing(true);
       runMoveCodeAnimation(ENERGY_COMPANY, INTELLIGENT_CONTROL, SpotPriceDataIcon);
+      console.log(ANIMATION_MOVING_TIME);
       await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
       runMoveCodeAnimation(ORCHESTRATOR, INTELLIGENT_CONTROL, WasmWithOnnxIcon);
       await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);

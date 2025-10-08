@@ -38,20 +38,17 @@ export const DemoVisualizationProvider = ({ children }) => {
   const [deviceStatus, setDeviceStatus] = useState([
     {
       supervisorName: 'supervisor-python-local',
-      //isSupervisorDetected: false,
       deviceName: EV_CHARGER,
       isEnergyIntensive: false,
       
     },
     {
       supervisorName: 'supervisor-python-extra',
-      //isSupervisorDetected: false,
       deviceName: WASHING_MACHINE,
       isEnergyIntensive: false,
     },
     {
       supervisorName: 'supervisor-python-docker',
-      //isSupervisorDetected: false,
       deviceName: FREEZER,
       isEnergyIntensive: false,
     },

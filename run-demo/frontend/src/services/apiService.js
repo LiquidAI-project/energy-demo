@@ -23,18 +23,18 @@ export const fetchData = async (param) => {
 };
 
 // Function to send a POST request with form data
-export const fetchPostData = async (endpoint, data = {}) => {
+export const sendPostData = async (endpoint, data = {}) => {
   try {
     const url = `${PUBLIC_HOST}:${PUBLIC_PORT}${endpoint}`;
 
-    const formData = new URLSearchParams(data).toString();
+    // const formData = new URLSearchParams(data).toString();
 
-    const response = await axios.post(url, formData, {
+    const response = await axios.post(url, data, {
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
+        "Content-Type": "application/json",
+        //'Content-Type': 'application/x-www-form-urlencoded',
       },
     });
-
     return response.data;
   } catch (error) {
     console.error('Error fetching POST data:', error);
