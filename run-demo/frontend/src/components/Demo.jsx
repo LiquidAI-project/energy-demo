@@ -33,11 +33,12 @@ import TemperatureDataIcon from "../assets/temperature_data_icon.png";
 import DangerIcon from "../assets/danger_icon.png";
 import userPreferenceIcon from "../assets/user_preference_icon.png";
 import HackerIcon from "../assets/hacker_icon.png";
+import ScheduleIcon from "../assets/schedule.png";
 import CloudIcon from "../assets/cloud_icon.png";
 import OptimizedSettingsIcon from "../assets/optimized_settings_icon.png";
 import UserControlUI from "./userControl/UserControlUI";
 import DemoControlls from "./demoControll/DemoControlls";
-import { getDeviceIdByName, speak } from "../utils/deviceUtils";
+import { speak } from "../utils/deviceUtils";
 import { fetchData } from '../services/apiService';
 import {
   ORCHESTRATOR,
@@ -106,7 +107,6 @@ const Demo = () => {
   const hourglassRef = useRef(null);
   const logsQueueRef = useRef([]);
   const hasRun = useRef(false);
-
   const [activeDeployments, setActiveDeployments] = useState([]);
   const [warningBorderVisible, setWarningBorderVisible] = useState(false);
   const [open, setOpen] = useState(false);
@@ -121,6 +121,7 @@ const Demo = () => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [index, setIndex] = useState(0);
   const [rescheduleHistory, setRescheduleHistory] = useState([]);
+  const voiceEnabledRef = useRef(voiceEnabled);
 
   let totalConsumptionCloudBased = [];
   let totalConsumptionLiquidBased = [];
@@ -376,83 +377,63 @@ const Demo = () => {
   const fetchDeviceData = async () => {
     try {
       const devicesFromAPI = await fetchData("/file/device");
-      const deviceMap = new Map(
+      const deviceIdMap = new Map(
         devicesFromAPI.map((device) => [device.name, device._id])
       );
       localStorage.setItem(
         "deviceIdMap",
-        JSON.stringify(Array.from(deviceMap.entries()))
+        JSON.stringify(Array.from(deviceIdMap.entries()))
       );
-      
-      if (voiceEnabled) {
-        console.log("speaking");
-        speak("Available supervisors have been detected and attached to devices.");
+      const devicesMap = new Map();
+      for (const [deviceName, deviceId] of deviceIdMap.entries()) {
+        devicesMap.set(deviceName, {
+          name: deviceName,
+          deviceId: deviceId,
+          lastUpdateTime: null,
+          deploymentId: null,
+          existingModuleId: null,
+          existingModuleName: null,
+          isModuleActive: false,
+          isActive: false,
+        });
       }
+      localStorage.setItem("devices", JSON.stringify(Array.from(devicesMap.values())));
+      if (voiceEnabled)
+        speak("Available supervisors have been detected and attached to devices.");
     } catch (error) {
       console.error("Error fetching device data:", error);
     }
   };
 
   // Update the deployment details for the device
-  const updateDeployment = useCallback(
-    async (device, deviceName, deployments) => {
+  const updateDeployment = useCallback(async (device, deviceName) => {
+      const deployments = JSON.parse(localStorage.getItem("deployments") || "[]");
       const deviceSpecificDeployment = deployments.find((item) =>
         item.sequence.some((seq) => seq.device === device.deviceId)
       );
-
       if (deviceSpecificDeployment) {
         // Accessing the modules inside fullManifest using the deviceId
-        const deviceManifest =
-          deviceSpecificDeployment.fullManifest[device.deviceId];
-        console.log(deviceSpecificDeployment)
+        const deviceManifest = deviceSpecificDeployment.fullManifest[device.deviceId];
         device.deploymentId = deviceSpecificDeployment._id;
         device.existingModuleId = deviceManifest.modules[0].id;
         device.existingModuleName = deviceManifest.modules[0].name;
-        //device.isModuleActive = Boolean(deviceSpecificDeployment.active);
         device.isModuleActive = true;
 
-        const demoDeviceName = deviceStatus.find((item) =>
-          item.supervisorName === deviceName
-        ).deviceName;
-        const deviceRef = getDeviceReference(demoDeviceName);
-
+        const demoDevice = deviceStatus.find((item) =>
+          item.supervisorName == deviceName
+        );
+        const deviceRef = getDeviceReference(demoDevice.deviceName);
         if (deviceRef.current && device.isModuleActive) {
-          const deviceBounds = deviceRef.current.getBoundingClientRect();
-
-          const wasmModuleIconPosition = {
-            x: deviceBounds.left + deviceBounds.width / 2,
-            y: deviceBounds.top + deviceBounds.height / 2,
-          };
-
-          setActiveDeployments((prevActiveDeployments) => {
-            const existingDeploymentIds = prevActiveDeployments.map(
-              (dep) => dep.id
-            );
-
-            if (!existingDeploymentIds.includes(deviceSpecificDeployment._id)) {
-              return [
-                ...prevActiveDeployments,
-                {
-                  id: deviceSpecificDeployment._id,
-                  wasmModuleIconPosition: wasmModuleIconPosition,
-                  deviceId: device.deviceId,
-                },
-              ];
-            }
-            return prevActiveDeployments;
-          });
-        }
+          moveCodeAnimation(ORCHESTRATOR, demoDevice.deviceName, WebAssembly_Icon);
+          await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
+          if (voiceEnabledRef.current)
+            speak(`${device.existingModuleName} module has been deployed on ${demoDevice.deviceName} device`);
+        } 
       } else {
         device.deploymentId = null;
         device.existingModuleId = null;
         device.existingModuleName = null;
         device.isModuleActive = false;
-
-        setActiveDeployments((prevActiveDeployments) => {
-          return prevActiveDeployments.filter(
-            (dep) => dep.deviceId !== device.deviceId
-          );
-        });
       }
     },
     [getDeviceReference]
@@ -473,71 +454,33 @@ const Demo = () => {
     const now = Date.now();
     const expiryTime = parseInt(DEVICE_CHECK_INTERVAL) + 2000; // ms
 
-    // First, mark all devices as inactive (they will be activated if a log exists)
-    deviceIdMap.forEach(([deviceName, deviceId]) => {
-      if (!deviceMap.has(deviceName)) {
-        deviceMap.set(deviceName, {
-          name: deviceName,
-          deviceId: deviceId,
-          lastUpdateTime: 0,
-          deploymentId: null,
-          existingModuleId: null,
-          existingModuleName: null,
-          isModuleActive: false,
-          isActive: false, // default to false
-        });
-      } else {
-        const existing = deviceMap.get(deviceName);
-        deviceMap.set(deviceName, {
-          ...existing,
-          isActive: false, // will be updated if log exists
-        });
-      }
-    });
-
-    //const updatePromises = [];
-    //const deployments = await fetchData("/file/manifest");
-    //localStorage.setItem("deployments", deployments);
-
     // Process logs and update devices accordingly
     for (const log of logs) {
+      const logReceivedTime = new Date(log.dateReceived).getTime();
       if (log.funcName === "thingi_health" && log.loglevel === "INFO") {
-        const deviceId = getDeviceIdByName(log.deviceName);
-        const logReceivedTime = new Date(log.dateReceived).getTime();
-
-        if (!deviceMap.has(log.deviceName)) {
-          // If somehow a device is not in deviceMap, add it
-          deviceMap.set(log.deviceName, {
-            name: log.deviceName,
-            deviceId: deviceId,
-            lastUpdateTime: logReceivedTime,
-            deploymentId: null,
-            existingModuleId: null,
-            existingModuleName: null,
-            isModuleActive: false,
-            isActive: true,
-          });
-        } else {
-          // Update lastUpdateTime and mark as active
-          const existing = deviceMap.get(log.deviceName);
-          deviceMap.set(log.deviceName, {
-            ...existing,
-            lastUpdateTime: logReceivedTime,
-            isActive: true,
-          });
-        }
-      } /* else if (log.funcName === "deployment_create" && now - logReceivedTime < 5000
-      ) {
-        moveCodeAnimation(ORCHESTRATOR, log.deviceName, WebAssembly_Icon);
-        await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
-        updatePromises.push(
-          updateDeployment(
-            deviceMap.get(log.deviceName),
-            log.deviceName,
-            deployments
-          )
+        // Update lastUpdateTime and mark as active
+        const existing = deviceMap.get(log.deviceName);
+        deviceMap.set(log.deviceName, {
+          ...existing,
+          lastUpdateTime: logReceivedTime,
+          isActive: true,
+        });
+      } else if (log.funcName === "deployment_create") {
+        updateDeployment(
+          deviceMap.get(log.deviceName),
+          log.deviceName
         );
-      } */
+      } else if (log.funcName === "do_wasm_work") {
+        if (log.message && log.message.startsWith("Execution result:")) {
+          const demoDevice = deviceStatus.find((item) =>
+            item.supervisorName == log.deviceName
+          );
+          moveCodeAnimation(ORCHESTRATOR, demoDevice.deviceName, ScheduleIcon);
+          await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
+          if (voiceEnabledRef.current)
+            speak(`${log.module_name} module is successfully executed on device ${demoDevice.deviceName}`);
+        }
+      }
     }
 
     // Optional: filter out stale devices based on expiryTime
@@ -554,7 +497,7 @@ const Demo = () => {
   
     // Clear the queue
     logsQueueRef.current = [];
-  }, [getDeviceIdByName]);
+  }, [voiceEnabled]);
 
   const getInitialDeviceHealth = useCallback(async () => {
     try {
@@ -580,17 +523,35 @@ const Demo = () => {
       setTimeout(processLogsQueue, 500);
     };
 
-   // if (!hasRun.current) {
+    // Function to fetch and save deployments
+    const fetchDeployments = async () => {
+      try {
+        const deployments = await fetchData("/file/manifest");
+        localStorage.setItem("deployments", JSON.stringify(deployments));
+      } catch (error) {
+        console.error("Error fetching deployments:", error);
+      }
+    };
+
+    const intervalId = setInterval(fetchDeployments, 5 * 60 * 1000); // change 5 to 10 for 10 minutes
+
+    if (!hasRun.current) {
       fetchDeviceData();   
       getInitialDeviceHealth();
       socket.addEventListener("message", handleMessage);
-   //   hasRun.current = true;
-   // }
+      hasRun.current = true;
+      fetchDeployments();
+    }
 
     return() => {
+      clearInterval(intervalId);
       //socket.removeEventListener("message", handleMessage);
     }
   }, []);
+
+  useEffect(() => {
+    voiceEnabledRef.current = voiceEnabled;
+  }, [voiceEnabled]);
 
   useEffect(() => {
     pausedRef.current = paused;

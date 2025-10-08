@@ -42,6 +42,7 @@ import {
   predefinedDayPlan6,
 } from "../../assets/mockData/dailyPlan";
 import { speak } from "../../utils/deviceUtils";
+import { sendPostData } from "../../services/apiService";
 
 // eslint-disable-next-line no-undef
 const ANIMATION_MOVING_TIME = import.meta.env.VITE_ANIMATION_MOVING_TIME;
@@ -111,15 +112,24 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       setDemoRunning(false);
       setScheduleProcessing(true);
       runMoveCodeAnimation(ENERGY_COMPANY, INTELLIGENT_CONTROL, SpotPriceDataIcon);
-      console.log(ANIMATION_MOVING_TIME);
       await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
       runMoveCodeAnimation(ORCHESTRATOR, INTELLIGENT_CONTROL, WasmWithOnnxIcon);
       await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
-      runMoveCodeAnimation(INTELLIGENT_CONTROL, ORCHESTRATOR, ScheduleIcon);
+      console.log("Sending Fibo mofule deploy request"); 
+      await sendPostData("/file/manifest/68e6c1691c910eb512feccdd"); // Deploy FiboDep1 deployment
       await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
-      runMoveCodeAnimation(ORCHESTRATOR, FREEZER, ScheduleIcon);
-      runMoveCodeAnimation(ORCHESTRATOR, EV_CHARGER, ScheduleIcon);
+      console.log("Deploy request complete");
+      setTimeout(() => {
+        console.log("Waiting for some time before the next animation happens");
+        runMoveCodeAnimation(INTELLIGENT_CONTROL, ORCHESTRATOR, ScheduleIcon);
+      }, 5000);
+      console.log("Sending module execution request -- Param0"); 
+      await sendPostData("/execute/68e6c1691c910eb512feccdd", {"param0": 8}); // Execute FiboDep1 deployment
       await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
+      console.log("Execution request complete");
+      //runMoveCodeAnimation(ORCHESTRATOR, FREEZER, ScheduleIcon);
+      // runMoveCodeAnimation(ORCHESTRATOR, EV_CHARGER, ScheduleIcon);
+      //await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
       setDayPlans(predefinedDayPlan1);
       setDemoRunning(true);
       setScheduleProcessing(false);

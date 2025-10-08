@@ -26,9 +26,7 @@ export const fetchData = async (param) => {
 export const sendPostData = async (endpoint, data = {}) => {
   try {
     const url = `${PUBLIC_HOST}:${PUBLIC_PORT}${endpoint}`;
-
     // const formData = new URLSearchParams(data).toString();
-
     const response = await axios.post(url, data, {
       headers: {
         "Content-Type": "application/json",
