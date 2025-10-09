@@ -109,7 +109,7 @@ export const initialDayPlan = [
       id: FREEZER,
       name: 'Freezer',
       slots: [
-        { start: 3, end: 5 }, 
+        { start: 1, end: 5 }, 
         { start: 7, end: 9 }, 
         { start: 19, end: 20 }, 
       ],
@@ -118,7 +118,7 @@ export const initialDayPlan = [
       id: EV_CHARGER,
       name: 'EV Charger',
       slots: [
-        { start: 1, end: 5 }
+        { start: 3, end: 5 }
       ],
     },
   ];

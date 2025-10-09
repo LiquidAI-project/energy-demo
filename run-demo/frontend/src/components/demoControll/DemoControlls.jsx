@@ -115,8 +115,8 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
       runMoveCodeAnimation(ORCHESTRATOR, INTELLIGENT_CONTROL, WasmWithOnnxIcon);
       await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
-      console.log("Sending Fibo mofule deploy request"); 
-      await sendPostData("/file/manifest/68e6c1691c910eb512feccdd"); // Deploy FiboDep1 deployment
+      console.log("Sending Fibo module deploy request"); 
+      await sendPostData("/file/manifest/68e75d3a1c910eb512fed014"); // Deploy FiboDep1 deployment
       await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
       console.log("Deploy request complete");
       setTimeout(() => {
@@ -124,7 +124,7 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
         runMoveCodeAnimation(INTELLIGENT_CONTROL, ORCHESTRATOR, ScheduleIcon);
       }, 5000);
       console.log("Sending module execution request -- Param0"); 
-      await sendPostData("/execute/68e6c1691c910eb512feccdd", {"param0": 8}); // Execute FiboDep1 deployment
+      await sendPostData("/execute/68e75d3a1c910eb512fed014", {"param0": 8}); // Execute FiboDep1 deployment
       await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
       console.log("Execution request complete");
       //runMoveCodeAnimation(ORCHESTRATOR, FREEZER, ScheduleIcon);
