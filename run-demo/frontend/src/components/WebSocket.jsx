@@ -1,4 +1,4 @@
-const socket = new WebSocket("ws://liquidai.local:80/");
+const socket = new WebSocket("ws://orchestrator.tlt-cityiot.rd.tuni.fi/");
 
 socket.onopen = () => {
   console.log("✅ Connected to WebSocket server");
