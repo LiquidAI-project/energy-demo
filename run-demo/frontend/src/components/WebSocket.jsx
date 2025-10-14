@@ -1,4 +1,4 @@
-const socket = new WebSocket("wss://orchestrator.tlt-cityiot.rd.tuni.fi:5981/");
+const socket = new WebSocket("wss://orchestrator.tlt-cityiot.rd.tuni.fi:443/");
 
 socket.onopen = () => {
   console.log("✅ Connected to WebSocket server");
