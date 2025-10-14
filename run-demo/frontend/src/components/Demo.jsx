@@ -4,7 +4,7 @@
 // Author(s): Lakshan Rathnayaka <lakshan.rathnayaka@tuni.fi>, Ville Heikkilä <ville.heikkila@tuni.fi>.
 
 import { Accordion, AccordionSummary,
-  AccordionDetails, Box, Grid, Typography, Popover, IconButton } from "@mui/material";
+  AccordionDetails, Box, Grid, Typography, Popover, IconButton, Tooltip } from "@mui/material";
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import backgroundImage from "./../assets/yard.png";
@@ -27,6 +27,7 @@ import EnergyUsageIcon from "./../assets/energy_usage_icon.png";
 import roadImage from "./../assets/road.png";
 import IntelligentControlIcon from "./../assets/intelligent_control.jpg";
 import Energy_Company_Icon from "../assets/spot_price.png";
+import ArchitectureImage from "../assets/architecture.png";
 import FlexibilityServiceIcon from "../assets/flexibility_service.jpg";
 import SpotPriceDataIcon from "../assets/spotPriceDataIcon.png";
 import TemperatureDataIcon from "../assets/temperature_data_icon.png";
@@ -69,6 +70,9 @@ import HourglassFullIcon from "@mui/icons-material/HourglassFull";
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { keyframes } from "@mui/system";
 import socket from "./WebSocket";
+import AccountTreeIcon from '@mui/icons-material/AccountTree';
+import HomeIcon from '@mui/icons-material/Home';
+
 
 // eslint-disable-next-line no-undef
 const PUBLIC_HOST = import.meta.env.VITE_PUBLIC_HOST;
@@ -122,6 +126,7 @@ const Demo = () => {
   const [index, setIndex] = useState(0);
   const [rescheduleHistory, setRescheduleHistory] = useState([]);
   const voiceEnabledRef = useRef(voiceEnabled);
+  const [showMainView, setShowMainView] = useState(true);
 
   let totalConsumptionCloudBased = [];
   let totalConsumptionLiquidBased = [];
@@ -849,12 +854,30 @@ const Demo = () => {
         >
           Energy Demo
         </Typography>
+        <Tooltip title={ showMainView ? "Switch to Architecture View" : "Switch to UI View" }>
+        <IconButton
+          onClick={() => setShowMainView((prev) => !prev)}
+          sx={{
+            position: "absolute",
+            top: 20,
+            right: 20,
+            zIndex: 1000,
+            backgroundColor: "#f5f5f5",
+            boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
+            "&:hover": { backgroundColor: "#e0e0e0" },
+          }}
+        >
+          {showMainView ? <AccountTreeIcon /> : <HomeIcon />}
+        </IconButton>
+      </Tooltip>
         <Grid
           container
           spacing={4}
           columns={5}
           style={{ paddingRight: "3vh", paddingLeft: "3vh" }}
         >
+          {showMainView ? (
+            <>
           {demoRunMethod === WITH_LIQUID_AI && (
             <>
               <div id="orchestrator-freezer-line" />
@@ -1508,6 +1531,32 @@ const Demo = () => {
               </div>
             </Box>
           </Grid>
+          </>
+          ) : (
+            <Grid item xs={12} sm={3} minWidth={"77vh"}>
+              <Box>
+                <div
+                  style={{
+                    position: "relative",
+                    marginTop: "15px",
+                    paddingBottom: "83%",
+                    width: "100%",
+                    height: 0,
+                  }}
+                >
+                  <img
+                    src={ArchitectureImage}
+                    alt="Architecture View"
+                    style={{
+                      width: "100%",
+                      borderRadius: "4px",
+                      boxShadow: "0 2px 4px rgba(0,0,0,0.2)"
+                    }}
+                  />
+                </div>
+              </Box>
+            </Grid>
+          )}
           <Grid item xs={2} style={{ position: "relative", marginTop: "15px"}}>
             <Grid container spacing={1.5} columns={1}>
               <Grid item xs={1} minWidth="50vh" style={{paddingLeft: "0px", marginBottom: "10px"}}>
