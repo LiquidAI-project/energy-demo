@@ -69,7 +69,7 @@ import { ExpandLess, ExpandMore, ArrowBackIos, ArrowForwardIos } from "@mui/icon
 import HourglassFullIcon from "@mui/icons-material/HourglassFull";
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { keyframes } from "@mui/system";
-import socket from "./WebSocket";
+// import socket from "./WebSocket";
 import AccountTreeIcon from '@mui/icons-material/AccountTree';
 import HomeIcon from '@mui/icons-material/Home';
 
@@ -118,7 +118,7 @@ const Demo = () => {
   const { deviceStatus, hackerVisibility, movingDeployments, setMovingDeployments } = useDemoVisualizationContext();
   const { demoRunMethod, demoTime, scheduleProcessing, voiceEnabled } = useDemoControlContext();
   const [paused, setPaused] = useState(false);
-  const pausedRef = useRef(paused); 
+  const pausedRef = useRef(paused);
   const [referenceLineEnabled, setReferenceLineEnabled] = useState(false);
   const [referenceLinePosition, setReferenceLinePosition] = useState(50); // start middle
   const [activePopover, setActivePopover] = useState(null);
@@ -259,26 +259,26 @@ const Demo = () => {
       return new Promise((resolve) => {
         const startDeviceRef = getDeviceReference(startDeviceName);
         const endDeviceRef = getDeviceReference(endDeviceName);
-  
+
         if (endDeviceRef.current && startDeviceRef.current) {
           const startDevice = startDeviceRef.current.getBoundingClientRect();
           const endDevice = endDeviceRef.current.getBoundingClientRect();
-  
+
           const startPosition = {
             x: startDevice.left + startDevice.width / 2,
             y: startDevice.top + startDevice.height / 2,
           };
-  
+
           const endPosition = {
             x: endDevice.left + endDevice.width / 2,
             y: endDevice.top + endDevice.height / 2,
           };
-  
+
           // Generate a unique ID using UUID v4
           const uniqueId = uuidv4();
-  
+
           const animationDuration = ANIMATION_MOVING_TIME; // duration of the movement in milliseconds
-  
+
           const newMovingDeployments = {
             id: uniqueId, // Use the UUID as a unique identifier
             startPos: startPosition,
@@ -289,20 +289,20 @@ const Demo = () => {
             elapsedTime: 0,
             //endTime: Date.now() + animationDuration, // Calculate the end time
           };
-  
+
           /* setMovingDeployments((prevDeployments) => {
             // Add the new deployment to the state
             const updatedDeployments = [...prevDeployments, newMovingDeployments];
-  
+
             // Set timeout to remove the animation from state after its duration
             setTimeout(() => {
               // Remove the animation once the movement duration ends
-              setMovingDeployments((currentDeployments) => 
+              setMovingDeployments((currentDeployments) =>
                 currentDeployments.filter(dep => dep.id !== uniqueId)
               );
               resolve(); // Resolve once the animation is complete
             }, animationDuration);
-  
+
             return updatedDeployments;
           }); */
 
@@ -433,7 +433,7 @@ const Demo = () => {
           await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
           if (voiceEnabledRef.current)
             speak(`${device.existingModuleName} module has been deployed on ${demoDevice.deviceName} device`);
-        } 
+        }
       } else {
         device.deploymentId = null;
         device.existingModuleId = null;
@@ -448,7 +448,7 @@ const Demo = () => {
   const processLogsQueue = useCallback(async () => {
     const logs = logsQueueRef.current;
     if (logs.length === 0) return;
-  
+
     // Get existing devices from localStorage
     let existingDevices = JSON.parse(localStorage.getItem("devices")) || [];
     const deviceMap = new Map(existingDevices.map((d) => [d.name, d]));
@@ -496,10 +496,10 @@ const Demo = () => {
         isActive: device.isActive && isStillActive,
       };
     });
-      
+
     // Save updated list back to localStorage
     localStorage.setItem("devices", JSON.stringify(updatedDevices));
-  
+
     // Clear the queue
     logsQueueRef.current = [];
   }, [voiceEnabled]);
@@ -520,7 +520,7 @@ const Demo = () => {
       console.error("Error fetching data:", error);
     }
   }, [processLogsQueue]);
- 
+
   useEffect(() => {
     const handleMessage = (event) => {
       console.log("📩 Message:", JSON.parse(event.data));
@@ -541,8 +541,30 @@ const Demo = () => {
     const intervalId = setInterval(fetchDeployments, 5 * 60 * 1000); // change 5 to 10 for 10 minutes
 
     if (!hasRun.current) {
-      fetchDeviceData();   
+      console.log("Fetching device data...");
+      fetchDeviceData();
       getInitialDeviceHealth();
+
+      const PUBLIC_HOST = import.meta.env.VITE_PUBLIC_HOST;
+      const PUBLIC_PORT = import.meta.env.VITE_PUBLIC_PORT;
+      const SOCKET_URL= `${PUBLIC_HOST.split("//")[1]}:${PUBLIC_PORT}`;
+      console.log(`Connection to websocket at: ${SOCKET_URL}`);
+
+      const socket = new WebSocket(`wss://${SOCKET_URL}`);
+
+      socket.onopen = () => {
+        console.log("✅ Connected to WebSocket server");
+      };
+
+      socket.onclose = () => {
+          console.log("⚠️ WebSocket connection closed");
+      };
+
+      socket.onerror = (err) => {
+          console.error("❌ WebSocket error:", err);
+      };
+
+
       socket.addEventListener("message", handleMessage);
       hasRun.current = true;
       fetchDeployments();
@@ -1056,9 +1078,9 @@ const Demo = () => {
                             style={{
                               position: "absolute",
                               padding: "10px",
-                              bottom: "-18%",    
+                              bottom: "-18%",
                               right: "-20%",
-                              width: "34%",       
+                              width: "34%",
                               height: "34%",
                               display: "flex",
                               alignItems: "center",
@@ -1141,9 +1163,9 @@ const Demo = () => {
                             style={{
                               position: "absolute",
                               padding: "10px",
-                              top: "-10%",    
+                              top: "-10%",
                               right: "-22%",
-                              width: "34%",       
+                              width: "34%",
                               height: "34%",
                               display: "flex",
                               alignItems: "center",
@@ -1214,9 +1236,9 @@ const Demo = () => {
                             style={{
                               position: "absolute",
                               padding: "10px",
-                              bottom: "-4%",    
+                              bottom: "-4%",
                               right: "-4%",
-                              width: "18%",       
+                              width: "18%",
                               height: "30%",
                               display: "flex",
                               alignItems: "center",
@@ -1274,7 +1296,7 @@ const Demo = () => {
                           height: "100%"
                         }}
                       />
-                      {scheduleProcessing && (((new Date(demoTime).getHours() === 4 || new Date(demoTime).getHours() === 13 || new Date(demoTime).getHours() === 21) && new Date(demoTime).getMinutes() === 0)) && ( 
+                      {scheduleProcessing && (((new Date(demoTime).getHours() === 4 || new Date(demoTime).getHours() === 13 || new Date(demoTime).getHours() === 21) && new Date(demoTime).getMinutes() === 0)) && (
                         <>
                           <motion.div
                             initial={{ rotate: 0 }}
@@ -1283,9 +1305,9 @@ const Demo = () => {
                             style={{
                               position: "absolute",
                               padding: "10px",
-                              top: "-8%",    
+                              top: "-8%",
                               right: "-10%",
-                              width: "28%",       
+                              width: "28%",
                               height: "30%",
                               display: "flex",
                               alignItems: "center",
@@ -1344,8 +1366,8 @@ const Demo = () => {
                           backgroundColor: "#2b717a",
                           color: "white",
                           borderRadius: "8px 8px 0px 0px",
-                        
-  
+
+
                         }}
                       >
                         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
@@ -1354,7 +1376,7 @@ const Demo = () => {
                             Device Schedule Info
                           </Typography>
                         </Box>
-                      </AccordionSummary>               
+                      </AccordionSummary>
                       <AccordionDetails
                         sx={{
                           display: "flex",
@@ -1393,7 +1415,7 @@ const Demo = () => {
                           >
                             <ArrowBackIos sx={{ paddingLeft: "4px", fontSize: "18px", cursor: "pointer" }} />
                           </IconButton>
-                  
+
                           {/* Step Text */}
                           <Box
                             sx={{
@@ -1420,7 +1442,7 @@ const Demo = () => {
                               {rescheduleHistory[index] && rescheduleHistory[index].content}
                             </Typography>
                           </Box>
-                  
+
                           {/* Right Arrow */}
                           <IconButton
                             onClick={() => setIndex((prev) => Math.min(prev + 1, rescheduleHistory.length - 1))}
@@ -1596,7 +1618,7 @@ const Demo = () => {
                 <Grid item xs={1} paddingBottom="5px">
                   <Box>
                     <List
-                      sx={{ width: "100%", 
+                      sx={{ width: "100%",
                       bgcolor: "background.paper",
                       border: "1px solid #DCDCDC",
                       borderRadius: "5px",
@@ -1672,8 +1694,8 @@ const Demo = () => {
                       top: 0,
                       left: `calc(${referenceLinePosition}% - 30px)`,
                       height: "100%",
-                      width: "20px", 
-                      backgroundColor: "rgba(255, 205, 205, 0.5)", 
+                      width: "20px",
+                      backgroundColor: "rgba(255, 205, 205, 0.5)",
                       border: "2px solid rgba(192, 64, 64, 0.9)",
                       cursor: "grab",
                       backdropFilter: "brightness(1.1)",
