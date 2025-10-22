@@ -69,7 +69,7 @@ import { ExpandLess, ExpandMore, ArrowBackIos, ArrowForwardIos } from "@mui/icon
 import HourglassFullIcon from "@mui/icons-material/HourglassFull";
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { keyframes } from "@mui/system";
-// import socket from "./WebSocket";
+import socket from "./WebSocket";
 import AccountTreeIcon from '@mui/icons-material/AccountTree';
 import HomeIcon from '@mui/icons-material/Home';
 
@@ -456,8 +456,8 @@ const Demo = () => {
 
     // Process logs and update devices accordingly
     for (const log of logs) {
-      const logReceivedTime = new Date(log.dateReceived).getTime();
-      if (log.funcName === "thingi_health" && log.loglevel === "INFO") {
+      const logReceivedTime = new Date(parseInt(log.dateReceived.$date.$numberLong)).getTime();
+      if (log.funcName.includes("thingi_health") && log.loglevel === "INFO") {
         // Update lastUpdateTime and mark as active
         const existing = deviceMap.get(log.deviceName);
         deviceMap.set(log.deviceName, {
@@ -509,7 +509,6 @@ const Demo = () => {
       // Convert to ISO 8601 format (e.g., "2024-07-24T13:21:35.776Z")
       const formattedDate = currentDate.toISOString();
       const logs = await fetchData("/device/logs?after=" + formattedDate);
-      console.log(logs);
       logs.forEach((log) => logsQueueRef.current.push(log));
       setTimeout(processLogsQueue, 500);
     } catch (error) {
@@ -531,7 +530,6 @@ const Demo = () => {
     const intervalId = setInterval(fetchDeployments, 5 * 60 * 1000); // change 5 to 10 for 10 minutes
 
     if (!hasRun.current) {
-      console.log("Fetching device data...");
       fetchDeviceData();
       getInitialDeviceHealth();
       socket.addEventListener("message", (event) => {

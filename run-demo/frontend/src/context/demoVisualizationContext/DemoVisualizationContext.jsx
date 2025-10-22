@@ -37,18 +37,18 @@ export const DemoVisualizationProvider = ({ children }) => {
   const [ev2PluggedIn, setEv2PluggedIn] = useState(true);
   const [deviceStatus, setDeviceStatus] = useState([
     {
-      supervisorName: 'supervisor-python-local',
+      supervisorName: 'ev-charger',
       deviceName: EV_CHARGER,
       isEnergyIntensive: false,
       
     },
     {
-      supervisorName: 'supervisor-python-extra',
+      supervisorName: 'washing-machine',
       deviceName: WASHING_MACHINE,
       isEnergyIntensive: false,
     },
     {
-      supervisorName: 'supervisor-python-docker',
+      supervisorName: 'freezer',
       deviceName: FREEZER,
       isEnergyIntensive: false,
     },

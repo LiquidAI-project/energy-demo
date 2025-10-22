@@ -4,8 +4,7 @@ const ORCHESTRATOR_HOST = import.meta.env.VITE_ORCHESTRATOR_HOST;
 const ORCHESTRATOR_PORT = import.meta.env.VITE_ORCHESTRATOR_PORT;
 
 const SOCKET_URL= `${ORCHESTRATOR_HOST.split("//")[1]}:${ORCHESTRATOR_PORT}`;
-console.log(`ws://${SOCKET_URL}/ws/logs`);
-const socket = new WebSocket(`ws://${SOCKET_URL}/ws/logs`);
+const socket = new WebSocket(`wss://${SOCKET_URL}/ws/logs`);
 
 socket.onopen = () => {
   console.log("✅ Connected to WebSocket server");
