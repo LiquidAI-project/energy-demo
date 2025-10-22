@@ -73,11 +73,6 @@ import { keyframes } from "@mui/system";
 import AccountTreeIcon from '@mui/icons-material/AccountTree';
 import HomeIcon from '@mui/icons-material/Home';
 
-
-// eslint-disable-next-line no-undef
-const PUBLIC_HOST = import.meta.env.VITE_PUBLIC_HOST;
-// eslint-disable-next-line no-undef
-const PUBLIC_PORT = import.meta.env.VITE_PUBLIC_PORT;
 // eslint-disable-next-line no-undef
 const DEVICE_CHECK_INTERVAL = import.meta.env.VITE_DEVICE_CHECK_INTERVAL;
 // eslint-disable-next-line no-undef
@@ -514,6 +509,7 @@ const Demo = () => {
       // Convert to ISO 8601 format (e.g., "2024-07-24T13:21:35.776Z")
       const formattedDate = currentDate.toISOString();
       const logs = await fetchData("/device/logs?after=" + formattedDate);
+      console.log(logs);
       logs.forEach((log) => logsQueueRef.current.push(log));
       setTimeout(processLogsQueue, 500);
     } catch (error) {
@@ -522,12 +518,6 @@ const Demo = () => {
   }, [processLogsQueue]);
 
   useEffect(() => {
-    const handleMessage = (event) => {
-      console.log("📩 Message:", JSON.parse(event.data));
-      logsQueueRef.current.push(JSON.parse(event.data));
-      setTimeout(processLogsQueue, 500);
-    };
-
     // Function to fetch and save deployments
     const fetchDeployments = async () => {
       try {
@@ -544,28 +534,15 @@ const Demo = () => {
       console.log("Fetching device data...");
       fetchDeviceData();
       getInitialDeviceHealth();
-
-      const PUBLIC_HOST = import.meta.env.VITE_PUBLIC_HOST;
-      const PUBLIC_PORT = import.meta.env.VITE_PUBLIC_PORT;
-      const SOCKET_URL= `${PUBLIC_HOST.split("//")[1]}:${PUBLIC_PORT}`;
-      console.log(`Connection to websocket at: ${SOCKET_URL}`);
-
-      const socket = new WebSocket(`wss://${SOCKET_URL}`);
-
-      socket.onopen = () => {
-        console.log("✅ Connected to WebSocket server");
-      };
-
-      socket.onclose = () => {
-          console.log("⚠️ WebSocket connection closed");
-      };
-
-      socket.onerror = (err) => {
-          console.error("❌ WebSocket error:", err);
-      };
-
-
-      socket.addEventListener("message", handleMessage);
+      socket.addEventListener("message", (event) => {
+        try {
+          console.log("📩 Message:", JSON.parse(event.data));
+          logsQueueRef.current.push(JSON.parse(event.data));
+          setTimeout(processLogsQueue, 500);
+        } catch {
+          console.log("📩 Message from Rust server:", event.data);
+        }
+      });
       hasRun.current = true;
       fetchDeployments();
     }

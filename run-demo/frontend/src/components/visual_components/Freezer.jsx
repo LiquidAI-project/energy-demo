@@ -9,6 +9,7 @@ import { FREEZER } from '../../../constants';
 import { useDemoVisualizationContext } from "../../context/demoVisualizationContext/useDemoVisualizationContext";
 import { useDemoControlContext } from "../../context/demoControlContext/useDemoControlContext";
 import { speak } from "../../utils/deviceUtils";
+import AccessTimeIcon from '@mui/icons-material/AccessTime'
 
 const Freezer = React.forwardRef((props, ref) => {
 
@@ -100,25 +101,52 @@ const Freezer = React.forwardRef((props, ref) => {
         onMouseEnter={handleHoverOn}
         onMouseLeave={handleHoverAway}
       >
-        <img
-          id="freezer"
-          src={freezerImage}
-          alt="freezer"
-          ref={ref}
-          style={{
-            width: "100%",
-            height: "100%",
-            border: isActive ? blinkState
-            ? "5px solid rgb(34, 195, 34)"
-            : "5px solid green"
-            : "5px solid red",
-            borderRadius: "8px",
-            boxShadow: isActive && blinkState
-              ? "0 0 12px 6px rgba(34, 195, 34)"
-              : "none",
-            transition: "all 0.3s ease-in-out",
-          }}
-        />
+        <div style={{ position: "relative", width: "100%", height: "100%" }}>
+          <img
+            id="freezer"
+            src={freezerImage}
+            alt="freezer"
+            ref={ref}
+            style={{
+              width: "100%",
+              height: "100%",
+              border: isActive
+                ? blinkState
+                  ? "5px solid #1976d2"
+                  : "5px solid green"
+                : "5px solid red",
+              borderRadius: "8px",
+              boxShadow: isActive && blinkState ? "0 0 12px 12px #1976d2" : "none",
+              transition: "all 0.3s ease-in-out",
+            }}
+          />
+
+            {/* Overlay */}
+            {blinkState && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  width: "100%",
+                  height: "100%",
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  backgroundColor: "rgba(0, 0, 0, 0.3)", // semi-transparent overlay
+                  borderRadius: "8px",
+                }}
+              >
+                 <AccessTimeIcon
+        style={{
+          fontSize: 40,
+          color: "white",
+          animation: "spin 1s linear infinite",
+        }}
+      />
+              </div>
+              )}
+        </div>
       </button>
       <img
         src={isActive ? activeIcon : inactiveIcon}
