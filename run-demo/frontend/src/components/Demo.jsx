@@ -324,16 +324,16 @@ const Demo = () => {
         }
       });
     },
-    [getDeviceReference]
+    [getDeviceReference, movingDeployments]
   );
 
   // Handle animation of icon movements
   const continousAnimationRun = async () => {
     const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-    if (demoRunMethod === WITH_LIQUID_AI) {
+    /*if (demoRunMethod === WITH_LIQUID_AI) {
       moveCodeAnimation(ENERGY_COMPANY, INTELLIGENT_CONTROL, SpotPriceDataIcon);
-    } else {
+    } else {*/
         // Randomly pick an icon from each set
         const randomIconsFromWM = DATA_ICONS_MOVING_FROM_WM[Math.floor(Math.random() * DATA_ICONS_MOVING_FROM_WM.length)];
         const randomIconsFromFreezer = DATA_ICONS_MOVING_FROM_FREEZER[Math.floor(Math.random() * DATA_ICONS_MOVING_FROM_FREEZER.length)];
@@ -370,7 +370,7 @@ const Demo = () => {
       moveCodeAnimation(SERVICE_PROVIDER1, FREEZER, OptimizedSettingsIcon);
       moveCodeAnimation(SERVICE_PROVIDER1, WASHING_MACHINE, OptimizedSettingsIcon);
       moveCodeAnimation(SERVICE_PROVIDER2, EV_CHARGER, OptimizedSettingsIcon);
-    }
+   // }
   };
 
   // Fetch the device data from the API
@@ -465,7 +465,7 @@ const Demo = () => {
           lastUpdateTime: logReceivedTime,
           isActive: true,
         });
-      } else if (log.funcName === "deployment_create") {
+      } /*else if (log.funcName === "deployment_create") {
         updateDeployment(
           deviceMap.get(log.deviceName),
           log.deviceName
@@ -480,7 +480,7 @@ const Demo = () => {
           if (voiceEnabledRef.current)
             speak(`${log.module_name} module is successfully executed on device ${demoDevice.deviceName}`);
         }
-      }
+      }*/
     }
 
     // Optional: filter out stale devices based on expiryTime

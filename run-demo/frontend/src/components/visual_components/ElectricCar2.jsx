@@ -42,10 +42,10 @@ const ElectricCar2 = React.forwardRef((props, ref) => {
             width: "100%",
             height: "100%",
           }}
-          initial={{ y: 0 }} 
+          initial={{ y: '100vh' }} 
           animate={{ y: ev2PluggedIn ? 0 : '100vh' }}  // If ev2PluggedIn is false, move out of the screen
           transition={{
-            duration: 5,
+            duration: 3,
             ease: 'easeInOut',
           }}
         />

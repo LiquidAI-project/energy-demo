@@ -81,8 +81,12 @@ export const speak = (text) => {
   if ("speechSynthesis" in window) {
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = "en-US";
-    utterance.rate = 1;
-    utterance.pitch = 1;
+    utterance.rate = 1.3;
+    utterance.pitch = 1.3;
+    const voices = window.speechSynthesis.getVoices();
+    if (voices.length > 0) {
+      utterance.voice = voices[0]; // or voices.find(voice => voice.name.includes('Female'))
+    }
     window.speechSynthesis.speak(utterance);
   } else {
     console.error("Speech Synthesis not supported in this browser.");

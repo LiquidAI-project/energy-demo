@@ -9,7 +9,7 @@ import { FREEZER } from '../../../constants';
 import { useDemoVisualizationContext } from "../../context/demoVisualizationContext/useDemoVisualizationContext";
 import { useDemoControlContext } from "../../context/demoControlContext/useDemoControlContext";
 import { speak } from "../../utils/deviceUtils";
-import AccessTimeIcon from '@mui/icons-material/AccessTime'
+import PowerSettingsNewIcon from '@mui/icons-material/PowerSettingsNew';
 
 const Freezer = React.forwardRef((props, ref) => {
 
@@ -85,6 +85,26 @@ const Freezer = React.forwardRef((props, ref) => {
 
   return (
     <div>
+      <style>
+        {`
+          @keyframes vibrate {
+            0%, 100% { transform: translate(0, 0); }
+            10% { transform: translate(-1px, -1px); }
+            20% { transform: translate(1px, 1px); }
+            30% { transform: translate(-1px, 1px); }
+            40% { transform: translate(1px, -1px); }
+            50% { transform: translate(-1px, -1px); }
+            60% { transform: translate(1px, 1px); }
+            70% { transform: translate(-1px, 1px); }
+            80% { transform: translate(1px, -1px); }
+            90% { transform: translate(-1px, -1px); }
+          }
+          @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+          }
+        `}
+      </style>
       <button
         style={{
           position: "absolute",
@@ -118,34 +138,35 @@ const Freezer = React.forwardRef((props, ref) => {
               borderRadius: "8px",
               boxShadow: isActive && blinkState ? "0 0 12px 12px #1976d2" : "none",
               transition: "all 0.3s ease-in-out",
+              animation: isActive && blinkState ? "vibrate 0.2s ease-in-out infinite" : "none"
             }}
           />
 
-            {/* Overlay */}
-            {blinkState && (
-              <div
+          {/* Overlay */}
+          {isActive && blinkState && (
+            <div
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                width: "100%",
+                height: "100%",
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                backgroundColor: "rgba(0, 0, 0, 0.3)", // semi-transparent overlay
+                borderRadius: "8px",
+              }}
+            >
+              <PowerSettingsNewIcon
                 style={{
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  width: "100%",
-                  height: "100%",
-                  display: "flex",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  backgroundColor: "rgba(0, 0, 0, 0.3)", // semi-transparent overlay
-                  borderRadius: "8px",
+                  fontSize: 30,
+                  color: "white",
+                  animation: "pulse 1s ease-in-out infinite",
                 }}
-              >
-                 <AccessTimeIcon
-        style={{
-          fontSize: 40,
-          color: "white",
-          animation: "spin 1s linear infinite",
-        }}
-      />
-              </div>
-              )}
+              />
+            </div>
+          )}
         </div>
       </button>
       <img

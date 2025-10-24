@@ -33,8 +33,8 @@ export const DemoVisualizationProvider = ({ children }) => {
   const [movingDeployments, setMovingDeployments] = useState([]);
   const [dayPlans, setDayPlans] = useState(initialDayPlan);
   const [historicalDayPlans, setHistoricalDayPlans] = useState([initialDayPlan]);
-  const [ev1PluggedIn, setEv1PluggedIn] = useState(true);
-  const [ev2PluggedIn, setEv2PluggedIn] = useState(true);
+  const [ev1PluggedIn, setEv1PluggedIn] = useState(false);
+  const [ev2PluggedIn, setEv2PluggedIn] = useState(false);
   const [deviceStatus, setDeviceStatus] = useState([
     {
       supervisorName: 'ev-charger',
