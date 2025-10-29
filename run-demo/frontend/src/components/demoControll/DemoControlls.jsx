@@ -127,6 +127,7 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       runMoveCodeAnimation(ENERGY_COMPANY, INTELLIGENT_CONTROL, SpotPriceDataIcon);
       await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
       runMoveCodeAnimation(INTELLIGENT_CONTROL, ORCHESTRATOR, ScheduleIcon);
+      setDayPlans(predefinedDayPlan1);
       await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
       //console.log("Sending Fibo module deploy request"); 
       //await sendPostData("/file/manifest/68ef769e1c910eb512fef63b"); // Deploy FiboDep1 deployment
@@ -144,7 +145,6 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       runMoveCodeAnimation(ORCHESTRATOR, WASHING_MACHINE, ScheduleIcon);
       runMoveCodeAnimation(ORCHESTRATOR, EV_CHARGER, ScheduleIcon);
       await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
-      setDayPlans(predefinedDayPlan1);
       setDemoRunning(true);
       setScheduleProcessing(false);
       handlePopOverClose();
@@ -178,14 +178,12 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       if(voiceEnabled)
         speak("Sudden spike in electricity prices noticed, rescheduling device operating times");
       await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
-      runMoveCodeAnimation(ORCHESTRATOR, INTELLIGENT_CONTROL, WasmWithOnnxIcon);
-      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
       runMoveCodeAnimation(INTELLIGENT_CONTROL, ORCHESTRATOR, ScheduleIcon);
+      setDayPlans(predefinedDayPlan2);
       await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
       runMoveCodeAnimation(ORCHESTRATOR, FREEZER, ScheduleIcon);
       runMoveCodeAnimation(ORCHESTRATOR, EV_CHARGER, ScheduleIcon);
       await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
-      setDayPlans(predefinedDayPlan2);
       setHistoricalDayPlans(prev => [...prev, predefinedDayPlan1]);
       setDemoRunning(true);
       setScheduleProcessing(false);
@@ -234,13 +232,11 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       if(voiceEnabled)
         speak("User wants to turn on washing machine, rescheduling time");
       await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
-      runMoveCodeAnimation(ORCHESTRATOR, INTELLIGENT_CONTROL, WasmWithOnnxIcon);
-      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
       runMoveCodeAnimation(INTELLIGENT_CONTROL, ORCHESTRATOR, ScheduleIcon);
+      setDayPlans(predefinedDayPlan3);
       await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
       runMoveCodeAnimation(ORCHESTRATOR, WASHING_MACHINE, ScheduleIcon);
       await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
-      setDayPlans(predefinedDayPlan3);
       setHistoricalDayPlans(prev => [...prev, predefinedDayPlan2]);
       setDemoRunning(true);
       setScheduleProcessing(false);
@@ -269,14 +265,12 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
         speak("Sudden spike in electricity prices noticed, rescheduling device operating times");
       runMoveCodeAnimation(FLEXIBILITY_SERVICE, INTELLIGENT_CONTROL, DemandSpikeIcon);
       await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
-      runMoveCodeAnimation(ORCHESTRATOR, INTELLIGENT_CONTROL, WasmWithOnnxIcon);
-      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
       runMoveCodeAnimation(INTELLIGENT_CONTROL, ORCHESTRATOR, ScheduleIcon);
+      setDayPlans(predefinedDayPlan4);
       await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
       runMoveCodeAnimation(ORCHESTRATOR, FREEZER, ScheduleIcon);
       runMoveCodeAnimation(ORCHESTRATOR, WASHING_MACHINE, ScheduleIcon);
       await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
-      setDayPlans(predefinedDayPlan4);
       setHistoricalDayPlans(prev => [...prev, predefinedDayPlan3]);
       setDemoRunning(true);
       setScheduleProcessing(false);
@@ -313,10 +307,10 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       runMoveCodeAnimation(ORCHESTRATOR, INTELLIGENT_CONTROL, NewDeviceInfoIcon);
       await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
       runMoveCodeAnimation(INTELLIGENT_CONTROL, ORCHESTRATOR, ScheduleIcon);
+      setDayPlans(predefinedDayPlan5);
       await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
       runMoveCodeAnimation(ORCHESTRATOR, EV_CHARGER, ScheduleIcon);
       await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
-      setDayPlans(predefinedDayPlan5);
       setHistoricalDayPlans(prev => [...prev, predefinedDayPlan4]);
       setDemoRunning(true);
       setScheduleProcessing(false);
@@ -345,14 +339,12 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
         speak("Sudden spike in electricity prices noticed, rescheduling device operating times");
       runMoveCodeAnimation(FLEXIBILITY_SERVICE, INTELLIGENT_CONTROL, DemandSpikeIcon);
       await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
-      runMoveCodeAnimation(ORCHESTRATOR, INTELLIGENT_CONTROL, WasmWithOnnxIcon);
-      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
       runMoveCodeAnimation(INTELLIGENT_CONTROL, ORCHESTRATOR, ScheduleIcon);
+      setDayPlans(predefinedDayPlan6);
       await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
       runMoveCodeAnimation(ORCHESTRATOR, FREEZER, ScheduleIcon);
       runMoveCodeAnimation(ORCHESTRATOR, EV_CHARGER, ScheduleIcon);
       await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
-      setDayPlans(predefinedDayPlan6);
       setHistoricalDayPlans(prev => [...prev, predefinedDayPlan5]);
       setDemoRunning(true);
       setScheduleProcessing(false);
@@ -464,7 +456,7 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
     const resetDemoTime = new Date();
     resetDemoTime.setHours(0, 0, 0, 0);
     setDemoTime(resetDemoTime);
-    //setDemoRunning(false);
+    setDemoRunning(false);
     setMovingDeployments([]);
     setDayPlans(initialDayPlan);
     setEv1PluggedIn(false);

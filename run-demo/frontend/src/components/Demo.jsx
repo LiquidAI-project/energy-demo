@@ -16,6 +16,7 @@ import House_Warning_Border from "./../assets/house_warning_border.png";
 import Freezer from "./visual_components/Freezer";
 import WashingMachine from "./visual_components/WashingMachine";
 import MovingIcon from "./visual_components/MovingIcon";
+import ArchitectureView from "./visual_components/ArchitectureDiagram";
 import ElectricCar1 from "./visual_components/ElectricCar1";
 import ElectricCar2 from "./visual_components/ElectricCar2";
 import Jacuzzi from "./visual_components/Jacuzzi";
@@ -88,7 +89,7 @@ const spin = keyframes`
 
 const Demo = () => {
   const orchestratorRef = useRef(null);
-  const storageRef = useRef(null);
+  //const storageRef = useRef(null);
   const serviceProviderRef1 = useRef(null);
   const serviceProviderRef2 = useRef(null);
   const freezerRef = useRef(null);
@@ -220,7 +221,7 @@ const Demo = () => {
       [FREEZER]: freezerRef,
       [WASHING_MACHINE]: washingMachineRef,
       [ORCHESTRATOR]: orchestratorRef,
-      [STORAGE]: storageRef,
+      //[STORAGE]: storageRef,
       [SERVICE_PROVIDER1]: serviceProviderRef1,
       [SERVICE_PROVIDER2]: serviceProviderRef2,
       [INTELLIGENT_CONTROL]: intelligentControlRef,
@@ -331,13 +332,11 @@ const Demo = () => {
   const continousAnimationRun = async () => {
     const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-    /*if (demoRunMethod === WITH_LIQUID_AI) {
-      moveCodeAnimation(ENERGY_COMPANY, INTELLIGENT_CONTROL, SpotPriceDataIcon);
-    } else {*/
-        // Randomly pick an icon from each set
-        const randomIconsFromWM = DATA_ICONS_MOVING_FROM_WM[Math.floor(Math.random() * DATA_ICONS_MOVING_FROM_WM.length)];
-        const randomIconsFromFreezer = DATA_ICONS_MOVING_FROM_FREEZER[Math.floor(Math.random() * DATA_ICONS_MOVING_FROM_FREEZER.length)];
-        const randomIconsFromEV = DATA_ICONS_MOVING_FROM_EV[Math.floor(Math.random() * DATA_ICONS_MOVING_FROM_EV.length)];
+    if (demoRunMethod === WITHOUT_LIQUID_AI) {
+      // Randomly pick an icon from each set
+      const randomIconsFromWM = DATA_ICONS_MOVING_FROM_WM[Math.floor(Math.random() * DATA_ICONS_MOVING_FROM_WM.length)];
+      const randomIconsFromFreezer = DATA_ICONS_MOVING_FROM_FREEZER[Math.floor(Math.random() * DATA_ICONS_MOVING_FROM_FREEZER.length)];
+      const randomIconsFromEV = DATA_ICONS_MOVING_FROM_EV[Math.floor(Math.random() * DATA_ICONS_MOVING_FROM_EV.length)];
 
       // Animation for the whole process while querying the energy data from the devices to external service providers
       moveCodeAnimation(
@@ -370,7 +369,7 @@ const Demo = () => {
       moveCodeAnimation(SERVICE_PROVIDER1, FREEZER, OptimizedSettingsIcon);
       moveCodeAnimation(SERVICE_PROVIDER1, WASHING_MACHINE, OptimizedSettingsIcon);
       moveCodeAnimation(SERVICE_PROVIDER2, EV_CHARGER, OptimizedSettingsIcon);
-   // }
+    }
   };
 
   // Fetch the device data from the API
@@ -615,12 +614,6 @@ const Demo = () => {
         washingMachineRef,
         WASHING_MACHINE
       );
-      drawLines(
-        orchestratorRef,
-        ORCHESTRATOR,
-        serviceProviderRef1,
-        SERVICE_PROVIDER1
-      );
       drawLines(orchestratorRef, ORCHESTRATOR, evChargerRef, EV_CHARGER);
       drawLines(
         energyCompanyRef,
@@ -634,7 +627,7 @@ const Demo = () => {
         intelligentControlRef,
         INTELLIGENT_CONTROL
       );
-      drawLines(orchestratorRef, ORCHESTRATOR, storageRef, STORAGE);
+      //drawLines(orchestratorRef, ORCHESTRATOR, storageRef, STORAGE);
 
       window.addEventListener("resize", () =>
         drawLines(
@@ -690,9 +683,9 @@ const Demo = () => {
           INTELLIGENT_CONTROL
         )
       );
-      window.addEventListener("resize", () =>
+     /*  window.addEventListener("resize", () =>
         drawLines(orchestratorRef, ORCHESTRATOR, storageRef, STORAGE)
-      );
+      ); */
     } else {
       drawLines(serviceProviderRef1, SERVICE_PROVIDER1, freezerRef, FREEZER);
       drawLines(
@@ -796,9 +789,9 @@ const Demo = () => {
             INTELLIGENT_CONTROL
           )
         );
-        window.removeEventListener("resize", () =>
+        /* window.removeEventListener("resize", () =>
           drawLines(orchestratorRef, ORCHESTRATOR, storageRef, STORAGE)
-        );
+        ); */
       } else {
         window.removeEventListener("resize", () =>
           drawLines(
@@ -884,7 +877,7 @@ const Demo = () => {
               <div id="flexibilityService-intelligentControl-line" />
               <div id="userControl-intelligentControl-line" />
               <div id="orchestrator-evCharger-line" />
-              <div id="orchestrator-storage-line" />
+              {/* <div id="orchestrator-storage-line" /> */}
             </>
           )}
           {demoRunMethod === WITHOUT_LIQUID_AI && (
@@ -912,38 +905,6 @@ const Demo = () => {
           {movingDeployments.map((deployment) => (
             <MovingIcon key={deployment.id} deployment={deployment} paused={paused} />
           ))}
-          {demoRunMethod === WITH_LIQUID_AI &&
-            activeDeployments.map((deployment, index) => (
-              <motion.div
-                key={index}
-                initial={{
-                  x: deployment.wasmModuleIconPosition.x - 25,
-                  y: deployment.wasmModuleIconPosition.y - 25,
-                  width: "50px", // Set initial width
-                  height: "50px", // Set initial height
-                }}
-                animate={{
-                  x: deployment.wasmModuleIconPosition.x - 25,
-                  y: deployment.wasmModuleIconPosition.y - 25,
-                  width: "20px", // Animate to smaller width
-                  height: "20px", // Animate to smaller height
-                }}
-                transition={{ type: "spring", duration: 5 }}
-                style={{
-                  position: "absolute",
-                  zIndex: 3,
-                }}
-              >
-                <img
-                  src={WebAssembly_Icon}
-                  alt="Moving object"
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                  }}
-                />
-              </motion.div>
-            ))}
           <Grid item xs={12} sm={3} minWidth={"77vh"}>
             <Box>
               <div
@@ -1094,7 +1055,7 @@ const Demo = () => {
                       )}
                     </div>
                   )}
-                  {demoRunMethod === WITH_LIQUID_AI && (
+                 {/*  {demoRunMethod === WITH_LIQUID_AI && (
                     <img
                       src={Storage}
                       alt="Storage"
@@ -1108,7 +1069,7 @@ const Demo = () => {
                         zIndex: 2,
                       }}
                     />
-                  )}
+                  )} */}
                   {demoRunMethod === WITH_LIQUID_AI && (
                     <div
                       style={{
@@ -1541,6 +1502,7 @@ const Demo = () => {
                     height: 0,
                   }}
                 >
+                  {/* <ArchitectureView /> */}
                   <img
                     src={ArchitectureImage}
                     alt="Architecture View"
@@ -1549,13 +1511,13 @@ const Demo = () => {
                       borderRadius: "4px",
                       boxShadow: "0 2px 4px rgba(0,0,0,0.2)"
                     }}
-                  />
+                  /> 
                 </div>
               </Box>
             </Grid>
           )}
           <Grid item xs={2} style={{ position: "relative", marginTop: "15px"}}>
-            <Grid container spacing={1.5} columns={1}>
+            <Grid container spacing={1.5} columns={1} style={{ maxHeight: "100vh", overflowY: "auto", paddingRight: "8px" }}>
               <Grid item xs={1} minWidth="50vh" style={{paddingLeft: "0px", marginBottom: "10px"}}>
                 <Box
                   style={{
