@@ -106,6 +106,7 @@ const Demo = () => {
   const containerRef = useRef(null);
   const hourglassRef = useRef(null);
   const logsQueueRef = useRef([]);
+  const animationSessionRef = useRef(null);
   const hasRun = useRef(false);
   const [activeDeployments, setActiveDeployments] = useState([]);
   const [warningBorderVisible, setWarningBorderVisible] = useState(false);
@@ -166,11 +167,17 @@ const Demo = () => {
     }
   };
 
-  const pauseAwareDelay = (ms, isPausedRef) => {
+  const pauseAwareDelay = (ms, isPausedRef, sessionId) => {
     return new Promise((resolve) => {
       let elapsed = 0;
       const interval = 50; // check every 50ms
       const timer = setInterval(() => {
+        if (sessionId && animationSessionRef.current !== sessionId) {
+          clearInterval(timer);
+          resolve();
+          return;
+        }
+
         if (!isPausedRef.current) {
           elapsed += interval;
         }
@@ -251,10 +258,15 @@ const Demo = () => {
 
   // Object moving one place to another place animation
   const moveCodeAnimation = useCallback(
-    (startDeviceName, endDeviceName, iconSource, changingIconSource = null) => {
+    (startDeviceName, endDeviceName, iconSource, changingIconSource = null, sessionId = null) => {
       return new Promise((resolve) => {
         const startDeviceRef = getDeviceReference(startDeviceName);
         const endDeviceRef = getDeviceReference(endDeviceName);
+
+        if (sessionId && animationSessionRef.current !== sessionId) {
+          resolve(); // Abort early if session is stale
+          return;
+        }
 
         if (endDeviceRef.current && startDeviceRef.current) {
           const startDevice = startDeviceRef.current.getBoundingClientRect();
@@ -309,6 +321,14 @@ const Demo = () => {
           const interval = 50; // check every 50ms
 
           const timer = setInterval(() => {
+            if (sessionId && animationSessionRef.current !== sessionId) {
+              clearInterval(timer);
+              setMovingDeployments((current) =>
+                current.filter((dep) => dep.id !== uniqueId)
+              );
+              resolve();
+              return;
+            }
             if (!pausedRef.current) {
               elapsed += interval;
             }
@@ -902,7 +922,8 @@ const Demo = () => {
               </AnimatePresence>
             </>
           )}
-          {movingDeployments.map((deployment) => (
+          {movingDeployments
+          .map((deployment) => (
             <MovingIcon key={deployment.id} deployment={deployment} paused={paused} />
           ))}
           <Grid item xs={12} sm={3} minWidth={"77vh"}>
@@ -1532,9 +1553,7 @@ const Demo = () => {
                   <div style={{ marginBottom: "1%" }}>
                     <DemoControlls
                       continousAnimationRun={continousAnimationRun}
-                      runMoveCodeAnimation={(from, to, icon) =>
-                        moveCodeAnimation(from, to, icon)
-                      }
+                      runMoveCodeAnimation={(...args) => moveCodeAnimation(...args)}
                       setPaused={setPaused}
                       pausedRef={pausedRef}
                       pauseAwareDelay={pauseAwareDelay}
@@ -1542,6 +1561,7 @@ const Demo = () => {
                       setReferenceLineEnabled={setReferenceLineEnabled}
                       handlePopOverClose={handlePopOverClose}
                       setRescheduleHistory={setRescheduleHistory}
+                      animationSessionRef={animationSessionRef}
                     />
                   </div>
                 </Box>

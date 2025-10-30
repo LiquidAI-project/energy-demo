@@ -45,11 +45,12 @@ import {
 } from "../../assets/mockData/dailyPlan";
 import { speak } from "../../utils/deviceUtils";
 import { sendPostData } from "../../services/apiService";
+import { v4 as uuidv4 } from 'uuid';
 
 // eslint-disable-next-line no-undef
 const ANIMATION_MOVING_TIME = import.meta.env.VITE_ANIMATION_MOVING_TIME;
 
-const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused, pausedRef, pauseAwareDelay, referenceLineEnabled, setReferenceLineEnabled, handlePopOverClose, setRescheduleHistory }) => {
+const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused, pausedRef, pauseAwareDelay, referenceLineEnabled, setReferenceLineEnabled, handlePopOverClose, setRescheduleHistory, animationSessionRef }) => {
   const {
     deviceStatus,
     movingDeployments,
@@ -103,6 +104,8 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
 
     // Spot price fetch simulation
     if (currentHour == 0 && currentMinute === 30) {
+      const sessionId = uuidv4();
+      animationSessionRef.current = sessionId;
       setRescheduleHistory((prev) => [
         ...prev, 
         {
@@ -115,20 +118,24 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       setScheduleProcessing(true);
       setEv1PluggedIn(true);
       setEv2PluggedIn(true);
-      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
+     // await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef, sessionId);
       if (voiceEnabled) {
         speak("Electric cars are available for charging");
       }
-      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
-      runMoveCodeAnimation(EV_CHARGER, ORCHESTRATOR, NewDeviceDiscoveryIcon);
-      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
-      runMoveCodeAnimation(ORCHESTRATOR, INTELLIGENT_CONTROL, NewDeviceInfoIcon);
-      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
-      runMoveCodeAnimation(ENERGY_COMPANY, INTELLIGENT_CONTROL, SpotPriceDataIcon);
-      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
-      runMoveCodeAnimation(INTELLIGENT_CONTROL, ORCHESTRATOR, ScheduleIcon);
+      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef, sessionId);
+      runMoveCodeAnimation(EV_CHARGER, ORCHESTRATOR, NewDeviceDiscoveryIcon, null, sessionId);   
+      if (animationSessionRef.current !== sessionId) return; 
+      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef, sessionId);
+      runMoveCodeAnimation(ORCHESTRATOR, INTELLIGENT_CONTROL, NewDeviceInfoIcon, null, sessionId);
+      if (animationSessionRef.current !== sessionId) return; 
+      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef, sessionId);
+      runMoveCodeAnimation(ENERGY_COMPANY, INTELLIGENT_CONTROL, SpotPriceDataIcon, null, sessionId);
+      if (animationSessionRef.current !== sessionId) return; 
+      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef, sessionId);
+      runMoveCodeAnimation(INTELLIGENT_CONTROL, ORCHESTRATOR, ScheduleIcon, null, sessionId);
+      if (animationSessionRef.current !== sessionId) return; 
+      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef, sessionId);
       setDayPlans(predefinedDayPlan1);
-      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
       //console.log("Sending Fibo module deploy request"); 
       //await sendPostData("/file/manifest/68ef769e1c910eb512fef63b"); // Deploy FiboDep1 deployment
       //await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
@@ -141,29 +148,36 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       //await sendPostData("/execute/68ef769e1c910eb512fef63b", {"param0": 8}); // Execute FiboDep1 deployment
       //await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
       //console.log("Execution request complete");
-      runMoveCodeAnimation(ORCHESTRATOR, FREEZER, ScheduleIcon);
-      runMoveCodeAnimation(ORCHESTRATOR, WASHING_MACHINE, ScheduleIcon);
-      runMoveCodeAnimation(ORCHESTRATOR, EV_CHARGER, ScheduleIcon);
-      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
+      runMoveCodeAnimation(ORCHESTRATOR, FREEZER, ScheduleIcon, null, sessionId);
+      runMoveCodeAnimation(ORCHESTRATOR, WASHING_MACHINE, ScheduleIcon, null, sessionId);
+      runMoveCodeAnimation(ORCHESTRATOR, EV_CHARGER, ScheduleIcon, null, sessionId);
+      if (animationSessionRef.current !== sessionId) return; 
+      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef, sessionId);
       setDemoRunning(true);
       setScheduleProcessing(false);
       handlePopOverClose();
     }
 
     if (currentHour == 1 && currentMinute === 40) {
-      runMoveCodeAnimation(ORCHESTRATOR, EV_CHARGER, WasmWithOnnxIcon);
+      const sessionId = uuidv4();
+      animationSessionRef.current = sessionId;
+      runMoveCodeAnimation(ORCHESTRATOR, EV_CHARGER, WasmWithOnnxIcon, null, sessionId);
       if(voiceEnabled)
         speak("Module is deployed on E V Charger");
     }
 
     if (currentHour == 2 && currentMinute === 40) {
-      runMoveCodeAnimation(ORCHESTRATOR, FREEZER, WasmWithOnnxIcon);
+      const sessionId = uuidv4();
+      animationSessionRef.current = sessionId;
+      runMoveCodeAnimation(ORCHESTRATOR, FREEZER, WasmWithOnnxIcon, null, sessionId);
       if(voiceEnabled)
         speak("Module is deployed on Freezer");
     }
 
     // Demand spike simulation
     if (currentHour == 4 && currentMinute === 30) {
+      const sessionId = uuidv4();
+      animationSessionRef.current = sessionId;
       setDemoRunning(false);
       setScheduleProcessing(true);
       setRescheduleHistory((prev) => [
@@ -174,50 +188,55 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
             "The Flexibility Service analyzes new price data for significant changes, such as spikes, and informs the Intelligence Control, which recalculates optimal schedules and forwards them to the Orchestrator. The Orchestrator then distributes the updated schedules to target devices for efficient energy use."
         }
       ]);
-      runMoveCodeAnimation(FLEXIBILITY_SERVICE, INTELLIGENT_CONTROL, DemandSpikeIcon);
+      runMoveCodeAnimation(FLEXIBILITY_SERVICE, INTELLIGENT_CONTROL, DemandSpikeIcon, null, sessionId);
+      if (animationSessionRef.current !== sessionId) return; 
       if(voiceEnabled)
         speak("Sudden spike in electricity prices noticed, rescheduling device operating times");
-      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
-      runMoveCodeAnimation(INTELLIGENT_CONTROL, ORCHESTRATOR, ScheduleIcon);
+      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef, sessionId);
+      runMoveCodeAnimation(INTELLIGENT_CONTROL, ORCHESTRATOR, ScheduleIcon, null, sessionId);
+      if (animationSessionRef.current !== sessionId) return; 
+      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef, sessionId);
       setDayPlans(predefinedDayPlan2);
-      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
-      runMoveCodeAnimation(ORCHESTRATOR, FREEZER, ScheduleIcon);
-      runMoveCodeAnimation(ORCHESTRATOR, EV_CHARGER, ScheduleIcon);
-      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
       setHistoricalDayPlans(prev => [...prev, predefinedDayPlan1]);
+      runMoveCodeAnimation(ORCHESTRATOR, FREEZER, ScheduleIcon, null, sessionId);
+      runMoveCodeAnimation(ORCHESTRATOR, EV_CHARGER, ScheduleIcon, null, sessionId);
+      if (animationSessionRef.current !== sessionId) return; 
+      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef, sessionId);
       setDemoRunning(true);
       setScheduleProcessing(false);
       handlePopOverClose();
     }
 
     if (currentHour == 6 && currentMinute === 40) {
-      runMoveCodeAnimation(ORCHESTRATOR, FREEZER, WasmWithOnnxIcon);
+      const sessionId = uuidv4();
+      animationSessionRef.current = sessionId;
+      runMoveCodeAnimation(ORCHESTRATOR, FREEZER, WasmWithOnnxIcon, null, sessionId);
       if(voiceEnabled)
         speak("Module is deployed on Freezer");
     }
 
     if (currentHour == 7 && currentMinute === 40) {
-      runMoveCodeAnimation(ORCHESTRATOR, WASHING_MACHINE, WasmWithOnnxIcon);
+      const sessionId = uuidv4();
+      animationSessionRef.current = sessionId;
+      runMoveCodeAnimation(ORCHESTRATOR, WASHING_MACHINE, WasmWithOnnxIcon, null, sessionId);
       if(voiceEnabled)
         speak("Module is deployed on washing machine");
     }
 
     // EV unplug simulation
     if (currentHour == 8 && currentMinute === 0) {
+      const sessionId = uuidv4();
+      animationSessionRef.current = sessionId;
       setEv1PluggedIn(false);
       setEv2PluggedIn(false);
       if(voiceEnabled)
         speak("Electric cars are not available");
     }
 
-    if (currentHour == 9 && currentMinute === 40) {
-      runMoveCodeAnimation(ORCHESTRATOR, WASHING_MACHINE, WasmWithOnnxIcon);
-      if(voiceEnabled)
-        speak("Module is deployed on washing machine");
-    }
-
     // Washing machine set to simulation and EV unplug simulation
-    if (currentHour == 10 && currentMinute === 0) {
+    if (currentHour == 9 && currentMinute === 40) {
+      const sessionId = uuidv4();
+      animationSessionRef.current = sessionId;
       setDemoRunning(false);
       setScheduleProcessing(true);
       setRescheduleHistory((prev) => [
@@ -228,15 +247,21 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
             "The user requests optimal schedules from the Intelligence Control, which recalculates them and forwards them to the Orchestrator. The Orchestrator then distributes the updated schedules to target devices for efficient energy use."
         }
       ]);
-      runMoveCodeAnimation(USER_CONTROL, INTELLIGENT_CONTROL, UserInputIcon);
+      runMoveCodeAnimation(USER_CONTROL, INTELLIGENT_CONTROL, UserInputIcon, null, sessionId);
+      if (animationSessionRef.current !== sessionId) return; 
       if(voiceEnabled)
         speak("User wants to turn on washing machine, rescheduling time");
-      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
-      runMoveCodeAnimation(INTELLIGENT_CONTROL, ORCHESTRATOR, ScheduleIcon);
+      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef, sessionId);
+      runMoveCodeAnimation(INTELLIGENT_CONTROL, ORCHESTRATOR, ScheduleIcon, null, sessionId);
+      if (animationSessionRef.current !== sessionId) return; 
+      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef, sessionId);
       setDayPlans(predefinedDayPlan3);
-      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
-      runMoveCodeAnimation(ORCHESTRATOR, WASHING_MACHINE, ScheduleIcon);
-      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
+      runMoveCodeAnimation(ORCHESTRATOR, WASHING_MACHINE, ScheduleIcon, null, sessionId);
+      if (animationSessionRef.current !== sessionId) return; 
+      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef, sessionId);
+      runMoveCodeAnimation(ORCHESTRATOR, WASHING_MACHINE, WasmWithOnnxIcon, null, sessionId);
+      if(voiceEnabled)
+        speak("Module is deployed on washing machine");
       setHistoricalDayPlans(prev => [...prev, predefinedDayPlan2]);
       setDemoRunning(true);
       setScheduleProcessing(false);
@@ -244,13 +269,17 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
     }
 
     if (currentHour == 11 && currentMinute === 40) {
-      runMoveCodeAnimation(ORCHESTRATOR, FREEZER, WasmWithOnnxIcon);
+      const sessionId = uuidv4();
+      animationSessionRef.current = sessionId;
+      runMoveCodeAnimation(ORCHESTRATOR, FREEZER, WasmWithOnnxIcon, null, sessionId);
       if(voiceEnabled)
         speak("Module is deployed on freezer");
     }
 
     // Demand spike simulation
     if (currentHour == 13 && currentMinute === 0) {
+      const sessionId = uuidv4();
+      animationSessionRef.current = sessionId;
       setDemoRunning(false);
       setScheduleProcessing(true);
       setRescheduleHistory((prev) => [
@@ -263,14 +292,17 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       ]);
       if(voiceEnabled)
         speak("Sudden spike in electricity prices noticed, rescheduling device operating times");
-      runMoveCodeAnimation(FLEXIBILITY_SERVICE, INTELLIGENT_CONTROL, DemandSpikeIcon);
-      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
-      runMoveCodeAnimation(INTELLIGENT_CONTROL, ORCHESTRATOR, ScheduleIcon);
+      runMoveCodeAnimation(FLEXIBILITY_SERVICE, INTELLIGENT_CONTROL, DemandSpikeIcon, null, sessionId);
+      if (animationSessionRef.current !== sessionId) return; 
+      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef, sessionId);
+      runMoveCodeAnimation(INTELLIGENT_CONTROL, ORCHESTRATOR, ScheduleIcon, null, sessionId);
+      if (animationSessionRef.current !== sessionId) return; 
+      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef, sessionId);
       setDayPlans(predefinedDayPlan4);
-      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
-      runMoveCodeAnimation(ORCHESTRATOR, FREEZER, ScheduleIcon);
-      runMoveCodeAnimation(ORCHESTRATOR, WASHING_MACHINE, ScheduleIcon);
-      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
+      runMoveCodeAnimation(ORCHESTRATOR, FREEZER, ScheduleIcon, null, sessionId);
+      runMoveCodeAnimation(ORCHESTRATOR, WASHING_MACHINE, ScheduleIcon, null, sessionId);
+      if (animationSessionRef.current !== sessionId) return; 
+      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef, sessionId);
       setHistoricalDayPlans(prev => [...prev, predefinedDayPlan3]);
       setDemoRunning(true);
       setScheduleProcessing(false);
@@ -278,18 +310,22 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
     }
 
     if (currentHour == 14 && currentMinute === 40) {
-      runMoveCodeAnimation(ORCHESTRATOR, WASHING_MACHINE, WasmWithOnnxIcon);
+      const sessionId = uuidv4();
+      animationSessionRef.current = sessionId;
+      runMoveCodeAnimation(ORCHESTRATOR, WASHING_MACHINE, WasmWithOnnxIcon, null, sessionId);
       if(voiceEnabled)
         speak("Module is deployed on washing machine");
     }
 
     // EV plug back in simulation
     if (currentHour == 18 && currentMinute === 0) {
+      const sessionId = uuidv4();
+      animationSessionRef.current = sessionId;
       setDemoRunning(false);
       setScheduleProcessing(true);
       setEv1PluggedIn(true);
       setEv2PluggedIn(true);
-      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
+      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef, sessionId);
       if (voiceEnabled) {
         speak("Electric cars are available for charging again");
       }
@@ -301,16 +337,20 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
             "The Intelligence control receives the updated electricity price information for the current hour from the enerygy company. It then recalculates and sends the optimal schedules to the Orchestrator, which forwards them to target devices for efficient energy use."
         }
       ]);
-      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
-      runMoveCodeAnimation(EV_CHARGER, ORCHESTRATOR, NewDeviceDiscoveryIcon);
-      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
-      runMoveCodeAnimation(ORCHESTRATOR, INTELLIGENT_CONTROL, NewDeviceInfoIcon);
-      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
-      runMoveCodeAnimation(INTELLIGENT_CONTROL, ORCHESTRATOR, ScheduleIcon);
+      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef, sessionId);
+      runMoveCodeAnimation(EV_CHARGER, ORCHESTRATOR, NewDeviceDiscoveryIcon, null, sessionId);
+      if (animationSessionRef.current !== sessionId) return; 
+      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef, sessionId);
+      runMoveCodeAnimation(ORCHESTRATOR, INTELLIGENT_CONTROL, NewDeviceInfoIcon, null, sessionId);
+      if (animationSessionRef.current !== sessionId) return; 
+      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef, sessionId);
+      runMoveCodeAnimation(INTELLIGENT_CONTROL, ORCHESTRATOR, ScheduleIcon, null, sessionId);
+      if (animationSessionRef.current !== sessionId) return; 
+      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef, sessionId);
       setDayPlans(predefinedDayPlan5);
-      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
-      runMoveCodeAnimation(ORCHESTRATOR, EV_CHARGER, ScheduleIcon);
-      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
+      runMoveCodeAnimation(ORCHESTRATOR, EV_CHARGER, ScheduleIcon, null, sessionId);
+      if (animationSessionRef.current !== sessionId) return; 
+      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef, sessionId);
       setHistoricalDayPlans(prev => [...prev, predefinedDayPlan4]);
       setDemoRunning(true);
       setScheduleProcessing(false);
@@ -318,13 +358,17 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
     }
 
     if (currentHour == 18 && currentMinute === 40) {
-      runMoveCodeAnimation(ORCHESTRATOR, FREEZER, WasmWithOnnxIcon);
+      const sessionId = uuidv4();
+      animationSessionRef.current = sessionId;
+      runMoveCodeAnimation(ORCHESTRATOR, FREEZER, WasmWithOnnxIcon, null, sessionId);
       if(voiceEnabled)
         speak("Module is deployed on freezer");
     }
 
     // Demand spike simulation
     if (currentHour == 21 && currentMinute === 0) {
+      const sessionId = uuidv4();
+      animationSessionRef.current = sessionId;
       setDemoRunning(false);
       setScheduleProcessing(true);
       setRescheduleHistory((prev) => [
@@ -337,14 +381,17 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       ]);
       if(voiceEnabled)
         speak("Sudden spike in electricity prices noticed, rescheduling device operating times");
-      runMoveCodeAnimation(FLEXIBILITY_SERVICE, INTELLIGENT_CONTROL, DemandSpikeIcon);
-      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
-      runMoveCodeAnimation(INTELLIGENT_CONTROL, ORCHESTRATOR, ScheduleIcon);
+      runMoveCodeAnimation(FLEXIBILITY_SERVICE, INTELLIGENT_CONTROL, DemandSpikeIcon, null, sessionId);
+      if (animationSessionRef.current !== sessionId) return; 
+      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef, sessionId);
+      runMoveCodeAnimation(INTELLIGENT_CONTROL, ORCHESTRATOR, ScheduleIcon, null, sessionId);
+      if (animationSessionRef.current !== sessionId) return; 
+      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef, sessionId);
       setDayPlans(predefinedDayPlan6);
-      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
-      runMoveCodeAnimation(ORCHESTRATOR, FREEZER, ScheduleIcon);
-      runMoveCodeAnimation(ORCHESTRATOR, EV_CHARGER, ScheduleIcon);
-      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
+      runMoveCodeAnimation(ORCHESTRATOR, FREEZER, ScheduleIcon, null, sessionId);
+      runMoveCodeAnimation(ORCHESTRATOR, EV_CHARGER, ScheduleIcon, null, sessionId);
+      if (animationSessionRef.current !== sessionId) return; 
+      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef, sessionId);
       setHistoricalDayPlans(prev => [...prev, predefinedDayPlan5]);
       setDemoRunning(true);
       setScheduleProcessing(false);
@@ -352,11 +399,15 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
     }
 
     if (currentHour == 21 && currentMinute === 40) {
-      runMoveCodeAnimation(ORCHESTRATOR, FREEZER, WasmWithOnnxIcon);
+      const sessionId = uuidv4();
+      animationSessionRef.current = sessionId;
+      runMoveCodeAnimation(ORCHESTRATOR, FREEZER, WasmWithOnnxIcon, null, sessionId);
+      if (animationSessionRef.current !== sessionId) return; 
       if(voiceEnabled)
         speak("Module is deployed on freezer");
-      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
-      runMoveCodeAnimation(ORCHESTRATOR, EV_CHARGER, WasmWithOnnxIcon);
+      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef, sessionId);
+      runMoveCodeAnimation(ORCHESTRATOR, EV_CHARGER, WasmWithOnnxIcon, null, sessionId);
+      if (animationSessionRef.current !== sessionId) return; 
       if(voiceEnabled)
         speak("Module is deployed on E V Charger");
     }
@@ -457,6 +508,8 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
     resetDemoTime.setHours(0, 0, 0, 0);
     setDemoTime(resetDemoTime);
     setDemoRunning(false);
+    setScheduleProcessing(false);
+    animationSessionRef.current = null;
     setMovingDeployments([]);
     setDayPlans(initialDayPlan);
     setEv1PluggedIn(false);
