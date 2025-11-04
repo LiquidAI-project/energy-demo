@@ -9,6 +9,7 @@ import { initialDayPlan } from "../../assets/mockData/dailyPlan";
 import { EV_CHARGER, WASHING_MACHINE, FREEZER } from "../../../constants";
 import { isDeviceOperating } from "../../utils/deviceUtils";
 import { useDemoControlContext } from "../demoControlContext/useDemoControlContext";
+import { useSyncedLocalStorage } from "../../services/SyncedLocalStorage";
 
 const DemoVisualizationContext = createContext({
   hackerVisibility: false,
@@ -31,8 +32,8 @@ export const DemoVisualizationProvider = ({ children }) => {
   const { demoTime } = useDemoControlContext();
   const [hackerVisibility, setHackerVisibility] = useState(false);
   const [movingDeployments, setMovingDeployments] = useState([]);
-  const [dayPlans, setDayPlans] = useState(initialDayPlan);
-  const [historicalDayPlans, setHistoricalDayPlans] = useState([initialDayPlan]);
+  const [dayPlans, setDayPlans] = useSyncedLocalStorage("dayPlans", initialDayPlan);
+  const [historicalDayPlans, setHistoricalDayPlans] = useSyncedLocalStorage("historicalDayPlans", [initialDayPlan]);
   const [ev1PluggedIn, setEv1PluggedIn] = useState(false);
   const [ev2PluggedIn, setEv2PluggedIn] = useState(false);
   const [deviceStatus, setDeviceStatus] = useState([

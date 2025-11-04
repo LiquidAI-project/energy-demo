@@ -1,7 +1,7 @@
 // Copyright 2024 Tampere University
 // This software was developed as a part of the LiquidAI project
 // This source code is licensed under the MIT license. See LICENSE in the repository root directory.
-// Author(s): Lakshan Rathnayaka <lakshan.rathnayaka@tuni.fi>, Ville Heikkilä <ville.heikkila@tuni.fi>.
+// Author(s): Lakshan Rathnayaka <lakshan.rathnayaka@tuni.fi>, Ville Heikkilä <ville.heikkila@tuni.fi>, Asma Jamil <asma.jamil@tuni.fi>.
 
 import { Accordion, AccordionSummary,
   AccordionDetails, Box, Grid, Typography, Popover, IconButton, Tooltip } from "@mui/material";
@@ -124,6 +124,7 @@ const Demo = () => {
   const [rescheduleHistory, setRescheduleHistory] = useState([]);
   const voiceEnabledRef = useRef(voiceEnabled);
   const [showMainView, setShowMainView] = useState(true);
+  const [latestSocketMsg, setLatestSocketMsg] = useState(null);
 
   let totalConsumptionCloudBased = [];
   let totalConsumptionLiquidBased = [];
@@ -553,8 +554,9 @@ const Demo = () => {
       getInitialDeviceHealth();
       socket.addEventListener("message", (event) => {
         try {
-          console.log("📩 Message:", JSON.parse(event.data));
+          //console.log("📩 Message:", JSON.parse(event.data));
           logsQueueRef.current.push(JSON.parse(event.data));
+          setLatestSocketMsg(JSON.parse(event.data));
           setTimeout(processLogsQueue, 500);
         } catch {
           console.log("📩 Message from Rust server:", event.data);
@@ -1523,7 +1525,7 @@ const Demo = () => {
                     height: 0,
                   }}
                 >
-                  {/* <ArchitectureView /> */}
+                  <ArchitectureView socketMsg={latestSocketMsg} isPaused={paused} />
                   <img
                     src={ArchitectureImage}
                     alt="Architecture View"

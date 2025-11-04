@@ -3,6 +3,8 @@
 // This source code is licensed under the MIT license. See LICENSE in the repository root directory.
 // Author(s): Lakshan Rathnayaka <lakshan.rathnayaka@tuni.fi>, Ville Heikkilä <ville.heikkila@tuni.fi>.
 
+import { sendPostData } from "../services/apiService";
+
 /**
  * Retrieves the device ID map from local storage.
  * The map is stored as a JSON string in the local storage under the key "deviceIdMap".
@@ -92,3 +94,40 @@ export const speak = (text) => {
     console.error("Speech Synthesis not supported in this browser.");
   }
 };
+
+/**
+ * Calls deploy and execute APIs
+ * This function is called when a IoT device has to start operating.
+ *
+ * @param {string} deploymentId - The deployment to be deployed and executed.
+ * @param {string} deploymentName - The deployment name to be displayed.
+ * @param {string} deviceName - The device name on which the deployment is executed.
+ * @param {string} params - The data to be sent to execute API.
+ * @param {string} sessionId - The id value to handle animations.
+ */
+export const deployAndExecute = (deploymentId, deploymentName, deviceName, params) => {
+  console.log(`Sending ${deploymentName} manifest deploy request`); 
+    sendPostData(`/file/manifest/${deploymentId}`)
+    .then((res) => {
+      const status = Object.values(res.deviceResponses)
+                      .find(d => d.deploymentId === deploymentId)
+                      ?.status;
+      if (status === "success") {
+        console.log(`Sending ${deploymentName} execution request`); 
+        sendPostData(`/execute/${deploymentId}`, params)
+        .then((res) => {
+          if (res.result) {
+            return "Success";
+          } else {
+            console.warn(`Manifest deployment failed, skipping to start ${deviceName}`);
+            return `Manifest deployment failed, skipping to start ${deviceName}`;
+          }
+        })
+        .catch((err) => console.error("Request error:", err));
+      } else {
+        console.warn(`Module execution failed, ${deviceName} can not be started`);
+        return `Module execution failed, ${deviceName} can not be started`;
+      }
+    })
+    .catch((err) => console.error("Request error:", err)); 
+}

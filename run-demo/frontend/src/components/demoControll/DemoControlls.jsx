@@ -1,7 +1,7 @@
 // Copyright 2024 Tampere University
 // This software was developed as a part of the LiquidAI project
 // This source code is licensed under the MIT license. See LICENSE in the repository root directory.
-// Author(s): Lakshan Rathnayaka <lakshan.rathnayaka@tuni.fi>, Ville Heikkilä <ville.heikkila@tuni.fi>.
+// Author(s): Lakshan Rathnayaka <lakshan.rathnayaka@tuni.fi>, Ville Heikkilä <ville.heikkila@tuni.fi>, Asma Jamil <asma.jamil@tuni.fi>.
 
 import { useEffect, useState } from "react";
 import { Button, Box, FormControlLabel, Switch } from "@mui/material";
@@ -43,9 +43,10 @@ import {
   predefinedDayPlan5,
   predefinedDayPlan6,
 } from "../../assets/mockData/dailyPlan";
-import { speak } from "../../utils/deviceUtils";
+import { speak, deployAndExecute } from "../../utils/deviceUtils";
 import { sendPostData } from "../../services/apiService";
 import { v4 as uuidv4 } from 'uuid';
+import { useSyncedLocalStorage } from "../../services/SyncedLocalStorage";
 
 // eslint-disable-next-line no-undef
 const ANIMATION_MOVING_TIME = import.meta.env.VITE_ANIMATION_MOVING_TIME;
@@ -61,8 +62,8 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
     setEv2PluggedIn,
     setMovingDeployments
   } = useDemoVisualizationContext();
-  const { voiceEnabled, demoRunMethod, demoRunning, scheduleProcessing, demoTime, setDemoRunning, setScheduleProcessing, setDemoTime, setVoiceEnabled } = useDemoControlContext();
-  const [demoStatus, setDemoStatus] = useState("idle"); // idle | running | stopped
+  const { voiceEnabled, demoRunMethod, demoRunning, scheduleProcessing, demoTime, demoStatus, setDemoRunning, setScheduleProcessing, setDemoTime, setVoiceEnabled, setDemoStatus } = useDemoControlContext();
+
 
   /**
    * ML model retraining simulation.
@@ -136,18 +137,6 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       if (animationSessionRef.current !== sessionId) return; 
       await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef, sessionId);
       setDayPlans(predefinedDayPlan1);
-      //console.log("Sending Fibo module deploy request"); 
-      //await sendPostData("/file/manifest/68ef769e1c910eb512fef63b"); // Deploy FiboDep1 deployment
-      //await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
-      //console.log("Deploy request complete");
-      /*setTimeout(() => {
-        console.log("Waiting for some time before the next animation happens");
-        runMoveCodeAnimation(INTELLIGENT_CONTROL, ORCHESTRATOR, ScheduleIcon);
-      }, 5000);*/
-      //console.log("Sending module execution request -- Param0"); 
-      //await sendPostData("/execute/68ef769e1c910eb512fef63b", {"param0": 8}); // Execute FiboDep1 deployment
-      //await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
-      //console.log("Execution request complete");
       runMoveCodeAnimation(ORCHESTRATOR, FREEZER, ScheduleIcon, null, sessionId);
       runMoveCodeAnimation(ORCHESTRATOR, WASHING_MACHINE, ScheduleIcon, null, sessionId);
       runMoveCodeAnimation(ORCHESTRATOR, EV_CHARGER, ScheduleIcon, null, sessionId);
@@ -161,17 +150,29 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
     if (currentHour == 1 && currentMinute === 40) {
       const sessionId = uuidv4();
       animationSessionRef.current = sessionId;
-      runMoveCodeAnimation(ORCHESTRATOR, EV_CHARGER, WasmWithOnnxIcon, null, sessionId);
-      if(voiceEnabled)
-        speak("Module is deployed on E V Charger");
+      const result = deployAndExecute("6904c92175d1501dc7b259d3", "Fibo_EV", EV_CHARGER, {"param0": 8});
+      if (result === "Success") {
+        runMoveCodeAnimation(ORCHESTRATOR, EV_CHARGER, WasmWithOnnxIcon, null, sessionId);
+        if(voiceEnabled)
+          speak("Module is deployed on E V Charger");
+      } else {
+        if(voiceEnabled)
+          speak(result);
+      }
     }
 
     if (currentHour == 2 && currentMinute === 40) {
       const sessionId = uuidv4();
       animationSessionRef.current = sessionId;
-      runMoveCodeAnimation(ORCHESTRATOR, FREEZER, WasmWithOnnxIcon, null, sessionId);
-      if(voiceEnabled)
-        speak("Module is deployed on Freezer");
+      const result = deployAndExecute("6904c91175d1501dc7b259a6", "Fibo_Freezer", FREEZER, {"param0": 10});
+      if (result === "Success") {
+        runMoveCodeAnimation(ORCHESTRATOR, FREEZER, WasmWithOnnxIcon, null, sessionId);
+        if(voiceEnabled)
+          speak("Module is deployed on Freezer");
+      } else {
+        if(voiceEnabled)
+          speak(result);
+      }
     }
 
     // Demand spike simulation
@@ -210,17 +211,29 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
     if (currentHour == 6 && currentMinute === 40) {
       const sessionId = uuidv4();
       animationSessionRef.current = sessionId;
-      runMoveCodeAnimation(ORCHESTRATOR, FREEZER, WasmWithOnnxIcon, null, sessionId);
-      if(voiceEnabled)
-        speak("Module is deployed on Freezer");
+      const result = deployAndExecute("6904c91175d1501dc7b259a6", "Fibo_Freezer", FREEZER, {"param0": 10});
+      if (result === "Success") {
+        runMoveCodeAnimation(ORCHESTRATOR, FREEZER, WasmWithOnnxIcon, null, sessionId);
+        if(voiceEnabled)
+          speak("Module is deployed on Freezer");
+      } else {
+        if(voiceEnabled)
+          speak(result);
+      }
     }
 
     if (currentHour == 7 && currentMinute === 40) {
       const sessionId = uuidv4();
       animationSessionRef.current = sessionId;
-      runMoveCodeAnimation(ORCHESTRATOR, WASHING_MACHINE, WasmWithOnnxIcon, null, sessionId);
-      if(voiceEnabled)
-        speak("Module is deployed on washing machine");
+      const result = deployAndExecute("6904c93375d1501dc7b25a00", "Fibo_WM", WASHING_MACHINE, {"param0": 6});
+      if (result === "Success") {
+        runMoveCodeAnimation(ORCHESTRATOR, WASHING_MACHINE, WasmWithOnnxIcon, null, sessionId);
+        if(voiceEnabled)
+          speak("Module is deployed on washing machine");
+      } else {
+        if(voiceEnabled)
+          speak(result);
+      }
     }
 
     // EV unplug simulation
@@ -259,9 +272,15 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       runMoveCodeAnimation(ORCHESTRATOR, WASHING_MACHINE, ScheduleIcon, null, sessionId);
       if (animationSessionRef.current !== sessionId) return; 
       await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef, sessionId);
-      runMoveCodeAnimation(ORCHESTRATOR, WASHING_MACHINE, WasmWithOnnxIcon, null, sessionId);
-      if(voiceEnabled)
-        speak("Module is deployed on washing machine");
+      const result = deployAndExecute("6904c93375d1501dc7b25a00", "Fibo_WM", WASHING_MACHINE, {"param0": 6});
+      if (result === "Success") {
+        runMoveCodeAnimation(ORCHESTRATOR, WASHING_MACHINE, WasmWithOnnxIcon, null, sessionId);
+        if(voiceEnabled)
+          speak("Module is deployed on washing machine");
+      } else {
+        if(voiceEnabled)
+          speak(result);
+      }
       setHistoricalDayPlans(prev => [...prev, predefinedDayPlan2]);
       setDemoRunning(true);
       setScheduleProcessing(false);
@@ -271,9 +290,15 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
     if (currentHour == 11 && currentMinute === 40) {
       const sessionId = uuidv4();
       animationSessionRef.current = sessionId;
-      runMoveCodeAnimation(ORCHESTRATOR, FREEZER, WasmWithOnnxIcon, null, sessionId);
-      if(voiceEnabled)
-        speak("Module is deployed on freezer");
+      const result = deployAndExecute("6904c91175d1501dc7b259a6", "Fibo_Freezer", FREEZER, {"param0": 8});
+      if (result === "Success") {
+        runMoveCodeAnimation(ORCHESTRATOR, FREEZER, WasmWithOnnxIcon, null, sessionId);
+        if(voiceEnabled)
+          speak("Module is deployed on freezer");
+      } else {
+        if(voiceEnabled)
+          speak(result);
+      }
     }
 
     // Demand spike simulation
@@ -312,9 +337,15 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
     if (currentHour == 14 && currentMinute === 40) {
       const sessionId = uuidv4();
       animationSessionRef.current = sessionId;
-      runMoveCodeAnimation(ORCHESTRATOR, WASHING_MACHINE, WasmWithOnnxIcon, null, sessionId);
-      if(voiceEnabled)
-        speak("Module is deployed on washing machine");
+      const result = deployAndExecute("6904c93375d1501dc7b25a00", "Fibo_WM", WASHING_MACHINE, {"param0": 6});
+      if (result === "Success") {
+        runMoveCodeAnimation(ORCHESTRATOR, WASHING_MACHINE, WasmWithOnnxIcon, null, sessionId);
+        if(voiceEnabled)
+          speak("Module is deployed on washing machine");
+      } else {
+        if(voiceEnabled)
+          speak(result);
+      }
     }
 
     // EV plug back in simulation
@@ -360,9 +391,15 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
     if (currentHour == 18 && currentMinute === 40) {
       const sessionId = uuidv4();
       animationSessionRef.current = sessionId;
-      runMoveCodeAnimation(ORCHESTRATOR, FREEZER, WasmWithOnnxIcon, null, sessionId);
-      if(voiceEnabled)
-        speak("Module is deployed on freezer");
+      const result = deployAndExecute("6904c91175d1501dc7b259a6", "Fibo_Freezer", FREEZER, {"param0": 10});
+      if (result === "Success") {
+        runMoveCodeAnimation(ORCHESTRATOR, FREEZER, WasmWithOnnxIcon, null, sessionId);
+        if(voiceEnabled)
+          speak("Module is deployed on Freezer");
+      } else {
+        if(voiceEnabled)
+          speak(result);
+      }
     }
 
     // Demand spike simulation
@@ -401,15 +438,28 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
     if (currentHour == 21 && currentMinute === 40) {
       const sessionId = uuidv4();
       animationSessionRef.current = sessionId;
-      runMoveCodeAnimation(ORCHESTRATOR, FREEZER, WasmWithOnnxIcon, null, sessionId);
-      if (animationSessionRef.current !== sessionId) return; 
-      if(voiceEnabled)
-        speak("Module is deployed on freezer");
-      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef, sessionId);
-      runMoveCodeAnimation(ORCHESTRATOR, EV_CHARGER, WasmWithOnnxIcon, null, sessionId);
-      if (animationSessionRef.current !== sessionId) return; 
-      if(voiceEnabled)
-        speak("Module is deployed on E V Charger");
+      let result = deployAndExecute("6904c91175d1501dc7b259a6", "Fibo_Freezer", FREEZER, {"param0": 8});
+      if (result === "Success") {
+        runMoveCodeAnimation(ORCHESTRATOR, FREEZER, WasmWithOnnxIcon, null, sessionId);
+        if (animationSessionRef.current !== sessionId) return;
+        if(voiceEnabled)
+          speak("Module is deployed on freezer");
+        await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef, sessionId);
+      } else {
+        if(voiceEnabled)
+          speak(result);
+      }
+      
+      result = deployAndExecute("6904c92175d1501dc7b259d3", "Fibo_EV", EV_CHARGER, {"param0": 6});
+      if (result === "Success") {
+        runMoveCodeAnimation(ORCHESTRATOR, EV_CHARGER, WasmWithOnnxIcon, null, sessionId);
+        if (animationSessionRef.current !== sessionId) return; 
+        if(voiceEnabled)
+          speak("Module is deployed on E V Charger");
+      } else {
+        if(voiceEnabled)
+          speak(result);
+      }
     }
 
     if (currentHour == 23 && currentMinute == 50)
@@ -478,6 +528,14 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
     }
   }, [demoTime]);
 
+  useEffect(() => {
+    if (demoRunMethod == WITH_LIQUID_AI && scheduleProcessing) {
+      setPaused(false);
+      setDemoStatus("running");
+      dayPlanExecution();
+    }
+  }, []);
+
   const handleStart = () => {
     setDemoStatus("running");
     setDemoRunning(true);
@@ -534,7 +592,7 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
   return (
     <Box>
       <Box display="flex" alignItems="center" gap={2} marginBottom={2}>
-        <DropdownMenu resetDemoTimer={resetDemoTimer} setDemoStatus={setDemoStatus} />
+        <DropdownMenu resetDemoTimer={resetDemoTimer} />
         {demoStatus === "idle" && (
           <Button
             variant="contained"
