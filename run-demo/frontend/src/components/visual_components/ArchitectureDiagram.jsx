@@ -21,6 +21,12 @@ import inactiveIcon from '../../assets/inactive.png';
 import { useDemoControlContext } from "../../context/demoControlContext/useDemoControlContext";
 import { WITH_LIQUID_AI } from "../../../constants";
 
+import NewDeviceDiscoveryIcon from "../../assets/new-device.png";
+import NewDeviceInfoIcon from "../../assets/new-device-info.png";
+import SocketMsgIcon from "../../assets/socket-icon.png";
+import WasmWithOnnxIcon from "../../assets/wasm_with_onnx.png";
+import ScheduleIcon from "../../assets/schedule.png";
+
 export default function ArchitectureDiagram({ socketMsg, isPaused }) {
   const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState(false);
@@ -34,12 +40,13 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
     wmLine: false,
   });
   const [lineDirection, setLineDirection] = useState(null);
-  const [currEventMsg, setCurrEventMsg] = useState(null);
+  const [currEventIcon, setCurrEventIcon] = useState(null);
   const devices = JSON.parse(localStorage.getItem('devices') || '[]');
   const [isFreezerActive, setIsFreezerActive] = useState(false);
   const [isWMActive, setIsWMActive] = useState(false);
   const [isEVActive, setIsEVActive] = useState(false);
   const isPausedRef = useRef(isPaused);
+  const [eventAnimationActive, setEventAnimationActive] = useState(false);
   const { demoRunMethod, demoRunning, demoStatus, demoTime, scheduleProcessing, voiceEnabled, changeDemoRunMethod } = useDemoControlContext();
 
   // Helper function to wait until resumed
@@ -54,7 +61,7 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
       setLoading(true);
       setExpanded(false);
       setAnimateLines(prev => ({ ...prev, dbLine: true }));
-      setLineDirection("toComp"); 
+      setLineDirection("normalDir"); 
       const modules = await fetchData("/file/module");
       const deployments = await fetchData("/file/manifest");
       if (deployments || modules) {
@@ -86,13 +93,49 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
     }
   };
 
+  const runAnimation = async (lineDirectionValue, lineName, iconName) => {
+    setLineDirection(lineDirectionValue);
+    setAnimateLines(prev => ({ ...prev, [lineName]: true }));
+    setCurrEventIcon(prev => iconName);
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    await waitUntilResumed();
+    await new Promise(resolve => setTimeout(resolve, 1310));
+    setAnimateLines(prev => ({ ...prev, [lineName]: false }));
+    setCurrEventIcon(null);
+  }
+
   const dayPlanExecution = async () => {
-  
+    if (eventAnimationActive || isPausedRef.current) return;
+
+    const currentDate = new Date(demoTime);
+    const currentHour = currentDate.getHours();
+    const currentMinute = currentDate.getMinutes();
+
+    if (currentHour == 0 && currentMinute === 30) {
+      setAnimateLines({
+        dbLine: false,
+        icLine: false,
+        freezerLine: false,
+        evLine: false,
+        wmLine: false,
+      });
+      setCurrEventIcon(null);
+      await new Promise(resolve => setTimeout(resolve, 100));
+      setEventAnimationActive(true);
+      await runAnimation("reverseDir", "evLine", NewDeviceDiscoveryIcon);
+      await runAnimation("normalDir", "icLine", NewDeviceInfoIcon);
+      await runAnimation("reverseDir", "icLine", ScheduleIcon);
+      runAnimation("normalDir", "freezerLine", ScheduleIcon);
+      runAnimation("normalDir", "wmLine", ScheduleIcon);
+      await runAnimation("normalDir", "evLine", ScheduleIcon);
+      setEventAnimationActive(false);
+    }
   }
 
   useEffect(() => {
     changeDemoRunMethod(WITH_LIQUID_AI);
     fetchAndSetData();
+    setCurrEventIcon(prev => SocketMsgIcon);
     const intervalId = setInterval(fetchAndSetData, 10 * 60 * 1000);
     return() => { clearInterval(intervalId); }
   }, []);
@@ -106,48 +149,21 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
       if (!socketMsg) return;
 
       // Skip processing if paused
-      if (isPausedRef.current) {
-        console.log("⏸ Socket message ignored (paused)");
-        return;
-      }
+      if (isPausedRef.current || eventAnimationActive) return;
 
       console.log(socketMsg);
       
       if (socketMsg && socketMsg.funcName.includes("thingi_health") && socketMsg.loglevel === "INFO") {
         if(socketMsg.deviceName === "freezer") {
-          setAnimateLines(prev => ({ ...prev, freezerLine: true }));
-          setCurrEventMsg(prev => socketMsg.message);
-
-          // Wait here if paused 🚦
-          await new Promise(resolve => setTimeout(resolve, 2000));
-          await waitUntilResumed();
-          await new Promise(resolve => setTimeout(resolve, 1320));
-
-          setAnimateLines(prev => ({ ...prev, freezerLine: false }));
+          await runAnimation("normalDir", "freezerLine", SocketMsgIcon);
           setIsFreezerActive(devices.find(device => device.name === "freezer").isActive);
         }
         if(socketMsg.deviceName === "washing-machine") {
-          setAnimateLines(prev => ({ ...prev, wmLine: true }));
-          setCurrEventMsg(prev => socketMsg.message);
-
-          // Wait here if paused 🚦
-          await new Promise(resolve => setTimeout(resolve, 2000));
-          await waitUntilResumed();
-          await new Promise(resolve => setTimeout(resolve, 1320));
-
-          setAnimateLines(prev => ({ ...prev, wmLine: false }));
+          await runAnimation("normalDir", "wmLine", SocketMsgIcon);
           setIsWMActive(devices.find(device => device.name === "washing-machine").isActive);
         }
         if(socketMsg.deviceName === "ev-charger") {
-          setAnimateLines(prev => ({ ...prev, evLine: true }));
-          setCurrEventMsg(prev => socketMsg.message);
-
-           // Wait here if paused 🚦
-          await new Promise(resolve => setTimeout(resolve, 2000));
-          await waitUntilResumed();
-          await new Promise(resolve => setTimeout(resolve, 1320));
-
-          setAnimateLines(prev => ({ ...prev, evLine: false }));
+          await runAnimation("normalDir", "evLine", SocketMsgIcon);
           setIsEVActive(devices.find(device => device.name === "ev-charger").isActive);
         }
         if (isFreezerActive)
@@ -172,10 +188,10 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
     <>
       <style>
         {`
-          @keyframes fromComp {
+          @keyframes reverseDir {
             to { stroke-dashoffset: 16; }
           }
-          @keyframes toComp {
+          @keyframes normalDir {
             to { stroke-dashoffset: -16; }
           }
           /* Animate the moving icon */
@@ -189,18 +205,18 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
           }
           @keyframes moveAlongFreezer {
             0% {
-              transform: translate(42%, 8px);
+              transform: translate(25%, 8px);
             }
             100% {
-              transform: translate(-60%, 196px);
+              transform: translate(-80%, 196px);
             }
           }
           @keyframes moveAlongIC {
             0% {
-              transform: translate(10%, 0px);
+              transform: translate(10%, 5px);
             }
             100% {
-              transform: translate(90%, 0px);
+              transform: translate(80%, 5px);
             }
           }
           @keyframes moveAlongEV {
@@ -213,10 +229,10 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
           }
           @keyframes moveAlongWM {
             0% {
-              transform: translate(50%, 8px);
+              transform: translate(40%, 8px);
             }
             100% {
-              transform: translate(50%, 196px);
+              transform: translate(40%, 196px);
             }
           }
         `}
@@ -281,6 +297,7 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
                 <g
                   style={{
                     animation: "moveAlongDB 2s linear",
+                    animationDirection: lineDirection === "normalDir" ? "normal" : "reverse",
                     animationPlayState: isPaused ? "paused" : "running"
                   }}
                 >
@@ -380,7 +397,6 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
                   </marker>
                 </defs>
 
-                {/* Example 3 arrows */}
                 <line
                   x1="42%"
                   y1="8"
@@ -396,9 +412,20 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
                   markerEnd="url(#arrowheadRight)"
                 />
                 {animateLines.freezerLine && (
-                  <g
+                  <image
+                    href={currEventIcon}
+                    width="30"
+                    height="30"
+                    style={{
+                      animation: "moveAlongFreezer 2s linear forwards",
+                      animationDirection: lineDirection === "normalDir" ? "normal" : "reverse",
+                      animationPlayState: isPaused ? "paused" : "running",
+                    }}
+                  />
+                  /*<g
                     style={{
                       animation: "moveAlongFreezer 3s linear",
+                      animationDirection: lineDirection === "normalDir" ? "normal" : "reverse",
                       animationPlayState: isPaused ? "paused" : "running"
                     }}
                   >
@@ -412,7 +439,7 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
                     >
                       {currEventMsg}
                     </text>
-                  </g>
+                  </g> */
                 )}
                 <line
                   x1="50%"
@@ -428,10 +455,21 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
                   markerStart="url(#arrowheadLeft)"
                   markerEnd="url(#arrowheadRight)"
                 />
-                {animateLines.wmLine && (
-                  <g
+               {animateLines.wmLine && (
+                  <image
+                    href={currEventIcon}
+                    width="30"
+                    height="30"
+                    style={{
+                      animation: "moveAlongWM 2s linear forwards",
+                      animationDirection: lineDirection === "normalDir" ? "normal" : "reverse",
+                      animationPlayState: isPaused ? "paused" : "running",
+                    }}
+                  />
+                  /*<g
                     style={{
                       animation: "moveAlongWM 3s linear",
+                      animationDirection: lineDirection === "normalDir" ? "normal" : "reverse",
                       animationPlayState: isPaused ? "paused" : "running"
                     }}
                   >
@@ -445,7 +483,7 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
                     >
                       {currEventMsg}
                     </text>
-                  </g>
+                  </g>*/
                 )}
                 <line
                   x1="58%"
@@ -462,9 +500,20 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
                   markerEnd="url(#arrowheadRight)"
                 />
                 { animateLines.evLine && (
-                  <g
+                  <image
+                    href={currEventIcon}
+                    width="30"
+                    height="30"
+                    style={{
+                      animation: "moveAlongEV 2s linear forwards",
+                      animationDirection: lineDirection === "normalDir" ? "normal" : "reverse",
+                      animationPlayState: isPaused ? "paused" : "running",
+                    }}
+                  />
+                  /*<g
                     style={{
                       animation: "moveAlongEV 3s linear",
+                      animationDirection: lineDirection === "normalDir" ? "normal" : "reverse",
                       animationPlayState: isPaused ? "paused" : "running"
                     }}
                   >
@@ -478,8 +527,8 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
                     >
                       {currEventMsg}
                     </text>
-                  </g>
-                )}
+                  </g>*/
+                )} 
               </svg>
               {expanded && modules && (
                 <>
@@ -569,7 +618,7 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
             <svg width="150px" height="64px" style={{ display: 'block', position: 'relative', zIndex: 2 }}>
               <defs>
                 <marker
-                  id="arrowheadLeft2"
+                  id="arrowheadLeft"
                   markerWidth="7"
                   markerHeight="7"
                   refX="7"
@@ -579,6 +628,17 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
                 >
                   <polygon points="7 0, 7 7, 0 3.5" fill="#094C7A" />
                 </marker>
+                <marker
+                  id="arrowheadRight"
+                  markerWidth="7"
+                  markerHeight="7"
+                  refX="5.5"
+                  refY="3.5"
+                  orient="auto"
+                  markerUnits="strokeWidth"
+                >
+                  <polygon points="0 0, 7 3.5, 0 7" fill="#094C7A" />
+                </marker>
               </defs>
               <line
                 x1="18"
@@ -587,7 +647,12 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
                 y2="17"
                 stroke="#094C7A"
                 strokeWidth="1.5"
-                markerStart="url(#arrowheadLeft2)"
+                strokeDasharray={animateLines.icLine ? "8 8" : "0"}
+                style={{
+                  animation: animateLines.icLine ? `${lineDirection} 1s linear infinite` : "none"
+                }}
+                markerStart="url(#arrowheadLeft)"
+                markerEnd="url(#arrowheadRight)"
               />
               <text
                   x="75"
@@ -602,6 +667,38 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
                   <tspan x="75" dy="12">and execution</tspan>
                   
               </text>
+              {animateLines.icLine && (
+                <g key={`${lineDirection}-${Date.now()}`}>
+                <image
+                  href={currEventIcon}
+                  width="30"
+                  height="30"
+                  style={{
+                    animation: "moveAlongIC 2s linear forwards",
+                    animationDirection: lineDirection === "normalDir" ? "normal" : "reverse",
+                    animationPlayState: isPaused ? "paused" : "running",
+                  }}
+                />
+                </g>
+                /* <g
+                  style={{
+                    animation: "moveAlongIC 2s linear",
+                    animationDirection: lineDirection === "normalDir" ? "normal" : "reverse",
+                    animationPlayState: isPaused ? "paused" : "running"
+                  }}
+                >
+                  <circle cx="0" cy="17" r="8" fill="#00bcd4" />
+                  <text
+                    x="75"
+                    y="-10"
+                    fontSize="10"
+                    fill="#094C7A"
+                    fontFamily="monospace"
+                  >
+                    {currEventMsg}
+                  </text>
+                </g> */
+              )}
             </svg>
           </Grid>
           <Grid item>

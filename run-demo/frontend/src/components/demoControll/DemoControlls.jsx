@@ -46,7 +46,6 @@ import {
 import { speak, deployAndExecute } from "../../utils/deviceUtils";
 import { sendPostData } from "../../services/apiService";
 import { v4 as uuidv4 } from 'uuid';
-import { useSyncedLocalStorage } from "../../services/SyncedLocalStorage";
 
 // eslint-disable-next-line no-undef
 const ANIMATION_MOVING_TIME = import.meta.env.VITE_ANIMATION_MOVING_TIME;
