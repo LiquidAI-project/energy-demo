@@ -18,9 +18,11 @@ import { useState, useEffect, useRef } from 'react';
 import { fetchData } from '../../services/apiService';
 import activeIcon from '../../assets/active.png';
 import inactiveIcon from '../../assets/inactive.png';
+import { useDemoControlContext } from "../../context/demoControlContext/useDemoControlContext";
+import { WITH_LIQUID_AI } from "../../../constants";
 
 export default function ArchitectureDiagram({ socketMsg, isPaused }) {
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [modules, setModules] = useState([]);
   const [deployments, setDeployments] = useState([]);
@@ -38,6 +40,7 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
   const [isWMActive, setIsWMActive] = useState(false);
   const [isEVActive, setIsEVActive] = useState(false);
   const isPausedRef = useRef(isPaused);
+  const { demoRunMethod, demoRunning, demoStatus, demoTime, scheduleProcessing, voiceEnabled, changeDemoRunMethod } = useDemoControlContext();
 
   // Helper function to wait until resumed
   const waitUntilResumed = async () => {
@@ -56,7 +59,7 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
       const deployments = await fetchData("/file/manifest");
       if (deployments || modules) {
         // Wait 2 seconds before processing data
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        await new Promise(resolve => setTimeout(resolve, 1200));
 
         // Wait here if paused 🚦
         await waitUntilResumed();
@@ -71,7 +74,7 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
         setModules(moduleNames);
         setDeployments(deploymentNames);
 
-        await new Promise(resolve => setTimeout(resolve, 1300));
+        await new Promise(resolve => setTimeout(resolve, 1200));
         setAnimateLines(prev => ({ ...prev, dbLine: false }));
         setLoading(false);
         setExpanded(true); 
@@ -83,7 +86,12 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
     }
   };
 
+  const dayPlanExecution = async () => {
+  
+  }
+
   useEffect(() => {
+    changeDemoRunMethod(WITH_LIQUID_AI);
     fetchAndSetData();
     const intervalId = setInterval(fetchAndSetData, 10 * 60 * 1000);
     return() => { clearInterval(intervalId); }
@@ -113,7 +121,7 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
           // Wait here if paused 🚦
           await new Promise(resolve => setTimeout(resolve, 2000));
           await waitUntilResumed();
-          await new Promise(resolve => setTimeout(resolve, 1500));
+          await new Promise(resolve => setTimeout(resolve, 1320));
 
           setAnimateLines(prev => ({ ...prev, freezerLine: false }));
           setIsFreezerActive(devices.find(device => device.name === "freezer").isActive);
@@ -125,7 +133,7 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
           // Wait here if paused 🚦
           await new Promise(resolve => setTimeout(resolve, 2000));
           await waitUntilResumed();
-          await new Promise(resolve => setTimeout(resolve, 1500));
+          await new Promise(resolve => setTimeout(resolve, 1320));
 
           setAnimateLines(prev => ({ ...prev, wmLine: false }));
           setIsWMActive(devices.find(device => device.name === "washing-machine").isActive);
@@ -137,7 +145,7 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
            // Wait here if paused 🚦
           await new Promise(resolve => setTimeout(resolve, 2000));
           await waitUntilResumed();
-          await new Promise(resolve => setTimeout(resolve, 1500));
+          await new Promise(resolve => setTimeout(resolve, 1320));
 
           setAnimateLines(prev => ({ ...prev, evLine: false }));
           setIsEVActive(devices.find(device => device.name === "ev-charger").isActive);
@@ -152,8 +160,13 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
       }
     }
     
-    handleSocketMsg();
-  }, [socketMsg]);
+    if (demoRunning && demoStatus === "running") 
+      handleSocketMsg();
+  }, [socketMsg, demoRunning, demoStatus]);
+
+  useEffect(() => {
+    dayPlanExecution();
+  }, [demoTime]);
 
   return (
     <>
