@@ -21,3 +21,4 @@ export const FLEXIBILITY_SERVICE = "flexibilityService";
 export const HACKER = "hacker";
 export const WITH_LIQUID_AI = "With Liquid AI";
 export const WITHOUT_LIQUID_AI = "Without Liquid AI";
+export const MONGO = "mongo";

@@ -3,7 +3,7 @@
 // This source code is licensed under the MIT license. See LICENSE in the repository root directory.
 // Author(s): Lakshan Rathnayaka <lakshan.rathnayaka@tuni.fi>, Ville Heikkilä <ville.heikkila@tuni.fi>.
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Popover } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import activeIcon from "../../assets/active.png";
@@ -23,6 +23,8 @@ const evCharger = React.forwardRef((props, ref) => {
   const [blinkState, setBlinkState] = useState(false);
   const [isActive, setIsActive] = useState(false);
   const [deviceInfo, setDeviceInfo] = useState({});
+  const prevValueRef = useRef(null);
+  const isFirstMount = useRef(true);
 
   const getDeviceStatus = deviceStatus.find((device) => device.deviceName === EV_CHARGER);
 
@@ -57,19 +59,32 @@ const evCharger = React.forwardRef((props, ref) => {
   useEffect(() => {
     let intervalId;
     if (getDeviceStatus.isEnergyIntensive) {
-      if(voiceEnabled)
-        speak("Electric cars are connected for charging");
       intervalId = setInterval(() => {
-        setBlinkState((prevState) => !prevState);
+        setBlinkState(prevState => !prevState);
       }, 500);
     } else {
-      if(voiceEnabled)
-        speak("Electric cars are removed from charging");
       setBlinkState(false); 
       clearInterval(intervalId);
     }
     return () => clearInterval(intervalId);
   }, [getDeviceStatus.isEnergyIntensive]);
+
+  useEffect(() => {
+    // Skip the first mount entirely
+    if (isFirstMount.current) {
+      isFirstMount.current = false;
+      prevValueRef.current = getDeviceStatus.isEnergyIntensive;
+      return; // ✅ don't run anything on first mount
+    }
+    // Only run if the value actually changed
+    if (prevValueRef.current === getDeviceStatus.isEnergyIntensive) return;
+    if (getDeviceStatus.isEnergyIntensive) {
+      if (voiceEnabled) speak("Electric cars are connected for charging");
+    } else {
+      if (voiceEnabled) speak("Electric cars are removed from charging");
+    }
+    prevValueRef.current = getDeviceStatus.isEnergyIntensive;
+  }, [getDeviceStatus.isEnergyIntensive, voiceEnabled]);
 
   const handleHoverOn = (event) => {
     setAnchorEl(event.currentTarget);

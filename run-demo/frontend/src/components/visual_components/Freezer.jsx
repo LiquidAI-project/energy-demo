@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Popover } from '@mui/material';
 import { useNavigate } from "react-router-dom";
 import freezerImage from '../../assets/freezer.png';
@@ -19,6 +19,8 @@ const Freezer = React.forwardRef((props, ref) => {
   const [blinkState, setBlinkState] = useState(false);
   const { deviceStatus } = useDemoVisualizationContext();
   const {voiceEnabled} = useDemoControlContext();
+  const prevValueRef = useRef(null);
+  const isFirstMount = useRef(true);
 
   const getDeviceStatus = deviceStatus.find((device) => device.deviceName === FREEZER);
 
@@ -35,7 +37,6 @@ const Freezer = React.forwardRef((props, ref) => {
     supervisorName: getDeviceStatus.supervisorName
   };
 
-  
   useEffect(() => {
     const checkEquipment = () => {
       const devices = JSON.parse(localStorage.getItem('devices') || '[]');
@@ -49,23 +50,35 @@ const Freezer = React.forwardRef((props, ref) => {
     return () => clearInterval(intervalId);
   }, [component.id]);
 
-  // Sets blinkState when the appliance is in running state
   useEffect(() => {
     let intervalId;
     if (getDeviceStatus.isEnergyIntensive) {
-      if(voiceEnabled)
-        speak("Freezer is turned on");
       intervalId = setInterval(() => {
-        setBlinkState((prevState) => !prevState);
+        setBlinkState(prevState => !prevState);
       }, 500);
     } else {
-      if(voiceEnabled)
-        speak("Freezer is turned off");
-      setBlinkState(false);
+      setBlinkState(false); 
       clearInterval(intervalId);
     }
     return () => clearInterval(intervalId);
   }, [getDeviceStatus.isEnergyIntensive]);
+
+  useEffect(() => {
+    // Skip the first mount entirely
+    if (isFirstMount.current) {
+      isFirstMount.current = false;
+      prevValueRef.current = getDeviceStatus.isEnergyIntensive;
+      return; // ✅ don't run anything on first mount
+    }
+    // Only run if the value actually changed
+    if (prevValueRef.current === getDeviceStatus.isEnergyIntensive) return;
+    if (getDeviceStatus.isEnergyIntensive) {
+      if (voiceEnabled) speak("Freezer is turned on");
+    } else {
+      if (voiceEnabled) speak("Freezer is turned off");
+    }
+    prevValueRef.current = getDeviceStatus.isEnergyIntensive;
+  }, [getDeviceStatus.isEnergyIntensive, voiceEnabled]);
 
   const handleHoverOn = (event) => {
     setAnchorEl(event.currentTarget);

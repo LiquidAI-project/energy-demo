@@ -5,7 +5,7 @@
 
 
 import React from "react";
-import { Box, Grid, Typography, CircularProgress } from "@mui/material";
+import { Box, Grid, Typography, CircularProgress, Button, Dialog, DialogTitle, DialogContent, DialogActions, Accordion, AccordionSummary, AccordionDetails } from "@mui/material";
 import DatabaseImg from '../../assets/database.png';
 import OrchestratorImg from '../../assets/orchestrator.png';
 import IntelligenceControlImg from '../../assets/intelligent_control.jpg';
@@ -20,6 +20,8 @@ import activeIcon from '../../assets/active.png';
 import inactiveIcon from '../../assets/inactive.png';
 import { useDemoControlContext } from "../../context/demoControlContext/useDemoControlContext";
 import { WITH_LIQUID_AI } from "../../../constants";
+import { v4 as uuidv4 } from 'uuid';
+import { ANIMATION_EVENT_SEQUENCE } from "../../assets/mockData/eventSequence";
 
 import NewDeviceDiscoveryIcon from "../../assets/new-device.png";
 import NewDeviceInfoIcon from "../../assets/new-device-info.png";
@@ -27,82 +29,82 @@ import SocketMsgIcon from "../../assets/socket-icon.png";
 import WasmWithOnnxIcon from "../../assets/wasm_with_onnx.png";
 import ScheduleIcon from "../../assets/schedule.png";
 
+const iconMap = {
+  NewDeviceDiscoveryIcon,
+  NewDeviceInfoIcon,
+  WasmWithOnnxIcon,
+  SocketMsgIcon,
+  ScheduleIcon
+};
+
+
 export default function ArchitectureDiagram({ socketMsg, isPaused }) {
   const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [modules, setModules] = useState([]);
   const [deployments, setDeployments] = useState([]);
-  const [animateLines, setAnimateLines] = useState({
-    dbLine: false,
-    icLine: false,
-    freezerLine: false,
-    evLine: false,
-    wmLine: false,
-  });
-  const [lineDirection, setLineDirection] = useState(null);
-  const [currEventIcon, setCurrEventIcon] = useState(null);
   const devices = JSON.parse(localStorage.getItem('devices') || '[]');
-  const [isFreezerActive, setIsFreezerActive] = useState(false);
-  const [isWMActive, setIsWMActive] = useState(false);
-  const [isEVActive, setIsEVActive] = useState(false);
+  const [isFreezerActive, setIsFreezerActive] = useState(devices.find(device => device.name === "freezer").isActive);
+  const [isWMActive, setIsWMActive] = useState(devices.find(device => device.name === "washing-machine").isActive);
+  const [isEVActive, setIsEVActive] = useState(devices.find(device => device.name === "ev-charger").isActive);
   const isPausedRef = useRef(isPaused);
-  const [eventAnimationActive, setEventAnimationActive] = useState(false);
-  const { demoRunMethod, demoRunning, demoStatus, demoTime, scheduleProcessing, voiceEnabled, changeDemoRunMethod } = useDemoControlContext();
+  const { demoRunning, demoStatus, demoTime, changeDemoRunMethod, eventProgress, setEventProgress, animateLines, eventAnimationActive, setEventAnimationActive, runGlobalAnimation } = useDemoControlContext();
+  const [deviceWorkInfo, setDeviceWorkInfo] = useState({
+    "freezer": [],
+    "washing-machine": [],
+    "ev-charger": [],
+  });
+  const [openOrchestratorDialog, setOpenOrchestratorDialog] = useState(false);
+  const [expandedAccordion, setExpandedAccordion] = useState(null);
+  const [detailsCache, setDetailsCache] = useState({}); // cache fetched info
 
-  // Helper function to wait until resumed
-  const waitUntilResumed = async () => {
-    while (isPausedRef.current) {
-      await new Promise(resolve => setTimeout(resolve, 300)); // check every 300ms
+
+  const handleAccordionChange = async (type, id, expanded) => {
+    if (!expanded) return; // only fetch when opened
+    if (detailsCache[id]) return; // already fetched
+  
+    let url = type === 'module'
+      ? `https://orchestrator.tlt-cityiot.rd.tuni.fi/file/module/${id}`
+      : `https://orchestrator.tlt-cityiot.rd.tuni.fi/file/manifest/${id}`;
+  
+    try {
+      const response = await fetch(url);
+      const data = await response.json();
+      setDetailsCache(prev => ({ ...prev, [id]: data }));
+    } catch (err) {
+      console.error(`Failed to fetch ${type} details:`, err);
     }
   };
 
+
   const fetchAndSetData = async () => {
+    if(eventAnimationActive) return;
     try {
       setLoading(true);
       setExpanded(false);
-      setAnimateLines(prev => ({ ...prev, dbLine: true }));
-      setLineDirection("normalDir"); 
+      runGlobalAnimation("normalDir", "dbLine", null, "Retrieving data", isPausedRef);
       const modules = await fetchData("/file/module");
       const deployments = await fetchData("/file/manifest");
       if (deployments || modules) {
         // Wait 2 seconds before processing data
         await new Promise(resolve => setTimeout(resolve, 1200));
-
-        // Wait here if paused 🚦
-        await waitUntilResumed();
-
-        const moduleNames = Array.isArray(modules)
-          ? modules.map(item => item.name)
+        const moduleItems = Array.isArray(modules)
+          ? modules.map(item => ({ _id: item._id, name: item.name }))
           : [];
-        const deploymentNames = Array.isArray(deployments)
-          ? deployments.map(item => item.name)
+        const deploymentItems = Array.isArray(deployments)
+          ? deployments.map(item => ({ _id: item._id, name: item.name }))
           : [];
-
-        setModules(moduleNames);
-        setDeployments(deploymentNames);
-
+        setModules(modules);
+        setDeployments(deployments);
         await new Promise(resolve => setTimeout(resolve, 1200));
-        setAnimateLines(prev => ({ ...prev, dbLine: false }));
         setLoading(false);
         setExpanded(true); 
       }
     } catch (error) {
       console.error("Error fetching deployments:", error);
       setLoading(false);
-      setAnimateLines(prev => ({ ...prev, dbLine: false }));
     }
   };
-
-  const runAnimation = async (lineDirectionValue, lineName, iconName) => {
-    setLineDirection(lineDirectionValue);
-    setAnimateLines(prev => ({ ...prev, [lineName]: true }));
-    setCurrEventIcon(prev => iconName);
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    await waitUntilResumed();
-    await new Promise(resolve => setTimeout(resolve, 1310));
-    setAnimateLines(prev => ({ ...prev, [lineName]: false }));
-    setCurrEventIcon(null);
-  }
 
   const dayPlanExecution = async () => {
     if (eventAnimationActive || isPausedRef.current) return;
@@ -112,32 +114,54 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
     const currentMinute = currentDate.getMinutes();
 
     if (currentHour == 0 && currentMinute === 30) {
-      setAnimateLines({
-        dbLine: false,
-        icLine: false,
-        freezerLine: false,
-        evLine: false,
-        wmLine: false,
-      });
-      setCurrEventIcon(null);
       await new Promise(resolve => setTimeout(resolve, 100));
       setEventAnimationActive(true);
-      await runAnimation("reverseDir", "evLine", NewDeviceDiscoveryIcon);
-      await runAnimation("normalDir", "icLine", NewDeviceInfoIcon);
-      await runAnimation("reverseDir", "icLine", ScheduleIcon);
-      runAnimation("normalDir", "freezerLine", ScheduleIcon);
-      runAnimation("normalDir", "wmLine", ScheduleIcon);
-      await runAnimation("normalDir", "evLine", ScheduleIcon);
+      await runGlobalAnimation("reverseDir", "evLine", NewDeviceDiscoveryIcon, isPausedRef);
+      await runGlobalAnimation("normalDir", "icLine", NewDeviceInfoIcon, isPausedRef);
+      await runGlobalAnimation("reverseDir", "icLine", ScheduleIcon, isPausedRef);
+      runGlobalAnimation("normalDir", "freezerLine", ScheduleIcon, isPausedRef);
+      runGlobalAnimation("normalDir", "wmLine", ScheduleIcon, isPausedRef);
+      await runGlobalAnimation("normalDir", "evLine", ScheduleIcon, isPausedRef);
       setEventAnimationActive(false);
     }
   }
 
+  const runAnimationEvent = async (event) => {
+   // const storageKey = `dayPlanExecution_${event.id}`;
+  
+    // 1️⃣ Load progress from sessionStorage or memory
+    //let storedProgress = JSON.parse(sessionStorage.getItem(event.id) || "{}");
+    setEventAnimationActive(true);
+    let storedProgress = eventProgress[event.id];
+    const currentStep = storedProgress.step || 1;
+    const totalSteps = event.steps.length; 
+    if (storedProgress.completed) return; // already finished
+    if (isPausedRef.current) return;  
+    for (let i = currentStep; i <= totalSteps; i++) {
+      const step = event.steps[i-1];
+      // 2️⃣ Update sessionStorage and state *after each step completes*
+      const updatedProgress = { step: i, completed: i >= totalSteps };
+      setEventProgress((prev) => ({
+        ...prev,
+        [event.id]: updatedProgress,
+      }));
+      if (Array.isArray(step[0])) {
+        await Promise.all(step.map(s => runGlobalAnimation(...s, isPausedRef)));
+      } else {
+        await runGlobalAnimation(...step, isPausedRef);
+      }
+      //console.log(`✅ Step ${i}/${totalSteps} complete for event ${event.id}`);
+    }
+    setEventAnimationActive(false);
+  };
+
   useEffect(() => {
     changeDemoRunMethod(WITH_LIQUID_AI);
-    fetchAndSetData();
-    setCurrEventIcon(prev => SocketMsgIcon);
-    const intervalId = setInterval(fetchAndSetData, 10 * 60 * 1000);
-    return() => { clearInterval(intervalId); }
+    if (new Date(demoTime).getHours() == 0)
+      fetchAndSetData();
+   // setCurrEventIcon(SocketMsgIcon);
+    //const intervalId = setInterval(fetchAndSetData, 10 * 60 * 1000);
+    //return() => { clearInterval(intervalId); }
   }, []);
 
   useEffect(() => {
@@ -151,28 +175,49 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
       // Skip processing if paused
       if (isPausedRef.current || eventAnimationActive) return;
 
-      console.log(socketMsg);
+      //console.log(socketMsg);
       
-      if (socketMsg && socketMsg.funcName.includes("thingi_health") && socketMsg.loglevel === "INFO") {
+      /*if (socketMsg && socketMsg.funcName.includes("thingi_health") && socketMsg.loglevel === "INFO") {
         if(socketMsg.deviceName === "freezer") {
-          await runAnimation("normalDir", "freezerLine", SocketMsgIcon);
+          await runGlobalAnimation("normalDir", "freezerLine", SocketMsgIcon, isPausedRef);
           setIsFreezerActive(devices.find(device => device.name === "freezer").isActive);
         }
         if(socketMsg.deviceName === "washing-machine") {
-          await runAnimation("normalDir", "wmLine", SocketMsgIcon);
+          await runGlobalAnimation("normalDir", "wmLine", SocketMsgIcon, isPausedRef);
           setIsWMActive(devices.find(device => device.name === "washing-machine").isActive);
         }
         if(socketMsg.deviceName === "ev-charger") {
-          await runAnimation("normalDir", "evLine", SocketMsgIcon);
+          await runGlobalAnimation("normalDir", "evLine", SocketMsgIcon, isPausedRef);
           setIsEVActive(devices.find(device => device.name === "ev-charger").isActive);
         }
-        if (isFreezerActive)
-          setIsFreezerActive(devices.find(device => device.name === "freezer").isActive);
-        if (isWMActive)
-          setIsWMActive(devices.find(device => device.name === "washing-machine").isActive);
-        if (isEVActive)
-          setIsEVActive(devices.find(device => device.name === "ev-charger").isActive);
 
+      }*/
+
+      //if(socketMsg && socketMsg.funcName.includes("deployment_create"))
+        //await runGlobalAnimation("normalDir", socketMsg.deviceName == "ev-charger" ? "evLine" : ( socketMsg.deviceName == "washing-machine" ? "wmLine" : "freezerLine" ), WasmWithOnnxIcon, isPausedRef);
+        
+      if(socketMsg && socketMsg.funcName.includes("do_wasm_work")) {  // Write in relevant device box the name of module deloyed
+        const timeValue = socketMsg.timestamp?.$date?.$numberLong
+        ? Number(socketMsg.timestamp.$date.$numberLong)
+        : Date.now();
+
+        // Convert it to readable local time
+        const formattedTime = new Date(timeValue).toLocaleTimeString([], {
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+
+        setDeviceWorkInfo(prev => ({
+          ...prev,
+          [socketMsg.deviceName]: [
+            ...prev[socketMsg.deviceName],
+            {
+              module: socketMsg.module_name,
+              time: formattedTime,
+            },
+          ],
+        }));
+        console.log(deviceWorkInfo);
       }
     }
     
@@ -181,8 +226,29 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
   }, [socketMsg, demoRunning, demoStatus]);
 
   useEffect(() => {
-    dayPlanExecution();
+    if (eventAnimationActive || isPausedRef.current) return;
+
+    const currentDate = new Date(demoTime);
+    const currentHour = currentDate.getHours();
+    const currentMinute = currentDate.getMinutes();
+
+    ANIMATION_EVENT_SEQUENCE.forEach((event) => {
+      if (event.hour === currentHour && event.minute === currentMinute) {
+        runAnimationEvent(event);
+      }
+    });
   }, [demoTime]);
+
+  /*useEffect(() => {
+    const keys = Object.keys(eventProgress);
+    keys.forEach((key) => {
+      const event = eventProgress[key];
+      if (!event.completed && demoRunning) {
+        const event = ANIMATION_EVENTS.find(e => e.id === key);
+        if (event) runAnimationEvent(event);
+      }
+    });
+  }, [demoRunning]);*/
 
   return (
     <>
@@ -276,9 +342,9 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
                 y2="17"
                 stroke="#094C7A"
                 strokeWidth="1.5"
-                strokeDasharray={animateLines.dbLine ? "8 8" : "0"}
+                strokeDasharray={animateLines.dbLine.active ? "8 8" : "0"}
                 style={{
-                  animation: animateLines.dbLine ? `${lineDirection} 1s linear infinite` : "none"
+                  animation: animateLines.dbLine.active ? `${animateLines.dbLine.direction} 1s linear infinite` : "none"
                 }}
                 markerStart="url(#arrowheadLeft)"
                 markerEnd="url(#arrowheadRight)"
@@ -293,11 +359,12 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
               >
                   Reads/Writes data
               </text>
-              {animateLines.dbLine && (
+              {animateLines.dbLine.active && (
                 <g
+                  key={animateLines.dbLine.runId}
                   style={{
                     animation: "moveAlongDB 2s linear",
-                    animationDirection: lineDirection === "normalDir" ? "normal" : "reverse",
+                    animationDirection: animateLines.dbLine.direction === "normalDir" ? "normal" : "reverse",
                     animationPlayState: isPaused ? "paused" : "running"
                   }}
                 >
@@ -404,42 +471,48 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
                   y2="199"
                   stroke="#094C7A"
                   strokeWidth="1.5"
-                  strokeDasharray={animateLines.freezerLine ? "8 8" : "0"}
+                  strokeDasharray={animateLines.freezerLine.active ? "8 8" : "0"}
                   style={{
-                    animation: animateLines.freezerLine ? `${lineDirection} 1s linear infinite` : "none"
+                    animation: animateLines.freezerLine.active ? `${animateLines.freezerLine.direction} 1s linear infinite` : "none"
                   }}
                   markerStart="url(#arrowheadLeft)"
                   markerEnd="url(#arrowheadRight)"
                 />
-                {animateLines.freezerLine && (
-                  <image
-                    href={currEventIcon}
+                {animateLines.freezerLine.active && (
+                  /*<image
+                    key={animateLines.freezerLine.runId}
+                    href={iconMap[animateLines.freezerLine.icon]}
                     width="30"
                     height="30"
                     style={{
                       animation: "moveAlongFreezer 2s linear forwards",
-                      animationDirection: lineDirection === "normalDir" ? "normal" : "reverse",
+                      animationDirection: animateLines.freezerLine.direction === "normalDir" ? "normal" : "reverse",
                       animationPlayState: isPaused ? "paused" : "running",
                     }}
-                  />
-                  /*<g
+                  />*/
+                  <g
+                    key={animateLines.freezerLine.runId}
                     style={{
-                      animation: "moveAlongFreezer 3s linear",
-                      animationDirection: lineDirection === "normalDir" ? "normal" : "reverse",
+                      animation: "moveAlongFreezer 3s linear forwards",
+                      animationDirection: animateLines.freezerLine.direction === "normalDir" ? "normal" : "reverse",
                       animationPlayState: isPaused ? "paused" : "running"
                     }}
                   >
-                    <circle cx="0" cy="0" r="8" fill="#00bcd4" />
+                    <image
+                      href={iconMap[animateLines.freezerLine.icon]}
+                      width="30"
+                      height="30"
+                    />
                     <text
-                      x="12"
-                      y="4"
+                      x="30"
+                      y="25"
                       fontSize="10"
                       fill="#094C7A"
                       fontFamily="monospace"
                     >
-                      {currEventMsg}
+                      {animateLines.freezerLine.eventMsg}
                     </text>
-                  </g> */
+                  </g>
                 )}
                 <line
                   x1="50%"
@@ -448,42 +521,49 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
                   y2="199"
                   stroke="#094C7A"
                   strokeWidth="1.5"
-                  strokeDasharray={animateLines.wmLine ? "8 8" : "0"}  // dashed when animateLines=true
+                  strokeDasharray={animateLines.wmLine.active ? "8 8" : "0"}  // dashed when animateLines=true
                   style={{
-                    animation: animateLines.wmLine ? `${lineDirection} 1s linear infinite` : "none"
+                    animation: animateLines.wmLine.active ? `${animateLines.wmLine.direction} 1s linear infinite` : "none"
                   }}
                   markerStart="url(#arrowheadLeft)"
                   markerEnd="url(#arrowheadRight)"
                 />
-               {animateLines.wmLine && (
-                  <image
-                    href={currEventIcon}
+               {animateLines.wmLine.active && (
+                 /*  <image
+                    key={animateLines.wmLine.runId}
+                    href={iconMap[animateLines.wmLine.icon]}
                     width="30"
                     height="30"
                     style={{
                       animation: "moveAlongWM 2s linear forwards",
-                      animationDirection: lineDirection === "normalDir" ? "normal" : "reverse",
+                      animationDirection: animateLines.wmLine.direction === "normalDir" ? "normal" : "reverse",
                       animationPlayState: isPaused ? "paused" : "running",
                     }}
-                  />
-                  /*<g
+                  /> */
+                  <g
+                    key={animateLines.wmLine.runId}
                     style={{
-                      animation: "moveAlongWM 3s linear",
-                      animationDirection: lineDirection === "normalDir" ? "normal" : "reverse",
-                      animationPlayState: isPaused ? "paused" : "running"
+                      animation: "moveAlongWM 2s linear forwards",
+                      animationDirection: animateLines.wmLine.direction === "normalDir" ? "normal" : "reverse",
+                      animationPlayState: isPaused ? "paused" : "running",
                     }}
                   >
-                    <circle cx="0" cy="0" r="8" fill="#00bcd4" />
+                    <image
+                      
+                      href={iconMap[animateLines.wmLine.icon]}
+                      width="30"
+                      height="30"
+                    />
                     <text
-                      x="12"
-                      y="4"
+                      x="30"
+                      y="25"
                       fontSize="10"
                       fill="#094C7A"
                       fontFamily="monospace"
                     >
-                      {currEventMsg}
+                      {animateLines.wmLine.eventMsg}
                     </text>
-                  </g>*/
+                  </g>
                 )}
                 <line
                   x1="58%"
@@ -492,42 +572,48 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
                   y2="199"
                   stroke="#094C7A"
                   strokeWidth="1.5"
-                  strokeDasharray={animateLines.evLine ? "8 8" : "0"}  // dashed when animateLines=true
+                  strokeDasharray={animateLines.evLine.active ? "8 8" : "0"}  // dashed when animateLines=true
                   style={{
-                    animation: animateLines.evLine ? `${lineDirection} 1s linear infinite` : "none"
+                    animation: animateLines.evLine.active ? `${animateLines.evLine.direction} 1s linear infinite` : "none"
                   }}
                   markerStart="url(#arrowheadLeft)"
                   markerEnd="url(#arrowheadRight)"
                 />
-                { animateLines.evLine && (
-                  <image
-                    href={currEventIcon}
+                { animateLines.evLine.active && (
+                  /* <image
+                    key={animateLines.evLine.runId}
+                    href={iconMap[animateLines.evLine.icon]}
                     width="30"
                     height="30"
                     style={{
                       animation: "moveAlongEV 2s linear forwards",
-                      animationDirection: lineDirection === "normalDir" ? "normal" : "reverse",
+                      animationDirection: animateLines.evLine.direction === "normalDir" ? "normal" : "reverse",
                       animationPlayState: isPaused ? "paused" : "running",
                     }}
-                  />
-                  /*<g
+                  /> */
+                  <g
+                    key={animateLines.evLine.runId}
                     style={{
-                      animation: "moveAlongEV 3s linear",
-                      animationDirection: lineDirection === "normalDir" ? "normal" : "reverse",
-                      animationPlayState: isPaused ? "paused" : "running"
+                      animation: "moveAlongEV 2s linear forwards",
+                      animationDirection: animateLines.evLine.direction === "normalDir" ? "normal" : "reverse",
+                      animationPlayState: isPaused ? "paused" : "running",
                     }}
                   >
-                    <circle cx="0" cy="0" r="8" fill="#00bcd4" />
+                    <image
+                      href={iconMap[animateLines.evLine.icon]}
+                      width="30"
+                      height="30"
+                    />
                     <text
-                      x="12" // horizontal offset from the circle
-                      y="4"  // vertical alignment
+                      x="30"
+                      y="25"  
                       fontSize="10"
                       fill="#094C7A"
                       fontFamily="monospace"
                     >
-                      {currEventMsg}
+                      {animateLines.evLine.eventMsg}
                     </text>
-                  </g>*/
+                  </g>
                 )} 
               </svg>
               {expanded && modules && (
@@ -551,9 +637,9 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
                       fontFamily="monospace"
                     >
                       {
-                        modules.map((mod, index) => (
+                        modules.slice(0, 2).map((mod, index) => (
                           <React.Fragment key={index}>
-                            {mod}
+                            {mod.name}
                             <br />
                           </React.Fragment>
                         ))
@@ -583,9 +669,9 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
                       fontFamily="monospace"
                     >
                       {
-                        deployments.map((mod, index) => (
+                        deployments.slice(0, 2).map((mod, index) => (
                           <React.Fragment key={index}>
-                            {mod}
+                            {mod.name}
                             <br />
                           </React.Fragment>
                         ))
@@ -593,6 +679,21 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
                     </Typography>
                   </Box>
                 </>
+              )}
+              {expanded && (modules.length > 2 || deployments.length > 2) && (
+                <Typography
+                  onClick={() => setOpenOrchestratorDialog(true)}
+                  sx={{
+                    mt: 1,
+                    color: "#00bcd4",
+                    cursor: "pointer",
+                    textDecoration: "underline",
+                    fontSize: "0.9rem",
+                    alignSelf: "flex-end",
+                  }}
+                >
+                  See More
+                </Typography>
               )}
               <IconButton
                 size="small"
@@ -612,6 +713,61 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
                   }}
                 />
               </IconButton>
+              {/* --- See More Dialog --- */}
+              <Dialog
+                open={openOrchestratorDialog}
+                onClose={() => setOpenOrchestratorDialog(false)}
+                fullWidth
+                maxWidth="sm"
+              >
+                <DialogTitle>Modules & Deployments</DialogTitle>
+                <DialogContent dividers>
+                  <Typography variant="h6" gutterBottom>Modules</Typography>
+                  {modules.map((mod, index) => (
+                    <Accordion 
+                     key={mod._id}
+                     onChange={(e, expanded) => handleAccordionChange('module', mod._id, expanded)}
+                    >
+                      <AccordionSummary
+                        expandIcon={<ExpandMoreIcon />}
+                        aria-controls={`module-content-${index}`}
+                        id={`module-header-${index}`}
+                      >
+                        <Typography>{mod.name || mod}</Typography> {/* show name or module string */}
+                      </AccordionSummary>
+                      <AccordionDetails>
+                      <Typography component="pre" variant="body2" fontFamily="monospace" sx={{ whiteSpace: 'pre-wrap' }}>
+                        {detailsCache[mod._id] ? JSON.stringify(detailsCache[mod._id], null, 2) : 'Loading...'}
+                      </Typography>
+                      </AccordionDetails>
+                    </Accordion>
+                  ))}
+
+                  <Typography variant="h6" gutterBottom mt="20px">Deployments</Typography>
+                  {deployments.map((dep, index) => (
+                    <Accordion 
+                      key={index}
+                      onChange={(e, expanded) => handleAccordionChange('deployment', dep._id, expanded)}
+                    >
+                      <AccordionSummary
+                        expandIcon={<ExpandMoreIcon />}
+                        aria-controls={`module-content-${index}`}
+                        id={`module-header-${index}`}
+                      >
+                        <Typography>{dep.name || mod}</Typography> {/* show name or module string */}
+                      </AccordionSummary>
+                      <AccordionDetails>
+                        <Typography component="pre" variant="body2" fontFamily="monospace" sx={{ whiteSpace: 'pre-wrap' }}>
+                          {detailsCache[dep._id] ? JSON.stringify(detailsCache[dep._id], null, 2) : 'Loading...'}
+                        </Typography>
+                      </AccordionDetails>
+                    </Accordion>
+                  ))}
+                </DialogContent>
+                <DialogActions>
+                  <Button onClick={() => setOpenOrchestratorDialog(false)}>Close</Button>
+                </DialogActions>
+              </Dialog>
             </Box>
           </Grid>
           <Grid item sx={{ px: 0, mx: -2, zIndex: 2, display:'flex', alignItems:'center' }}>
@@ -647,9 +803,9 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
                 y2="17"
                 stroke="#094C7A"
                 strokeWidth="1.5"
-                strokeDasharray={animateLines.icLine ? "8 8" : "0"}
+                strokeDasharray={animateLines.icLine.active ? "8 8" : "0"}
                 style={{
-                  animation: animateLines.icLine ? `${lineDirection} 1s linear infinite` : "none"
+                  animation: animateLines.icLine.active ? `${animateLines.icLine.direction} 1s linear infinite` : "none"
                 }}
                 markerStart="url(#arrowheadLeft)"
                 markerEnd="url(#arrowheadRight)"
@@ -667,37 +823,41 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
                   <tspan x="75" dy="12">and execution</tspan>
                   
               </text>
-              {animateLines.icLine && (
-                <g key={`${lineDirection}-${Date.now()}`}>
-                <image
-                  href={currEventIcon}
+              {animateLines.icLine.active && (
+                /*<image
+                  key={animateLines.icLine.runId}
+                  href={iconMap[animateLines.icLine.icon]}
                   width="30"
                   height="30"
                   style={{
                     animation: "moveAlongIC 2s linear forwards",
-                    animationDirection: lineDirection === "normalDir" ? "normal" : "reverse",
-                    animationPlayState: isPaused ? "paused" : "running",
+                    animationDirection: animateLines.icLine.direction === "normalDir" ? "normal" : "reverse",
+                    animationPlayState: isPausedRef.current ? "paused" : "running",
                   }}
-                />
-                </g>
-                /* <g
+                />*/
+                <g
+                  key={animateLines.icLine.runId}
                   style={{
-                    animation: "moveAlongIC 2s linear",
-                    animationDirection: lineDirection === "normalDir" ? "normal" : "reverse",
-                    animationPlayState: isPaused ? "paused" : "running"
+                    animation: "moveAlongIC 2s linear forwards",
+                    animationDirection: animateLines.icLine.direction === "normalDir" ? "normal" : "reverse",
+                    animationPlayState: isPausedRef.current ? "paused" : "running",
                   }}
                 >
-                  <circle cx="0" cy="17" r="8" fill="#00bcd4" />
+                  <image
+                    href={iconMap[animateLines.icLine.icon]}
+                    width="30"
+                    height="30"
+                  />
                   <text
-                    x="75"
-                    y="-10"
+                    x="30"
+                    y="25"
                     fontSize="10"
                     fill="#094C7A"
                     fontFamily="monospace"
                   >
-                    {currEventMsg}
+                    {animateLines.icLine.eventMsg}
                   </text>
-                </g> */
+                </g> 
               )}
             </svg>
           </Grid>
@@ -725,6 +885,30 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
                     zIndex: 2
                   }}
                 />
+                {deviceWorkInfo["freezer"].length > 0 && (
+                  <Box
+                    sx={{
+                      mt: 1,
+                      bgcolor: "#ffffff33",
+                      borderRadius: 1,
+                      p: 1,
+                      width: "100%",
+                      maxHeight: 100,
+                      overflowY: "auto",
+                    }}
+                  >
+                    {deviceWorkInfo["freezer"].map((info, index) => (
+                      <Typography
+                        key={index}
+                        variant="caption"
+                        align="center"
+                        sx={{ color: "#fff", display: "block" }}
+                      >
+                        {info.module} — <span style={{ color: "#ddd" }}>{info.time}</span>
+                      </Typography>
+                    ))}
+                  </Box>
+                )}
               </Box>
             </Grid>
             <Grid item>
@@ -742,6 +926,30 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
                     zIndex: 2
                   }}
                 />
+                {deviceWorkInfo["washing-machine"].length > 0 && (
+                  <Box
+                    sx={{
+                      mt: 1,
+                      bgcolor: "#ffffff33",
+                      borderRadius: 1,
+                      p: 1,
+                      width: "100%",
+                      maxHeight: 100,
+                      overflowY: "auto",
+                    }}
+                  >
+                    {deviceWorkInfo["washing-machine"].map((info, index) => (
+                      <Typography
+                        key={index}
+                        variant="caption"
+                        align="center"
+                        sx={{ color: "#fff", display: "block" }}
+                      >
+                        {info.module} — <span style={{ color: "#ddd" }}>{info.time}</span>
+                      </Typography>
+                    ))}
+                  </Box>
+                )}
               </Box>
             </Grid>
             <Grid item>
@@ -759,6 +967,30 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
                     zIndex: 2
                   }}
                 />
+                {deviceWorkInfo["ev-charger"].length > 0 && (
+                  <Box
+                    sx={{
+                      mt: 1,
+                      bgcolor: "#ffffff33",
+                      borderRadius: 1,
+                      p: 1,
+                      width: "100%",
+                      maxHeight: 100,
+                      overflowY: "auto",
+                    }}
+                  >
+                    {deviceWorkInfo["ev-charger"].map((info, index) => (
+                      <Typography
+                        key={index}
+                        variant="caption"
+                        align="center"
+                        sx={{ color: "#fff", display: "block" }}
+                      >
+                        {info.module} — <span style={{ color: "#ddd" }}>{info.time}</span>
+                      </Typography>
+                    ))}
+                  </Box>
+                )}
               </Box>
             </Grid>
           </Grid>

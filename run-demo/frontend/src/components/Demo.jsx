@@ -123,7 +123,7 @@ const Demo = () => {
   const [index, setIndex] = useState(0);
   const [rescheduleHistory, setRescheduleHistory] = useState([]);
   const voiceEnabledRef = useRef(voiceEnabled);
-  const [showMainView, setShowMainView] = useState(true);
+  const [isMainViewActive, setisMainViewActive] = useState(true);
   const [latestSocketMsg, setLatestSocketMsg] = useState(null);
 
   let totalConsumptionCloudBased = [];
@@ -844,7 +844,7 @@ const Demo = () => {
         }
       }
     };
-  }, [demoRunMethod, hackerVisibility, paused]);
+  }, [demoRunMethod, hackerVisibility, paused, isMainViewActive]);
 
   return (
     <div>
@@ -866,9 +866,9 @@ const Demo = () => {
         >
           Energy Demo
         </Typography>
-        <Tooltip title={ showMainView ? "Switch to Architecture View" : "Switch to UI View" }>
+        <Tooltip title={ isMainViewActive ? "Switch to Architecture View" : "Switch to UI View" }>
         <IconButton
-          onClick={() => setShowMainView((prev) => !prev)}
+          onClick={() => setisMainViewActive((prev) => !prev)}
           sx={{
             position: "absolute",
             top: 20,
@@ -879,7 +879,7 @@ const Demo = () => {
             "&:hover": { backgroundColor: "#e0e0e0" },
           }}
         >
-          {showMainView ? <AccountTreeIcon /> : <HomeIcon />}
+          {isMainViewActive ? <AccountTreeIcon /> : <HomeIcon />}
         </IconButton>
       </Tooltip>
         <Grid
@@ -888,7 +888,7 @@ const Demo = () => {
           columns={5}
           style={{ paddingRight: "3vh", paddingLeft: "3vh" }}
         >
-          {showMainView ? (
+          {isMainViewActive ? (
             <>
           {demoRunMethod === WITH_LIQUID_AI && (
             <>
@@ -1503,8 +1503,8 @@ const Demo = () => {
                     {/*Energy components inside the house*/}
                     <Freezer ref={freezerRef} />
                     <WashingMachine ref={washingMachineRef} />
-                    <ElectricCar1 ref={electricCar1Ref} />
-                    <ElectricCar2 ref={electricCar2Ref} />
+                    <ElectricCar1 ref={electricCar1Ref} isMainViewActive={isMainViewActive} />
+                    <ElectricCar2 ref={electricCar2Ref} isMainViewActive={isMainViewActive} />
                     <Jacuzzi ref={jacuzziRef} />
                     <EvCharger ref={evChargerRef} />
                   </div>

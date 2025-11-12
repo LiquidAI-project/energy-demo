@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Popover } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import washingMachineImage from "../../assets/washing_machine.png";
@@ -19,6 +19,8 @@ const WashingMachine = React.forwardRef((props, ref) => {
   const [blinkState, setBlinkState] = useState(false);
   const { deviceStatus } = useDemoVisualizationContext();
   const {voiceEnabled} = useDemoControlContext();
+  const prevValueRef = useRef(null);
+  const isFirstMount = useRef(true);
 
   const getDeviceStatus = deviceStatus.find((device) => device.deviceName === WASHING_MACHINE);
 
@@ -51,17 +53,31 @@ const WashingMachine = React.forwardRef((props, ref) => {
     return () => clearInterval(intervalId);
   }, [component.id]);
 
+  // Sets blinkState when the appliance is in running state
+  useEffect(() => {
+    // Skip the first mount entirely
+    if (isFirstMount.current) {
+      isFirstMount.current = false;
+      prevValueRef.current = getDeviceStatus.isEnergyIntensive;
+      return; // ✅ don't run anything on first mount
+    }
+    // Only run if the value actually changed
+    if (prevValueRef.current === getDeviceStatus.isEnergyIntensive) return;
+    if (getDeviceStatus.isEnergyIntensive) {
+      if (voiceEnabled) speak("Washing machine is turned on");
+    } else {
+      if (voiceEnabled) speak("Washing machine is turned off");
+    }
+    prevValueRef.current = getDeviceStatus.isEnergyIntensive;
+  }, [getDeviceStatus.isEnergyIntensive, voiceEnabled]);
+
   useEffect(() => {
     let intervalId;
     if (getDeviceStatus.isEnergyIntensive) {
-      if(voiceEnabled)
-        speak("Washing machine is turned on");
       intervalId = setInterval(() => {
         setBlinkState(prevState => !prevState);
       }, 500);
     } else {
-      if(voiceEnabled)
-        speak("Washing machine is turned off");
       setBlinkState(false); 
       clearInterval(intervalId);
     }

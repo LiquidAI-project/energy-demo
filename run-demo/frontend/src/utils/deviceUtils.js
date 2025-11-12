@@ -105,29 +105,28 @@ export const speak = (text) => {
  * @param {string} params - The data to be sent to execute API.
  * @param {string} sessionId - The id value to handle animations.
  */
-export const deployAndExecute = (deploymentId, deploymentName, deviceName, params) => {
-  console.log(`Sending ${deploymentName} manifest deploy request`); 
-    sendPostData(`/file/manifest/${deploymentId}`)
-    .then((res) => {
-      const status = Object.values(res.deviceResponses)
-                      .find(d => d.deploymentId === deploymentId)
-                      ?.status;
-      if (status === "success") {
-        console.log(`Sending ${deploymentName} execution request`); 
-        sendPostData(`/execute/${deploymentId}`, params)
-        .then((res) => {
-          if (res.result) {
-            return "Success";
-          } else {
-            console.warn(`Manifest deployment failed, skipping to start ${deviceName}`);
-            return `Manifest deployment failed, skipping to start ${deviceName}`;
-          }
-        })
-        .catch((err) => console.error("Request error:", err));
+export const deployAndExecute = async (deploymentId, deploymentName, deviceName, params) => {
+  try {
+    console.log(`Sending ${deploymentName} manifest deploy request`);
+    const manifestRes = await sendPostData(`/file/manifest/${deploymentId}`);
+    const status = Object.values(manifestRes.deviceResponses)
+                  .find(d => d.deploymentId === deploymentId)
+                  ?.status;
+    if (status === "success") {
+      console.log(`Sending ${deploymentName} execution request`);
+      const execRes = await sendPostData(`/execute/${deploymentId}`, params);   
+      if (execRes.result) {
+        return "Success";
       } else {
-        console.warn(`Module execution failed, ${deviceName} can not be started`);
-        return `Module execution failed, ${deviceName} can not be started`;
+        console.warn(`Manifest deployment failed, skipping to start ${deviceName}`);
+        return `Manifest deployment failed, skipping to start ${deviceName}`;
       }
-    })
-    .catch((err) => console.error("Request error:", err)); 
-}
+    } else {
+      console.warn(`Module execution failed, ${deviceName} can not be started`);
+      return `Module execution failed, ${deviceName} can not be started`;
+    }
+  } catch (err) {
+    console.error("Request error:", err);
+    return `Error: ${err.message || err}`;
+  }
+};

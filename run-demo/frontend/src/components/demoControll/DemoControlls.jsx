@@ -61,7 +61,7 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
     setEv2PluggedIn,
     setMovingDeployments
   } = useDemoVisualizationContext();
-  const { voiceEnabled, demoRunMethod, demoRunning, scheduleProcessing, demoTime, demoStatus, setDemoRunning, setScheduleProcessing, setDemoTime, setVoiceEnabled, setDemoStatus } = useDemoControlContext();
+  const { voiceEnabled, demoRunMethod, demoRunning, scheduleProcessing, demoTime, demoStatus, setDemoRunning, resetArchitectutreAnimations, setScheduleProcessing, setDemoTime, setVoiceEnabled, setDemoStatus } = useDemoControlContext();
 
 
   /**
@@ -149,7 +149,7 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
     if (currentHour == 1 && currentMinute === 40) {
       const sessionId = uuidv4();
       animationSessionRef.current = sessionId;
-      const result = deployAndExecute("6904c92175d1501dc7b259d3", "Fibo_EV", EV_CHARGER, {"param0": 8});
+      const result = await deployAndExecute("6904c92175d1501dc7b259d3", "Fibo_EV", EV_CHARGER, {"param0": 8});
       if (result === "Success") {
         runMoveCodeAnimation(ORCHESTRATOR, EV_CHARGER, WasmWithOnnxIcon, null, sessionId);
         if(voiceEnabled)
@@ -163,7 +163,8 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
     if (currentHour == 2 && currentMinute === 40) {
       const sessionId = uuidv4();
       animationSessionRef.current = sessionId;
-      const result = deployAndExecute("6904c91175d1501dc7b259a6", "Fibo_Freezer", FREEZER, {"param0": 10});
+      const result = await deployAndExecute("6904c91175d1501dc7b259a6", "Fibo_Freezer", FREEZER, {"param0": 10});
+      console.log(result);
       if (result === "Success") {
         runMoveCodeAnimation(ORCHESTRATOR, FREEZER, WasmWithOnnxIcon, null, sessionId);
         if(voiceEnabled)
@@ -210,7 +211,7 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
     if (currentHour == 6 && currentMinute === 40) {
       const sessionId = uuidv4();
       animationSessionRef.current = sessionId;
-      const result = deployAndExecute("6904c91175d1501dc7b259a6", "Fibo_Freezer", FREEZER, {"param0": 10});
+      const result = await deployAndExecute("6904c91175d1501dc7b259a6", "Fibo_Freezer", FREEZER, {"param0": 10});
       if (result === "Success") {
         runMoveCodeAnimation(ORCHESTRATOR, FREEZER, WasmWithOnnxIcon, null, sessionId);
         if(voiceEnabled)
@@ -224,7 +225,7 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
     if (currentHour == 7 && currentMinute === 40) {
       const sessionId = uuidv4();
       animationSessionRef.current = sessionId;
-      const result = deployAndExecute("6904c93375d1501dc7b25a00", "Fibo_WM", WASHING_MACHINE, {"param0": 6});
+      const result = await deployAndExecute("6904c93375d1501dc7b25a00", "Fibo_WM", WASHING_MACHINE, {"param0": 6});
       if (result === "Success") {
         runMoveCodeAnimation(ORCHESTRATOR, WASHING_MACHINE, WasmWithOnnxIcon, null, sessionId);
         if(voiceEnabled)
@@ -271,7 +272,7 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       runMoveCodeAnimation(ORCHESTRATOR, WASHING_MACHINE, ScheduleIcon, null, sessionId);
       if (animationSessionRef.current !== sessionId) return; 
       await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef, sessionId);
-      const result = deployAndExecute("6904c93375d1501dc7b25a00", "Fibo_WM", WASHING_MACHINE, {"param0": 6});
+      const result = await deployAndExecute("6904c93375d1501dc7b25a00", "Fibo_WM", WASHING_MACHINE, {"param0": 6});
       if (result === "Success") {
         runMoveCodeAnimation(ORCHESTRATOR, WASHING_MACHINE, WasmWithOnnxIcon, null, sessionId);
         if(voiceEnabled)
@@ -289,7 +290,7 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
     if (currentHour == 11 && currentMinute === 40) {
       const sessionId = uuidv4();
       animationSessionRef.current = sessionId;
-      const result = deployAndExecute("6904c91175d1501dc7b259a6", "Fibo_Freezer", FREEZER, {"param0": 8});
+      const result = await deployAndExecute("6904c91175d1501dc7b259a6", "Fibo_Freezer", FREEZER, {"param0": 8});
       if (result === "Success") {
         runMoveCodeAnimation(ORCHESTRATOR, FREEZER, WasmWithOnnxIcon, null, sessionId);
         if(voiceEnabled)
@@ -336,7 +337,7 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
     if (currentHour == 14 && currentMinute === 40) {
       const sessionId = uuidv4();
       animationSessionRef.current = sessionId;
-      const result = deployAndExecute("6904c93375d1501dc7b25a00", "Fibo_WM", WASHING_MACHINE, {"param0": 6});
+      const result = await deployAndExecute("6904c93375d1501dc7b25a00", "Fibo_WM", WASHING_MACHINE, {"param0": 6});
       if (result === "Success") {
         runMoveCodeAnimation(ORCHESTRATOR, WASHING_MACHINE, WasmWithOnnxIcon, null, sessionId);
         if(voiceEnabled)
@@ -390,7 +391,7 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
     if (currentHour == 18 && currentMinute === 40) {
       const sessionId = uuidv4();
       animationSessionRef.current = sessionId;
-      const result = deployAndExecute("6904c91175d1501dc7b259a6", "Fibo_Freezer", FREEZER, {"param0": 10});
+      const result = await deployAndExecute("6904c91175d1501dc7b259a6", "Fibo_Freezer", FREEZER, {"param0": 10});
       if (result === "Success") {
         runMoveCodeAnimation(ORCHESTRATOR, FREEZER, WasmWithOnnxIcon, null, sessionId);
         if(voiceEnabled)
@@ -437,7 +438,7 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
     if (currentHour == 21 && currentMinute === 40) {
       const sessionId = uuidv4();
       animationSessionRef.current = sessionId;
-      let result = deployAndExecute("6904c91175d1501dc7b259a6", "Fibo_Freezer", FREEZER, {"param0": 8});
+      let result = await deployAndExecute("6904c91175d1501dc7b259a6", "Fibo_Freezer", FREEZER, {"param0": 8});
       if (result === "Success") {
         runMoveCodeAnimation(ORCHESTRATOR, FREEZER, WasmWithOnnxIcon, null, sessionId);
         if (animationSessionRef.current !== sessionId) return;
@@ -449,7 +450,7 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
           speak(result);
       }
       
-      result = deployAndExecute("6904c92175d1501dc7b259d3", "Fibo_EV", EV_CHARGER, {"param0": 6});
+      result = await deployAndExecute("6904c92175d1501dc7b259d3", "Fibo_EV", EV_CHARGER, {"param0": 6});
       if (result === "Success") {
         runMoveCodeAnimation(ORCHESTRATOR, EV_CHARGER, WasmWithOnnxIcon, null, sessionId);
         if (animationSessionRef.current !== sessionId) return; 
@@ -566,6 +567,7 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
     setDemoTime(resetDemoTime);
     setDemoRunning(false);
     setScheduleProcessing(false);
+    resetArchitectutreAnimations();
     animationSessionRef.current = null;
     setMovingDeployments([]);
     setDayPlans(initialDayPlan);
