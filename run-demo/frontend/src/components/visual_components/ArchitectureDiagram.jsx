@@ -106,26 +106,6 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
     }
   };
 
-  const dayPlanExecution = async () => {
-    if (eventAnimationActive || isPausedRef.current) return;
-
-    const currentDate = new Date(demoTime);
-    const currentHour = currentDate.getHours();
-    const currentMinute = currentDate.getMinutes();
-
-    if (currentHour == 0 && currentMinute === 30) {
-      await new Promise(resolve => setTimeout(resolve, 100));
-      setEventAnimationActive(true);
-      await runGlobalAnimation("reverseDir", "evLine", NewDeviceDiscoveryIcon, isPausedRef);
-      await runGlobalAnimation("normalDir", "icLine", NewDeviceInfoIcon, isPausedRef);
-      await runGlobalAnimation("reverseDir", "icLine", ScheduleIcon, isPausedRef);
-      runGlobalAnimation("normalDir", "freezerLine", ScheduleIcon, isPausedRef);
-      runGlobalAnimation("normalDir", "wmLine", ScheduleIcon, isPausedRef);
-      await runGlobalAnimation("normalDir", "evLine", ScheduleIcon, isPausedRef);
-      setEventAnimationActive(false);
-    }
-  }
-
   const runAnimationEvent = async (event) => {
    // const storageKey = `dayPlanExecution_${event.id}`;
   
@@ -159,7 +139,6 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
     changeDemoRunMethod(WITH_LIQUID_AI);
     if (new Date(demoTime).getHours() == 0)
       fetchAndSetData();
-   // setCurrEventIcon(SocketMsgIcon);
     //const intervalId = setInterval(fetchAndSetData, 10 * 60 * 1000);
     //return() => { clearInterval(intervalId); }
   }, []);
@@ -175,23 +154,23 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
       // Skip processing if paused
       if (isPausedRef.current || eventAnimationActive) return;
 
-      //console.log(socketMsg);
+      console.log(socketMsg);
       
-      /*if (socketMsg && socketMsg.funcName.includes("thingi_health") && socketMsg.loglevel === "INFO") {
+      if (socketMsg && socketMsg.funcName.includes("thingi_health") && socketMsg.loglevel === "INFO") {
         if(socketMsg.deviceName === "freezer") {
-          await runGlobalAnimation("normalDir", "freezerLine", SocketMsgIcon, isPausedRef);
+          await runGlobalAnimation("normalDir", "freezerLine", "SocketMsgIcon", "Health check done", isPausedRef);
           setIsFreezerActive(devices.find(device => device.name === "freezer").isActive);
         }
         if(socketMsg.deviceName === "washing-machine") {
-          await runGlobalAnimation("normalDir", "wmLine", SocketMsgIcon, isPausedRef);
+          await runGlobalAnimation("normalDir", "wmLine", "SocketMsgIcon", "Health check done", isPausedRef);
           setIsWMActive(devices.find(device => device.name === "washing-machine").isActive);
         }
         if(socketMsg.deviceName === "ev-charger") {
-          await runGlobalAnimation("normalDir", "evLine", SocketMsgIcon, isPausedRef);
+          await runGlobalAnimation("normalDir", "evLine", "SocketMsgIcon", "Health check done", isPausedRef);
           setIsEVActive(devices.find(device => device.name === "ev-charger").isActive);
         }
 
-      }*/
+      }
 
       //if(socketMsg && socketMsg.funcName.includes("deployment_create"))
         //await runGlobalAnimation("normalDir", socketMsg.deviceName == "ev-charger" ? "evLine" : ( socketMsg.deviceName == "washing-machine" ? "wmLine" : "freezerLine" ), WasmWithOnnxIcon, isPausedRef);
@@ -367,6 +346,8 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
                     animationDirection: animateLines.dbLine.direction === "normalDir" ? "normal" : "reverse",
                     animationPlayState: isPaused ? "paused" : "running"
                   }}
+                  //transform={`translate(${11 + 129 * animateLines.dbLine.progress})`} // x1 + (x2-x1)*progress
+                    //transform={`translate(${x1 + (x2 - x1) * animateLines.dbLine.progress}, ${y1 + (y2 - y1) * animateLines.dbLine.progress})`}
                 >
                   <circle cx="0" cy="17" r="8" fill="#00bcd4" />
                 </g>
@@ -492,11 +473,13 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
                   />*/
                   <g
                     key={animateLines.freezerLine.runId}
+                    //transform={`translate(${42 + 18 * animateLines.freezerLine.progress})`} // x1 + (x2-x1)*progress
                     style={{
                       animation: "moveAlongFreezer 3s linear forwards",
                       animationDirection: animateLines.freezerLine.direction === "normalDir" ? "normal" : "reverse",
                       animationPlayState: isPaused ? "paused" : "running"
                     }}
+                      //transform={`translate(${x1 + (x2 - x1) * animateLines.freezerLine.progress}, ${y1 + (y2 - y1) * animateLines.freezerLine.progress})`}
                   >
                     <image
                       href={iconMap[animateLines.freezerLine.icon]}
@@ -542,11 +525,13 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
                   /> */
                   <g
                     key={animateLines.wmLine.runId}
+                    //transform={`translate(${50 + 0 * animateLines.wmLine.progress})`} // x1 + (x2-x1)*progress
                     style={{
                       animation: "moveAlongWM 2s linear forwards",
                       animationDirection: animateLines.wmLine.direction === "normalDir" ? "normal" : "reverse",
                       animationPlayState: isPaused ? "paused" : "running",
                     }}
+                      //transform={`translate(${x1 + (x2 - x1) * animateLines.wmLine.progress}, ${y1 + (y2 - y1) * animateLines.wmLine.progress})`}
                   >
                     <image
                       
@@ -593,11 +578,14 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
                   /> */
                   <g
                     key={animateLines.evLine.runId}
+                    //transform={animateLines.evLine.direction === "normalDir" ? `translate(${58 + 97 * animateLines.evLine.progress}, ${8 + 191 * animateLines.evLine.progress})` : `translate(${155 - 80 * animateLines.evLine.progress}, ${199 - 200 * animateLines.evLine.progress})`} // x1 + (x2-x1)*progress
+              
                     style={{
                       animation: "moveAlongEV 2s linear forwards",
                       animationDirection: animateLines.evLine.direction === "normalDir" ? "normal" : "reverse",
                       animationPlayState: isPaused ? "paused" : "running",
                     }}
+                     // transform={`translate(${x1 + (x2 - x1) * animateLines.evLine.progress}, ${y1 + (y2 - y1) * animateLines.evLine.progress})`}
                   >
                     <image
                       href={iconMap[animateLines.evLine.icon]}
@@ -837,11 +825,13 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
                 />*/
                 <g
                   key={animateLines.icLine.runId}
+                  //transform={`translate(${18 + 122 * animateLines.icLine.progress})`} // x1 + (x2-x1)*progress
                   style={{
                     animation: "moveAlongIC 2s linear forwards",
                     animationDirection: animateLines.icLine.direction === "normalDir" ? "normal" : "reverse",
                     animationPlayState: isPausedRef.current ? "paused" : "running",
                   }}
+                    //transform={`translate(${x1 + (x2 - x1) * animateLines.icLine.progress}, ${y1 + (y2 - y1) * animateLines.icLine.progress})`}
                 >
                   <image
                     href={iconMap[animateLines.icLine.icon]}

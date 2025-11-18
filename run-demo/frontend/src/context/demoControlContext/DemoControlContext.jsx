@@ -26,7 +26,7 @@ const getInitialEventProgress = () => {
   //sessionStorage.setItem("eventProgress", JSON.stringify(initial));
   return initial;
 };
-
+//progress: 0, startTime: null, pausedAt: 0,
 const createEmptyAnimateLines = () => ({
   dbLine: { active: false, direction: "normalDir", icon: null, eventMsg: null, runId: 0 },
   icLine: { active: false, direction: "normalDir", icon: null, eventMsg: null, runId: 0 },
@@ -111,6 +111,81 @@ export const DemoControlProvider = ({ children }) => {
       },
     }));
   }
+
+    /* const runGlobalAnimation = async (direction, lineName, icon, msg, pausedRef) => {
+      const runId = uuidv4();
+      const line = animateLines[lineName] || { progress: 0, pausedAt: 0 };
+    
+      // Compute startTime only for this run
+      let startTime = Date.now() - (line.progress || 0) * ANIMATION_MOVING_TIME;
+    
+      setAnimateLines(prev => ({
+        ...prev,
+        [lineName]: {
+          active: true,
+          progress: line.progress || 0,
+          startTime,
+          pausedAt: 0,
+          direction,
+          icon,
+          eventMsg: msg,
+          runId
+        }
+      }));
+    
+      return new Promise(resolve => {
+        const step = () => {
+          const now = Date.now();
+    
+          // If paused, just update pausedAt and don't change startTime
+          if (pausedRef.current) {
+            setAnimateLines(prev => ({
+              ...prev,
+              [lineName]: {
+                ...prev[lineName],
+                pausedAt: now - startTime
+              }
+            }));
+            requestAnimationFrame(step);
+            return;
+          }
+    
+          // Adjust elapsed to include paused time
+          const pausedTime = animateLines[lineName]?.pausedAt || 0;
+          const elapsed = now - startTime - pausedTime;
+          const progress = Math.min(elapsed / ANIMATION_MOVING_TIME, 1);
+    
+          setAnimateLines(prev => ({
+            ...prev,
+            [lineName]: {
+              ...prev[lineName],
+              progress,
+              pausedAt: 0
+            }
+          }));
+    
+          if (progress < 1) {
+            requestAnimationFrame(step);
+          } else {
+            // Complete and reset
+            setAnimateLines(prev => ({
+              ...prev,
+              [lineName]: {
+                ...prev[lineName],
+                active: false,
+                progress: 0,
+                pausedAt: 0
+              }
+            }));
+            resolve();
+          }
+        };
+    
+        requestAnimationFrame(step);
+      });
+    }; */
+    
+    
 
   const value = useMemo(
     () => ({ eventProgress, animateLines, eventAnimationActive, demoRunMethod, demoRunning, scheduleProcessing, demoTime, voiceEnabled, demoStatus, changeDemoRunMethod, resetArchitectutreAnimations, runGlobalAnimation, setAnimateLines, setEventProgress, setEventAnimationActive, setDemoRunning, setScheduleProcessing, setDemoTime, setVoiceEnabled, setDemoStatus }),

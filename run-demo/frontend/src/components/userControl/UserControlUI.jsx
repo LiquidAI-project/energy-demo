@@ -9,6 +9,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import HourglassFullIcon from "@mui/icons-material/HourglassFull";
 import { keyframes } from "@mui/system";
 import userControlIcon from '../../assets/userControl.png';
+import UserIcon from '../../assets/user_icon.png';
 import { useDemoControlContext } from "../../context/demoControlContext/useDemoControlContext";
 
 const spin = keyframes`
@@ -41,13 +42,12 @@ const UserControlUI = React.forwardRef(({anchorPopOverEl, activePopover, handleP
 
   return (
     <div>
-      <button
-        onClick={(!(new Date(demoTime).getHours() === 10 && new Date(demoTime).getMinutes() === 0)) ? handleClickOpen : undefined}
+      <div 
         ref={ref}
         style={{
           position: "absolute",
-          top: "37%",
-          left: "20%",
+          top: "33%",
+          left: "21%",
           width: "6%",
           height: "7%",
           zIndex: 2,
@@ -56,6 +56,30 @@ const UserControlUI = React.forwardRef(({anchorPopOverEl, activePopover, handleP
           border: "none",
         }}
       >
+        <img
+          src={UserIcon}
+          alt="UserIcon"
+          style={{
+            width: "100%",
+            height: "100%"
+          }}
+        />
+      </div>
+      <button
+        onClick={(!(new Date(demoTime).getHours() === 10 && new Date(demoTime).getMinutes() === 0)) ? handleClickOpen : undefined}       
+        style={{
+          position: "absolute",
+          top: "34%",
+          left: "13%",
+          width: "6%",
+          height: "7%",
+          zIndex: 2,
+          padding: 0,
+          background: "transparent",
+          border: "none",
+        }}
+      >
+        
         <img
           src={userControlIcon}
           alt="userControl"
@@ -113,7 +137,17 @@ const UserControlUI = React.forwardRef(({anchorPopOverEl, activePopover, handleP
           </>
         )}
       </button>
-
+      <div
+        style={{
+          position: "absolute",
+          top: "38%",     
+          left: "15%",
+          width: "6%",      
+          height: "0",
+          borderTop: "2px dashed #444", 
+          zIndex: 1,
+        }}
+      />
       <Popover
         id={id}
         open={open}
