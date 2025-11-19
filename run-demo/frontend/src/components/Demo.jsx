@@ -37,6 +37,7 @@ import userPreferenceIcon from "../assets/user_preference_icon.png";
 import HackerIcon from "../assets/hacker_icon.png";
 import ScheduleIcon from "../assets/schedule.png";
 import CloudIcon from "../assets/cloud_icon.png";
+import EnergyMovingIcon from "../assets/energy_moving.png";
 import OptimizedSettingsIcon from "../assets/optimized_settings_icon.png";
 import UserControlUI from "./userControl/UserControlUI";
 import DemoControlls from "./demoControll/DemoControlls";
@@ -57,6 +58,8 @@ import {
   HACKER,
   WITHOUT_LIQUID_AI,
   WITH_LIQUID_AI,
+  ELECTRIC_CAR_1,
+  ELECTRIC_CAR_2,
 } from "../../constants";
 import { v4 as uuidv4 } from 'uuid';
 import { useDemoVisualizationContext } from "../context/demoVisualizationContext/useDemoVisualizationContext";
@@ -238,6 +241,8 @@ const Demo = () => {
       [ENERGY_COMPANY]: energyCompanyRef,
       [FLEXIBILITY_SERVICE]: flexibilityServiceRef,
       [HACKER]: hackerRef,
+      [ELECTRIC_CAR_1]: electricCar1Ref,
+      [ELECTRIC_CAR_2]: electricCar2Ref,
       // Add more device names and their references here
     }),
     []
@@ -637,6 +642,29 @@ const Demo = () => {
         WASHING_MACHINE
       );
       drawLines(orchestratorRef, ORCHESTRATOR, evChargerRef, EV_CHARGER);
+      // Add drawLines for ElectricCar1 -> Freezer
+      drawLines(electricCar1Ref, "electricCar1", freezerRef, FREEZER, "orange");
+      drawLines(
+        electricCar2Ref,
+        "electricCar2",
+        freezerRef,
+        FREEZER,
+        "orange"
+      );
+      drawLines(
+        electricCar1Ref,
+        "electricCar1",
+        washingMachineRef,
+        WASHING_MACHINE,
+        "orange"
+      );
+      drawLines(
+        electricCar2Ref,
+        "electricCar2",
+        washingMachineRef,
+        WASHING_MACHINE,
+        "orange"
+      );
       drawLines(
         energyCompanyRef,
         ENERGY_COMPANY,
@@ -846,6 +874,24 @@ const Demo = () => {
     };
   }, [demoRunMethod, hackerVisibility, paused, isMainViewActive]);
 
+  useEffect(() => {
+    let intervalId;
+    if (isMainViewActive && demoRunMethod === WITH_LIQUID_AI) {
+      const runAllBoltAnimations = () => {
+        moveCodeAnimation(ELECTRIC_CAR_1, FREEZER, EnergyMovingIcon);
+       // moveCodeAnimation(ELECTRIC_CAR_2, FREEZER, EnergyMovingIcon);
+       // moveCodeAnimation(ELECTRIC_CAR_1, WASHING_MACHINE, EnergyMovingIcon);
+       // moveCodeAnimation(ELECTRIC_CAR_2, WASHING_MACHINE, EnergyMovingIcon);
+      };
+      runAllBoltAnimations();
+      intervalId = setInterval(runAllBoltAnimations, 3000);
+    }
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isMainViewActive, demoRunMethod]);
+
   return (
     <div>
       <div
@@ -899,6 +945,14 @@ const Demo = () => {
               <div id="flexibilityService-intelligentControl-line" />
               <div id="userControl-intelligentControl-line" />
               <div id="orchestrator-evCharger-line" />
+              {/* Add line from ElectricCar1 to Freezer - orange and behind car */}
+              <div id="electricCar1-freezer-line" style={{ zIndex: 0 }} />
+              {/* Add line from ElectricCar2 to Freezer */}
+              <div id="electricCar2-freezer-line" style={{ zIndex: 0, opacity: 0 }} />
+              {/* Add line from ElectricCar1 to WashingMachine */}
+              <div id="electricCar1-washingMachine-line" style={{ zIndex: 0, opacity: 0 }} />
+              {/* Add line from ElectricCar2 to WashingMachine */}
+              <div id="electricCar2-washingMachine-line" style={{ zIndex: 0, opacity: 0 }} />
               {/* <div id="orchestrator-storage-line" /> */}
             </>
           )}

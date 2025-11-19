@@ -524,7 +524,9 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
     }
 
     if (demoRunMethod === WITH_LIQUID_AI && demoRunning) {
-      dayPlanExecution();
+      setEv1PluggedIn(true);
+      setEv2PluggedIn(true);
+     // dayPlanExecution();
     }
   }, [demoTime]);
 

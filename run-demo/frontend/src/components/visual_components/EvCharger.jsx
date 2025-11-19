@@ -38,7 +38,9 @@ const evCharger = React.forwardRef((props, ref) => {
     optimize: false,
     isActive:  isActive,
     deviceInfo: deviceInfo,
-    supervisorName: getDeviceStatus.supervisorName
+    supervisorName: getDeviceStatus.supervisorName,
+    totalCapacity: "120kWh",
+    minCapacity: "80kWh"
   };
 
   useEffect(() => {

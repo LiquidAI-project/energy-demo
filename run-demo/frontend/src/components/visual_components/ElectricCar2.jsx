@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import carImage from "../../assets/car.png";
 import carChargerImage from "../../assets/car_charger.png";
 import { useDemoVisualizationContext } from '../../context/demoVisualizationContext/useDemoVisualizationContext';
+import NeonArrow from "./NeonArrow";
 
 const ElectricCar2 = React.forwardRef((props, ref) => {
 
@@ -49,6 +50,49 @@ const ElectricCar2 = React.forwardRef((props, ref) => {
             ease: 'easeInOut',
           }}
         />
+        {/* Neon arrows positioned above the car */}
+        {/* <div
+            style={{
+              position: "absolute",
+              top: "-2%",
+              left: "10%",
+              transform: "translate(-50%, -50%) rotate(-35deg)",
+              pointerEvents: "none",
+              zIndex: 5,
+              width: "140px",
+              height: "180px",
+            }}
+          >
+            <NeonArrow />
+          </div>
+          <div
+            style={{
+              position: "absolute",
+              top: "-4%",
+              left: "72%",
+              transform: "translate(-50%, -50%)",
+              pointerEvents: "none",
+              zIndex: 5,
+              width: "140px",
+              height: "180px",
+            }}
+          >
+            <NeonArrow />
+          </div>
+          <div
+            style={{
+              position: "absolute",
+              top: "-10%",
+              //right: "0%",
+              transform: "translate(28%, -30%) rotate(35deg)",
+              pointerEvents: "none",
+              zIndex: 5,
+              width: "140px",
+              height: "180px",
+            }}
+          >
+            <NeonArrow />
+          </div> */}
       </button>
     </div>
   );
