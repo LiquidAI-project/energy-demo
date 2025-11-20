@@ -3,14 +3,17 @@
 // This source code is licensed under the MIT license. See LICENSE in the repository root directory.
 // Author(s): Lakshan Rathnayaka <lakshan.rathnayaka@tuni.fi>, Ville Heikkilä <ville.heikkila@tuni.fi>, Asma Jamil <asma.jamil@tuni.fi>.
 
-import { Accordion, AccordionSummary,
-  AccordionDetails, Box, Grid, Typography, Popover, IconButton, Tooltip } from "@mui/material";
+import {
+  Accordion, AccordionSummary,
+  AccordionDetails, Box, Grid, Typography, Popover, IconButton, Tooltip
+} from "@mui/material";
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import backgroundImage from "./../assets/yard.png";
 import controlHub from "./../assets/controlHub.png";
 import Service_Provider1 from "./../assets/service_provider1.png";
 import Service_Provider2 from "./../assets/service_provider2.png";
+import carChargerImage from "./../assets/car_charger.png";
 import houseImage from "./../assets/house.png";
 import House_Warning_Border from "./../assets/house_warning_border.png";
 import Freezer from "./visual_components/Freezer";
@@ -21,6 +24,7 @@ import ElectricCar1 from "./visual_components/ElectricCar1";
 import ElectricCar2 from "./visual_components/ElectricCar2";
 import Jacuzzi from "./visual_components/Jacuzzi";
 import EvCharger from "./visual_components/EvCharger";
+import GradientArrowLine from "./visual_components/GradientArrowLine";
 import Orchestrator from "./../assets/orchestrator.png";
 import Storage from "./../assets/storage.png";
 import WebAssembly_Icon from "./../assets/WebAssembly_Logo.png";
@@ -115,7 +119,7 @@ const Demo = () => {
   const [warningBorderVisible, setWarningBorderVisible] = useState(false);
   const [open, setOpen] = useState(false);
   const [shouldBlink, setShouldBlink] = useState(false);
-  const { deviceStatus, hackerVisibility, movingDeployments, setMovingDeployments } = useDemoVisualizationContext();
+  const { deviceStatus, hackerVisibility, movingDeployments, setMovingDeployments, ev1PluggedIn } = useDemoVisualizationContext();
   const { demoRunMethod, demoTime, scheduleProcessing, voiceEnabled } = useDemoControlContext();
   const [paused, setPaused] = useState(false);
   const pausedRef = useRef(paused);
@@ -432,35 +436,35 @@ const Demo = () => {
 
   // Update the deployment details for the device
   const updateDeployment = useCallback(async (device, deviceName) => {
-      const deployments = JSON.parse(localStorage.getItem("deployments") || "[]");
-      const deviceSpecificDeployment = deployments.find((item) =>
-        item.sequence.some((seq) => seq.device === device.deviceId)
-      );
-      if (deviceSpecificDeployment) {
-        // Accessing the modules inside fullManifest using the deviceId
-        const deviceManifest = deviceSpecificDeployment.fullManifest[device.deviceId];
-        device.deploymentId = deviceSpecificDeployment._id;
-        device.existingModuleId = deviceManifest.modules[0].id;
-        device.existingModuleName = deviceManifest.modules[0].name;
-        device.isModuleActive = true;
+    const deployments = JSON.parse(localStorage.getItem("deployments") || "[]");
+    const deviceSpecificDeployment = deployments.find((item) =>
+      item.sequence.some((seq) => seq.device === device.deviceId)
+    );
+    if (deviceSpecificDeployment) {
+      // Accessing the modules inside fullManifest using the deviceId
+      const deviceManifest = deviceSpecificDeployment.fullManifest[device.deviceId];
+      device.deploymentId = deviceSpecificDeployment._id;
+      device.existingModuleId = deviceManifest.modules[0].id;
+      device.existingModuleName = deviceManifest.modules[0].name;
+      device.isModuleActive = true;
 
-        const demoDevice = deviceStatus.find((item) =>
-          item.supervisorName == deviceName
-        );
-        const deviceRef = getDeviceReference(demoDevice.deviceName);
-        if (deviceRef.current && device.isModuleActive) {
-          moveCodeAnimation(ORCHESTRATOR, demoDevice.deviceName, WebAssembly_Icon);
-          await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
-          if (voiceEnabledRef.current)
-            speak(`${device.existingModuleName} module has been deployed on ${demoDevice.deviceName} device`);
-        }
-      } else {
-        device.deploymentId = null;
-        device.existingModuleId = null;
-        device.existingModuleName = null;
-        device.isModuleActive = false;
+      const demoDevice = deviceStatus.find((item) =>
+        item.supervisorName == deviceName
+      );
+      const deviceRef = getDeviceReference(demoDevice.deviceName);
+      if (deviceRef.current && device.isModuleActive) {
+        moveCodeAnimation(ORCHESTRATOR, demoDevice.deviceName, WebAssembly_Icon);
+        await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
+        if (voiceEnabledRef.current)
+          speak(`${device.existingModuleName} module has been deployed on ${demoDevice.deviceName} device`);
       }
-    },
+    } else {
+      device.deploymentId = null;
+      device.existingModuleId = null;
+      device.existingModuleName = null;
+      device.isModuleActive = false;
+    }
+  },
     [getDeviceReference]
   );
 
@@ -571,7 +575,7 @@ const Demo = () => {
       fetchDeployments();
     }
 
-    return() => {
+    return () => {
       clearInterval(intervalId);
       //socket.removeEventListener("message", handleMessage);
     }
@@ -589,16 +593,31 @@ const Demo = () => {
       point_A_name,
       point_B_ref,
       point_B_name,
-      lineColor = "green"
+      lineColor = "green",
+      zIndexParam = 1
     ) => {
       if (point_A_ref.current && point_B_ref.current) {
+        const lineElement = document.getElementById(
+          `${point_A_name}-${point_B_name}-line`
+        );
+
+        if (!lineElement) return;
+
         const point_A_bounds = point_A_ref.current.getBoundingClientRect();
         const point_B_bounds = point_B_ref.current.getBoundingClientRect();
 
-        const x1 = point_A_bounds.left + point_A_bounds.width / 2;
-        const y1 = point_A_bounds.top + point_A_bounds.height / 2;
-        const x2 = point_B_bounds.left + point_B_bounds.width / 2;
-        const y2 = point_B_bounds.top + point_B_bounds.height / 2;
+        let offsetX = 0;
+        let offsetY = 0;
+        if (lineElement.offsetParent) {
+          const parentRect = lineElement.offsetParent.getBoundingClientRect();
+          offsetX = parentRect.left;
+          offsetY = parentRect.top;
+        }
+
+        const x1 = point_A_bounds.left + point_A_bounds.width / 2 - offsetX;
+        const y1 = point_A_bounds.top + point_A_bounds.height / 2 - offsetY;
+        const x2 = point_B_bounds.left + point_B_bounds.width / 2 - offsetX;
+        const y2 = point_B_bounds.top + point_B_bounds.height / 2 - offsetY;
 
         const length = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
         const angle = Math.atan2(y2 - y1, x2 - x1) * (180 / Math.PI);
@@ -611,12 +630,9 @@ const Demo = () => {
           transform: `rotate(${angle}deg)`,
           transformOrigin: "0 0",
           borderTop: `2px dashed ${lineColor}`,
-          zIndex: 1,
+          zIndex: zIndexParam,
         };
 
-        const lineElement = document.getElementById(
-          `${point_A_name}-${point_B_name}-line`
-        );
         Object.assign(lineElement.style, lineStyle);
       }
     };
@@ -643,7 +659,7 @@ const Demo = () => {
       );
       drawLines(orchestratorRef, ORCHESTRATOR, evChargerRef, EV_CHARGER);
       // Add drawLines for ElectricCar1 -> Freezer
-      drawLines(electricCar1Ref, "electricCar1", freezerRef, FREEZER, "orange");
+      /* drawLines(electricCar1Ref, "electricCar1", freezerRef, FREEZER, "transparent");
       drawLines(
         electricCar2Ref,
         "electricCar2",
@@ -664,7 +680,7 @@ const Demo = () => {
         washingMachineRef,
         WASHING_MACHINE,
         "orange"
-      );
+      ); */
       drawLines(
         energyCompanyRef,
         ENERGY_COMPANY,
@@ -733,9 +749,9 @@ const Demo = () => {
           INTELLIGENT_CONTROL
         )
       );
-     /*  window.addEventListener("resize", () =>
-        drawLines(orchestratorRef, ORCHESTRATOR, storageRef, STORAGE)
-      ); */
+      /*  window.addEventListener("resize", () =>
+         drawLines(orchestratorRef, ORCHESTRATOR, storageRef, STORAGE)
+       ); */
     } else {
       drawLines(serviceProviderRef1, SERVICE_PROVIDER1, freezerRef, FREEZER);
       drawLines(
@@ -750,7 +766,7 @@ const Demo = () => {
         evChargerRef,
         EV_CHARGER
       );
-      if(hackerVisibility) {
+      if (hackerVisibility) {
         drawLines(serviceProviderRef1, SERVICE_PROVIDER1, hackerRef, HACKER, "red");
         drawLines(serviceProviderRef2, SERVICE_PROVIDER2, hackerRef, HACKER, "red");
       }
@@ -773,7 +789,7 @@ const Demo = () => {
           EV_CHARGER
         )
       );
-      if(hackerVisibility) {
+      if (hackerVisibility) {
         window.addEventListener("resize", () =>
           drawLines(serviceProviderRef1, SERVICE_PROVIDER1, hackerRef, HACKER, "red")
         );
@@ -862,7 +878,7 @@ const Demo = () => {
             EV_CHARGER
           )
         );
-        if(hackerVisibility) {
+        if (hackerVisibility) {
           window.removeEventListener("resize", () =>
             drawLines(serviceProviderRef1, SERVICE_PROVIDER1, hackerRef, HACKER, "red")
           );
@@ -871,20 +887,25 @@ const Demo = () => {
           );
         }
       }
+      if (ev1PluggedIn) {
+        setTimeout(() => {
+          drawLines(electricCar1Ref, "electricCar1", freezerRef, FREEZER, "transparent", 5);
+        }, 3100);
+      }
     };
-  }, [demoRunMethod, hackerVisibility, paused, isMainViewActive]);
+  }, [demoRunMethod, hackerVisibility, paused, isMainViewActive, ev1PluggedIn]);
 
   useEffect(() => {
     let intervalId;
     if (isMainViewActive && demoRunMethod === WITH_LIQUID_AI) {
       const runAllBoltAnimations = () => {
         moveCodeAnimation(ELECTRIC_CAR_1, FREEZER, EnergyMovingIcon);
-       // moveCodeAnimation(ELECTRIC_CAR_2, FREEZER, EnergyMovingIcon);
-       // moveCodeAnimation(ELECTRIC_CAR_1, WASHING_MACHINE, EnergyMovingIcon);
-       // moveCodeAnimation(ELECTRIC_CAR_2, WASHING_MACHINE, EnergyMovingIcon);
+        // moveCodeAnimation(ELECTRIC_CAR_2, FREEZER, EnergyMovingIcon);
+        // moveCodeAnimation(ELECTRIC_CAR_1, WASHING_MACHINE, EnergyMovingIcon);
+        // moveCodeAnimation(ELECTRIC_CAR_2, WASHING_MACHINE, EnergyMovingIcon);
       };
-      runAllBoltAnimations();
-      intervalId = setInterval(runAllBoltAnimations, 3000);
+      //runAllBoltAnimations();
+      // intervalId = setInterval(runAllBoltAnimations, 3000);
     }
     return () => {
       if (intervalId) clearInterval(intervalId);
@@ -912,22 +933,22 @@ const Demo = () => {
         >
           Energy Demo
         </Typography>
-        <Tooltip title={ isMainViewActive ? "Switch to Architecture View" : "Switch to UI View" }>
-        <IconButton
-          onClick={() => setisMainViewActive((prev) => !prev)}
-          sx={{
-            position: "absolute",
-            top: 20,
-            right: 20,
-            zIndex: 1000,
-            backgroundColor: "#f5f5f5",
-            boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
-            "&:hover": { backgroundColor: "#e0e0e0" },
-          }}
-        >
-          {isMainViewActive ? <AccountTreeIcon /> : <HomeIcon />}
-        </IconButton>
-      </Tooltip>
+        <Tooltip title={isMainViewActive ? "Switch to Architecture View" : "Switch to UI View"}>
+          <IconButton
+            onClick={() => setisMainViewActive((prev) => !prev)}
+            sx={{
+              position: "absolute",
+              top: 20,
+              right: 20,
+              zIndex: 1000,
+              backgroundColor: "#f5f5f5",
+              boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
+              "&:hover": { backgroundColor: "#e0e0e0" },
+            }}
+          >
+            {isMainViewActive ? <AccountTreeIcon /> : <HomeIcon />}
+          </IconButton>
+        </Tooltip>
         <Grid
           container
           spacing={4}
@@ -936,203 +957,220 @@ const Demo = () => {
         >
           {isMainViewActive ? (
             <>
-          {demoRunMethod === WITH_LIQUID_AI && (
-            <>
-              <div id="orchestrator-freezer-line" />
-              <div id="orchestrator-washingMachine-line" />
-              <div id="orchestrator-intelligentControl-line" />
-              <div id="energyCompany-intelligentControl-line" />
-              <div id="flexibilityService-intelligentControl-line" />
-              <div id="userControl-intelligentControl-line" />
-              <div id="orchestrator-evCharger-line" />
-              {/* Add line from ElectricCar1 to Freezer - orange and behind car */}
-              <div id="electricCar1-freezer-line" style={{ zIndex: 0 }} />
-              {/* Add line from ElectricCar2 to Freezer */}
-              <div id="electricCar2-freezer-line" style={{ zIndex: 0, opacity: 0 }} />
-              {/* Add line from ElectricCar1 to WashingMachine */}
-              <div id="electricCar1-washingMachine-line" style={{ zIndex: 0, opacity: 0 }} />
-              {/* Add line from ElectricCar2 to WashingMachine */}
-              <div id="electricCar2-washingMachine-line" style={{ zIndex: 0, opacity: 0 }} />
-              {/* <div id="orchestrator-storage-line" /> */}
-            </>
-          )}
-          {demoRunMethod === WITHOUT_LIQUID_AI && (
-            <>
-              <div id="serviceProvider1-freezer-line" />
-              <div id="serviceProvider1-washingMachine-line" />
-              <div id="serviceProvider2-evCharger-line" />
-              <AnimatePresence initial={false}>
-                {hackerVisibility ? (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{
-                      opacity: { duration: 1, ease: "easeInOut" },
-                    }}
-                  >
-                    <div id="serviceProvider1-hacker-line" />
-                    <div id="serviceProvider2-hacker-line" />
-                  </motion.div>
-                ) : null}
-              </AnimatePresence>
-            </>
-          )}
-          {movingDeployments
-          .map((deployment) => (
-            <MovingIcon key={deployment.id} deployment={deployment} paused={paused} />
-          ))}
-          <Grid item xs={12} sm={3} minWidth={"77vh"}>
-            <Box>
-              <div
-                style={{
-                  position: "relative",
-                  marginTop: "15px",
-                  paddingBottom: "83%",
-                  width: "100%",
-                  height: 0,
-                }}
-              >
-                <img
-                  id="house_warning_border"
-                  src={House_Warning_Border}
-                  alt="warning"
-                  className="house_warning_border"
-                  style={{
-                    position: "absolute",
-                    left: "-1%",
-                    top: "-1%",
-                    width: "102%",
-                    height: "85.5%",
-                    opacity: warningBorderVisible ? 1 : 0,
-                    transition: "opacity 0.25s",
-                  }}
-                />
-                <img
-                  src={backgroundImage}
-                  alt="Home yard"
-                  className="background-image"
-                  style={{
-                    position: "absolute",
-                    top: 0,
-                    left: 0,
-                    width: "100%",
-                    height: "83%",
-                    objectFit: "cover",
-                    border: "1px solid #DCDCDC",
-                    borderRadius: "5px",
-                    boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.2)",
-                  }}
-                />
-                <div
-                  className="overlay-content"
-                  style={{
-                    position: "absolute",
-                    top: 0,
-                    left: 0,
-                    width: "100%",
-                    height: "100%",
-                    display: "flex",
-                    flexDirection: "column",
-                    justifyContent: "space-between",
-                  }}
-                >
-                  <img
-                    src={controlHub}
-                    alt="controlHub"
-                    className="controlHub-image"
-                    style={{
-                      position: "absolute",
-                      top: "54%",
-                      left: "17%",
-                      width: "77%",
-                      height: "10.655%",
-                    }}
-                  />
-                  <img
-                    src={roadImage}
-                    alt="Road"
-                    className="road-image"
-                    style={{
-                      position: "absolute",
-                      top: "54%",
-                      left: "47%",
-                      width: "47.5%",
-                      height: "29.2%",
-                    }}
-                  />
-                  {demoRunMethod === WITH_LIQUID_AI && (
+              {demoRunMethod === WITH_LIQUID_AI && (
+                <>
+                  <div id="orchestrator-freezer-line" />
+                  <div id="orchestrator-washingMachine-line" />
+                  <div id="orchestrator-intelligentControl-line" />
+                  <div id="energyCompany-intelligentControl-line" />
+                  <div id="flexibilityService-intelligentControl-line" />
+                  <div id="userControl-intelligentControl-line" />
+                  <div id="orchestrator-evCharger-line" />
+                  {/* Add line from ElectricCar1 to Freezer - orange and behind car */}
+                  {ev1PluggedIn &&
                     <div
+                      id="electricCar1-freezer-line"
                       style={{
                         position: "absolute",
-                        top: "57%",
-                        left: "45%",
-                        width: "7%",
-                        height: "7%",
-                        zIndex: 2,
+                        top: "50%",        // adjust
+                        left: "10%",       // adjust
+                        width: "40%",      // FULL line width
+                        height: "40px",
+                        overflow: "visible",
+                        zIndex: 1,     // behind all icons
                       }}
-                      ref={orchestratorRef}
+                    >
+                      <GradientArrowLine />
+                    </div>
+                  }
+
+
+                  {/* Add line from ElectricCar2 to Freezer */}
+                  <div id="electricCar2-freezer-line" style={{ zIndex: 0, opacity: 0 }} />
+                  {/* Add line from ElectricCar1 to WashingMachine */}
+                  <div id="electricCar1-washingMachine-line" style={{ zIndex: 0, opacity: 0 }} />
+                  {/* Add line from ElectricCar2 to WashingMachine */}
+                  <div id="electricCar2-washingMachine-line" style={{ zIndex: 0, opacity: 0 }} />
+                  {/* <div id="orchestrator-storage-line" /> */}
+                </>
+              )}
+              {demoRunMethod === WITHOUT_LIQUID_AI && (
+                <>
+                  <div id="serviceProvider1-freezer-line" />
+                  <div id="serviceProvider1-washingMachine-line" />
+                  <div id="serviceProvider2-evCharger-line" />
+                  <AnimatePresence initial={false}>
+                    {hackerVisibility ? (
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{
+                          opacity: { duration: 1, ease: "easeInOut" },
+                        }}
+                      >
+                        <div id="serviceProvider1-hacker-line" />
+                        <div id="serviceProvider2-hacker-line" />
+                      </motion.div>
+                    ) : null}
+                  </AnimatePresence>
+                </>
+              )}
+              {movingDeployments
+                .map((deployment) => (
+                  <MovingIcon key={deployment.id} deployment={deployment} paused={paused} />
+                ))}
+              <Grid item xs={12} sm={3} minWidth={"77vh"}>
+                <Box>
+                  <div
+                    style={{
+                      position: "relative",
+                      marginTop: "15px",
+                      paddingBottom: "83%",
+                      width: "100%",
+                      height: 0,
+                    }}
+                  >
+                    <img
+                      id="house_warning_border"
+                      src={House_Warning_Border}
+                      alt="warning"
+                      className="house_warning_border"
+                      style={{
+                        position: "absolute",
+                        left: "-1%",
+                        top: "-1%",
+                        width: "102%",
+                        height: "85.5%",
+                        opacity: warningBorderVisible ? 1 : 0,
+                        transition: "opacity 0.25s",
+                      }}
+                    />
+                    <img
+                      src={backgroundImage}
+                      alt="Home yard"
+                      className="background-image"
+                      style={{
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                        width: "100%",
+                        height: "83%",
+                        objectFit: "cover",
+                        border: "1px solid #DCDCDC",
+                        borderRadius: "5px",
+                        boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.2)",
+                      }}
+                    />
+                    <div
+                      className="overlay-content"
+                      style={{
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                        width: "100%",
+                        height: "100%",
+                        display: "flex",
+                        flexDirection: "column",
+                        justifyContent: "space-between",
+                      }}
                     >
                       <img
-                        src={Orchestrator}
-                        alt="Orchestrator"
+                        src={controlHub}
+                        alt="controlHub"
+                        className="controlHub-image"
                         style={{
-                          width: "100%",
-                          height: "100%",
+                          position: "absolute",
+                          top: "54%",
+                          left: "17%",
+                          width: "77%",
+                          height: "10.655%",
                         }}
                       />
-                      {scheduleProcessing && (
-                        <>
-                          <motion.div
-                            ref={hourglassRef}
-                            initial={{ rotate: 0 }}
-                            animate={{ rotate: 360 }}
-                            transition={{ repeat: Infinity, duration: 4, ease: "linear" }}
+                      <img
+                        src={roadImage}
+                        alt="Road"
+                        className="road-image"
+                        style={{
+                          position: "absolute",
+                          top: "54%",
+                          left: "47%",
+                          width: "47.5%",
+                          height: "29.2%",
+                        }}
+                      />
+                      {demoRunMethod === WITH_LIQUID_AI && (
+                        <div
+                          style={{
+                            position: "absolute",
+                            top: "57%",
+                            left: "45%",
+                            width: "7%",
+                            height: "7%",
+                            zIndex: 2,
+                          }}
+                          ref={orchestratorRef}
+                        >
+                          <img
+                            src={Orchestrator}
+                            alt="Orchestrator"
                             style={{
-                              position: "absolute",
-                              padding: "10px",
-                              bottom: "-18%",
-                              right: "-20%",
-                              width: "34%",
-                              height: "34%",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              background: "rgba(166, 221, 175, 0.85)",
-                              borderRadius: "50%",
-                              boxShadow: "0 2px 6px rgba(0,0,0,0.3)",
-                              cursor: "pointer"
+                              width: "100%",
+                              height: "100%",
                             }}
-                            onClick={(e) => handlePopOverClick(e, "orchestrator")}
-                          >
-                            <HourglassFullIcon style={{ fontSize: "1.0rem", color: "#167356" }} />
-                          </motion.div>
-                          <Popover
-                            open={activePopover === "orchestrator"}
-                            anchorEl={anchorEl}
-                            onClose={handlePopOverClose}
-                            anchorOrigin={{
-                              vertical: "bottom",
-                              horizontal: "center",
-                            }}
-                            transformOrigin={{
-                              vertical: "top",
-                              horizontal: "center",
-                            }}
-                          >
-                            <Box p={2} sx={{ maxWidth: 250 }}>
-                              <strong>Orchestrator</strong>
-                              <p>
-                                Orchestrator gets schedule information from intelligence control.<br />
-                                Then, it forwards the schedule times to the concerned devices.
-                              </p>
-                            </Box>
-                          </Popover>
-                        </>
+                          />
+                          {scheduleProcessing && (
+                            <>
+                              <motion.div
+                                ref={hourglassRef}
+                                initial={{ rotate: 0 }}
+                                animate={{ rotate: 360 }}
+                                transition={{ repeat: Infinity, duration: 4, ease: "linear" }}
+                                style={{
+                                  position: "absolute",
+                                  padding: "10px",
+                                  bottom: "-18%",
+                                  right: "-20%",
+                                  width: "34%",
+                                  height: "34%",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  background: "rgba(166, 221, 175, 0.85)",
+                                  borderRadius: "50%",
+                                  boxShadow: "0 2px 6px rgba(0,0,0,0.3)",
+                                  cursor: "pointer"
+                                }}
+                                onClick={(e) => handlePopOverClick(e, "orchestrator")}
+                              >
+                                <HourglassFullIcon style={{ fontSize: "1.0rem", color: "#167356" }} />
+                              </motion.div>
+                              <Popover
+                                open={activePopover === "orchestrator"}
+                                anchorEl={anchorEl}
+                                onClose={handlePopOverClose}
+                                anchorOrigin={{
+                                  vertical: "bottom",
+                                  horizontal: "center",
+                                }}
+                                transformOrigin={{
+                                  vertical: "top",
+                                  horizontal: "center",
+                                }}
+                              >
+                                <Box p={2} sx={{ maxWidth: 250 }}>
+                                  <strong>Orchestrator</strong>
+                                  <p>
+                                    Orchestrator gets schedule information from intelligence control.<br />
+                                    Then, it forwards the schedule times to the concerned devices.
+                                  </p>
+                                </Box>
+                              </Popover>
+                            </>
+                          )}
+                        </div>
                       )}
-                    </div>
-                  )}
-                 {/*  {demoRunMethod === WITH_LIQUID_AI && (
+                      {/*  {demoRunMethod === WITH_LIQUID_AI && (
                     <img
                       src={Storage}
                       alt="Storage"
@@ -1147,426 +1185,426 @@ const Demo = () => {
                       }}
                     />
                   )} */}
-                  {demoRunMethod === WITH_LIQUID_AI && (
-                    <div
-                      style={{
-                        position: "absolute",
-                        top: "57%",
-                        left: "25%",
-                        width: "6%",
-                        height: "7%",
-                        zIndex: 2,
-                      }}
-                      ref={intelligentControlRef}
-                    >
-                      <img
-                        src={IntelligentControlIcon}
-                        alt="IntelligentControl"
-                        style={{
-                          width: "100%",
-                          height: "100%"
-                        }}
-                      />
-                      {scheduleProcessing && (
-                        <>
-                          <motion.div
-                            initial={{ rotate: 0 }}
-                            animate={{ rotate: 360 }}
-                            transition={{ repeat: Infinity, duration: 4, ease: "linear" }}
+                      {demoRunMethod === WITH_LIQUID_AI && (
+                        <div
+                          style={{
+                            position: "absolute",
+                            top: "57%",
+                            left: "25%",
+                            width: "6%",
+                            height: "7%",
+                            zIndex: 2,
+                          }}
+                          ref={intelligentControlRef}
+                        >
+                          <img
+                            src={IntelligentControlIcon}
+                            alt="IntelligentControl"
                             style={{
-                              position: "absolute",
-                              padding: "10px",
-                              top: "-10%",
-                              right: "-22%",
-                              width: "34%",
-                              height: "34%",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              background: "rgba(166, 221, 175, 0.85)",
-                              borderRadius: "50%",
-                              boxShadow: "0 2px 6px rgba(0,0,0,0.3)",
-                              cursor: "pointer"
+                              width: "100%",
+                              height: "100%"
                             }}
-                            onClick={(e) => handlePopOverClick(e, "intelligence")}
-                          >
-                            <HourglassFullIcon style={{ fontSize: "1.0rem", color: "#167356" }} />
-                          </motion.div>
-                          <Popover
-                            open={activePopover === "intelligence"}
-                            anchorEl={anchorEl}
-                            onClose={handlePopOverClose}
-                            anchorOrigin={{
-                              vertical: "bottom",
-                              horizontal: "center",
-                            }}
-                            transformOrigin={{
-                              vertical: "top",
-                              horizontal: "center",
-                            }}
-                          >
-                            <Box p={2} sx={{ maxWidth: 250 }}>
-                              <strong>Intelligence Control</strong>
-                              <p>
-                                Intelligence Control gets spot price information from spot price controller.<br />
-                                It then sends the optimal electricity consumption times to the Orchestrator.
-                              </p>
-                            </Box>
-                          </Popover>
-                        </>
+                          />
+                          {scheduleProcessing && (
+                            <>
+                              <motion.div
+                                initial={{ rotate: 0 }}
+                                animate={{ rotate: 360 }}
+                                transition={{ repeat: Infinity, duration: 4, ease: "linear" }}
+                                style={{
+                                  position: "absolute",
+                                  padding: "10px",
+                                  top: "-10%",
+                                  right: "-22%",
+                                  width: "34%",
+                                  height: "34%",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  background: "rgba(166, 221, 175, 0.85)",
+                                  borderRadius: "50%",
+                                  boxShadow: "0 2px 6px rgba(0,0,0,0.3)",
+                                  cursor: "pointer"
+                                }}
+                                onClick={(e) => handlePopOverClick(e, "intelligence")}
+                              >
+                                <HourglassFullIcon style={{ fontSize: "1.0rem", color: "#167356" }} />
+                              </motion.div>
+                              <Popover
+                                open={activePopover === "intelligence"}
+                                anchorEl={anchorEl}
+                                onClose={handlePopOverClose}
+                                anchorOrigin={{
+                                  vertical: "bottom",
+                                  horizontal: "center",
+                                }}
+                                transformOrigin={{
+                                  vertical: "top",
+                                  horizontal: "center",
+                                }}
+                              >
+                                <Box p={2} sx={{ maxWidth: 250 }}>
+                                  <strong>Intelligence Control</strong>
+                                  <p>
+                                    Intelligence Control gets spot price information from spot price controller.<br />
+                                    It then sends the optimal electricity consumption times to the Orchestrator.
+                                  </p>
+                                </Box>
+                              </Popover>
+                            </>
+                          )}
+                        </div>
                       )}
-                    </div>
-                  )}
-                  {demoRunMethod === WITH_LIQUID_AI && (
-                    <UserControlUI ref={userControlRef} anchorPopOverEl={anchorEl} activePopover={activePopover} handlePopOverClick={handlePopOverClick} handlePopOverClose={handlePopOverClose} />
-                  )}
-                  {demoRunMethod === WITH_LIQUID_AI && (
-                    <div
-                      style={{
-                        position: "absolute",
-                        top: "90%",
-                        left: "10.2%",
-                        width: "15%",
-                        height: "10%",
-                        zIndex: 2,
-                      }}
-                      ref={energyCompanyRef}
-                    >
-                      <img
-                        src={Energy_Company_Icon}
-                        alt="energyCompany"
-                        style={{
-                          width: "100%",
-                          height: "100%"
-                        }}
-                      />
-                      {scheduleProcessing && ((new Date(demoTime).getHours() === 0 && new Date(demoTime).getMinutes() === 30)) && (
-                        <>
-                          <motion.div
-                            initial={{ rotate: 0 }}
-                            animate={{ rotate: 360 }}
-                            transition={{ repeat: Infinity, duration: 4, ease: "linear" }}
+                      {demoRunMethod === WITH_LIQUID_AI && (
+                        <UserControlUI ref={userControlRef} anchorPopOverEl={anchorEl} activePopover={activePopover} handlePopOverClick={handlePopOverClick} handlePopOverClose={handlePopOverClose} />
+                      )}
+                      {demoRunMethod === WITH_LIQUID_AI && (
+                        <div
+                          style={{
+                            position: "absolute",
+                            top: "90%",
+                            left: "10.2%",
+                            width: "15%",
+                            height: "10%",
+                            zIndex: 2,
+                          }}
+                          ref={energyCompanyRef}
+                        >
+                          <img
+                            src={Energy_Company_Icon}
+                            alt="energyCompany"
                             style={{
-                              position: "absolute",
-                              padding: "10px",
-                              bottom: "-4%",
-                              right: "-4%",
-                              width: "18%",
-                              height: "30%",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              background: "rgba(166, 221, 175, 0.85)",
-                              borderRadius: "50%",
-                              boxShadow: "0 2px 6px rgba(0,0,0,0.3)",
-                              cursor: "pointer"
+                              width: "100%",
+                              height: "100%"
                             }}
-                            onClick={(e) => handlePopOverClick(e, "energy")}
-                          >
-                            <HourglassFullIcon style={{ fontSize: "1.0rem", color: "#167356" }} />
-                          </motion.div>
-                          <Popover
-                            open={activePopover === "energy"}
-                            anchorEl={anchorEl}
-                            onClose={handlePopOverClose}
-                            anchorOrigin={{
-                              vertical: "bottom",
-                              horizontal: "center",
-                            }}
-                            transformOrigin={{
-                              vertical: "top",
-                              horizontal: "center",
-                            }}
-                          >
-                            <Box p={2} sx={{ maxWidth: 250 }}>
-                              <strong>Energy Provider</strong>
-                              <p>
-                                Energy provider sends the new price information (for the current hour) to Intelligence control.
-                              </p>
-                            </Box>
-                          </Popover>
-                        </>
+                          />
+                          {scheduleProcessing && ((new Date(demoTime).getHours() === 0 && new Date(demoTime).getMinutes() === 30)) && (
+                            <>
+                              <motion.div
+                                initial={{ rotate: 0 }}
+                                animate={{ rotate: 360 }}
+                                transition={{ repeat: Infinity, duration: 4, ease: "linear" }}
+                                style={{
+                                  position: "absolute",
+                                  padding: "10px",
+                                  bottom: "-4%",
+                                  right: "-4%",
+                                  width: "18%",
+                                  height: "30%",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  background: "rgba(166, 221, 175, 0.85)",
+                                  borderRadius: "50%",
+                                  boxShadow: "0 2px 6px rgba(0,0,0,0.3)",
+                                  cursor: "pointer"
+                                }}
+                                onClick={(e) => handlePopOverClick(e, "energy")}
+                              >
+                                <HourglassFullIcon style={{ fontSize: "1.0rem", color: "#167356" }} />
+                              </motion.div>
+                              <Popover
+                                open={activePopover === "energy"}
+                                anchorEl={anchorEl}
+                                onClose={handlePopOverClose}
+                                anchorOrigin={{
+                                  vertical: "bottom",
+                                  horizontal: "center",
+                                }}
+                                transformOrigin={{
+                                  vertical: "top",
+                                  horizontal: "center",
+                                }}
+                              >
+                                <Box p={2} sx={{ maxWidth: 250 }}>
+                                  <strong>Energy Provider</strong>
+                                  <p>
+                                    Energy provider sends the new price information (for the current hour) to Intelligence control.
+                                  </p>
+                                </Box>
+                              </Popover>
+                            </>
+                          )}
+                        </div>
                       )}
-                    </div>
-                  )}
-                  {demoRunMethod === WITH_LIQUID_AI && (
-                    <div
-                      style={{
-                        position: "absolute",
-                        top: "90%",
-                        left: "40.2%",
-                        width: "10%",
-                        height: "10%",
-                        zIndex: 2,
-                      }}
-                      ref={flexibilityServiceRef}
-                    >
-                      <img
-                        src={FlexibilityServiceIcon}
-                        alt="FlexibilityServiceIcon"
-                        style={{
-                          width: "100%",
-                          height: "100%"
-                        }}
-                      />
-                      {scheduleProcessing && (((new Date(demoTime).getHours() === 4 || new Date(demoTime).getHours() === 13 || new Date(demoTime).getHours() === 21) && new Date(demoTime).getMinutes() === 0)) && (
-                        <>
-                          <motion.div
-                            initial={{ rotate: 0 }}
-                            animate={{ rotate: 360 }}
-                            transition={{ repeat: Infinity, duration: 4, ease: "linear" }}
+                      {demoRunMethod === WITH_LIQUID_AI && (
+                        <div
+                          style={{
+                            position: "absolute",
+                            top: "90%",
+                            left: "40.2%",
+                            width: "10%",
+                            height: "10%",
+                            zIndex: 2,
+                          }}
+                          ref={flexibilityServiceRef}
+                        >
+                          <img
+                            src={FlexibilityServiceIcon}
+                            alt="FlexibilityServiceIcon"
                             style={{
-                              position: "absolute",
-                              padding: "10px",
-                              top: "-8%",
-                              right: "-10%",
-                              width: "28%",
-                              height: "30%",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              background: "rgba(166, 221, 175, 0.85)",
-                              borderRadius: "50%",
-                              boxShadow: "0 2px 6px rgba(0,0,0,0.3)",
-                              cursor: "pointer"
+                              width: "100%",
+                              height: "100%"
                             }}
-                            onClick={(e) => handlePopOverClick(e, "flexibility")}
-                          >
-                            <HourglassFullIcon style={{ fontSize: "1.0rem", color: "#167356" }} />
-                          </motion.div>
-                          <Popover
-                            open={activePopover === "flexibility"}
-                            anchorEl={anchorEl}
-                            onClose={handlePopOverClose}
-                            anchorOrigin={{
-                              vertical: "bottom",
-                              horizontal: "center",
-                            }}
-                            transformOrigin={{
-                              vertical: "top",
-                              horizontal: "center",
-                            }}
-                          >
-                            <Box p={2} sx={{ maxWidth: 250 }}>
-                              <strong>Flexibility Service</strong>
-                              <p>
-                                The Flexibility Service compares the new price data with previous values and identifies any significant changes, such as price spikes. <br />
-                                This information is then communicated to the Intelligence Control.
-                              </p>
-                            </Box>
-                          </Popover>
-                        </>
+                          />
+                          {scheduleProcessing && (((new Date(demoTime).getHours() === 4 || new Date(demoTime).getHours() === 13 || new Date(demoTime).getHours() === 21) && new Date(demoTime).getMinutes() === 0)) && (
+                            <>
+                              <motion.div
+                                initial={{ rotate: 0 }}
+                                animate={{ rotate: 360 }}
+                                transition={{ repeat: Infinity, duration: 4, ease: "linear" }}
+                                style={{
+                                  position: "absolute",
+                                  padding: "10px",
+                                  top: "-8%",
+                                  right: "-10%",
+                                  width: "28%",
+                                  height: "30%",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  background: "rgba(166, 221, 175, 0.85)",
+                                  borderRadius: "50%",
+                                  boxShadow: "0 2px 6px rgba(0,0,0,0.3)",
+                                  cursor: "pointer"
+                                }}
+                                onClick={(e) => handlePopOverClick(e, "flexibility")}
+                              >
+                                <HourglassFullIcon style={{ fontSize: "1.0rem", color: "#167356" }} />
+                              </motion.div>
+                              <Popover
+                                open={activePopover === "flexibility"}
+                                anchorEl={anchorEl}
+                                onClose={handlePopOverClose}
+                                anchorOrigin={{
+                                  vertical: "bottom",
+                                  horizontal: "center",
+                                }}
+                                transformOrigin={{
+                                  vertical: "top",
+                                  horizontal: "center",
+                                }}
+                              >
+                                <Box p={2} sx={{ maxWidth: 250 }}>
+                                  <strong>Flexibility Service</strong>
+                                  <p>
+                                    The Flexibility Service compares the new price data with previous values and identifies any significant changes, such as price spikes. <br />
+                                    This information is then communicated to the Intelligence Control.
+                                  </p>
+                                </Box>
+                              </Popover>
+                            </>
+                          )}
+                        </div>
                       )}
-                    </div>
-                  )}
-                  {demoRunMethod === WITH_LIQUID_AI && rescheduleHistory.length > 0 && (
-                    <Accordion
-                      sx={{
-                        position: "absolute",
-                        top: "84%",
-                        left: "60.2%",
-                        width: "40%",
-                        zIndex: 2,
-                        backgroundColor: "#7bc7d1",
-                        border: "1px solid #ccc",
-                        borderRadius: "8px",
-                        boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
-                      }}
-                    >
-                      <AccordionSummary
-                        expandIcon={<ExpandMore sx={{ color: "white" }} />}
-                        sx={{
-                          backgroundColor: "#2b717a",
-                          color: "white",
-                          borderRadius: "8px 8px 0px 0px",
-
-
-                        }}
-                      >
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                          <InfoOutlinedIcon fontSize="small" />
-                          <Typography variant="h6" sx={{ fontWeight: "bold", lineHeight: 1 }}>
-                            Device Schedule Info
-                          </Typography>
-                        </Box>
-                      </AccordionSummary>
-                      <AccordionDetails
-                        sx={{
-                          display: "flex",
-                          flexDirection: "column",
-                          padding: "10px",
-                        }}
-                      >
-                        <Typography variant="body1" sx={{ marginBottom: 2, textAlign: "justify" }}>
-                          When energy price changes occur, the system dynamically adjusts device
-                          schedules to optimize consumption. The recalculation process happens on
-                          the following times:
-                        </Typography>
-                        <Box
+                      {demoRunMethod === WITH_LIQUID_AI && rescheduleHistory.length > 0 && (
+                        <Accordion
                           sx={{
-                            flexGrow: 1,
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            position: "relative",
-                            padding: "8px",
+                            position: "absolute",
+                            top: "84%",
+                            left: "60.2%",
+                            width: "40%",
+                            zIndex: 2,
+                            backgroundColor: "#7bc7d1",
+                            border: "1px solid #ccc",
+                            borderRadius: "8px",
+                            boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
                           }}
                         >
-                          {/* Left Arrow */}
-                          <IconButton
-                            onClick={() => setIndex((prev) => Math.max(prev - 1, 0))}
-                            disabled={index === 0}
+                          <AccordionSummary
+                            expandIcon={<ExpandMore sx={{ color: "white" }} />}
                             sx={{
-                              position: "absolute",
-                              left: "4px",
-                              top: "20%",
-                              height: "30px",
-                              width: "30px",
-                              zIndex: 3,
-                              backgroundColor: "rgba(255,255,255,0.7)",
-                            }}
-                          >
-                            <ArrowBackIos sx={{ paddingLeft: "4px", fontSize: "18px", cursor: "pointer" }} />
-                          </IconButton>
+                              backgroundColor: "#2b717a",
+                              color: "white",
+                              borderRadius: "8px 8px 0px 0px",
 
-                          {/* Step Text */}
-                          <Box
-                            sx={{
-                              position: "relative",
-                              top: "-30px",
-                              width: "100%",
-                              height: "100%",
-                              padding: "20px",
-                              overflow: "hidden",
+
                             }}
                           >
-                            <Typography
-                              variant="h6"
+                            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                              <InfoOutlinedIcon fontSize="small" />
+                              <Typography variant="h6" sx={{ fontWeight: "bold", lineHeight: 1 }}>
+                                Device Schedule Info
+                              </Typography>
+                            </Box>
+                          </AccordionSummary>
+                          <AccordionDetails
+                            sx={{
+                              display: "flex",
+                              flexDirection: "column",
+                              padding: "10px",
+                            }}
+                          >
+                            <Typography variant="body1" sx={{ marginBottom: 2, textAlign: "justify" }}>
+                              When energy price changes occur, the system dynamically adjusts device
+                              schedules to optimize consumption. The recalculation process happens on
+                              the following times:
+                            </Typography>
+                            <Box
                               sx={{
-                                fontWeight: "bold",
-                                marginBottom: 2,
-                                backgroundColor: "lightgrey",
-                                textAlign: "center",
+                                flexGrow: 1,
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                position: "relative",
+                                padding: "8px",
                               }}
                             >
-                              {rescheduleHistory[index] && rescheduleHistory[index].title}
-                            </Typography>
-                            <Typography variant="body1" sx={{ padding: "10px", textAlign: "center" }}>
-                              {rescheduleHistory[index] && rescheduleHistory[index].content}
-                            </Typography>
-                          </Box>
+                              {/* Left Arrow */}
+                              <IconButton
+                                onClick={() => setIndex((prev) => Math.max(prev - 1, 0))}
+                                disabled={index === 0}
+                                sx={{
+                                  position: "absolute",
+                                  left: "4px",
+                                  top: "20%",
+                                  height: "30px",
+                                  width: "30px",
+                                  zIndex: 3,
+                                  backgroundColor: "rgba(255,255,255,0.7)",
+                                }}
+                              >
+                                <ArrowBackIos sx={{ paddingLeft: "4px", fontSize: "18px", cursor: "pointer" }} />
+                              </IconButton>
 
-                          {/* Right Arrow */}
-                          <IconButton
-                            onClick={() => setIndex((prev) => Math.min(prev + 1, rescheduleHistory.length - 1))}
-                            disabled={index === rescheduleHistory.length - 1}
-                            sx={{
+                              {/* Step Text */}
+                              <Box
+                                sx={{
+                                  position: "relative",
+                                  top: "-30px",
+                                  width: "100%",
+                                  height: "100%",
+                                  padding: "20px",
+                                  overflow: "hidden",
+                                }}
+                              >
+                                <Typography
+                                  variant="h6"
+                                  sx={{
+                                    fontWeight: "bold",
+                                    marginBottom: 2,
+                                    backgroundColor: "lightgrey",
+                                    textAlign: "center",
+                                  }}
+                                >
+                                  {rescheduleHistory[index] && rescheduleHistory[index].title}
+                                </Typography>
+                                <Typography variant="body1" sx={{ padding: "10px", textAlign: "center" }}>
+                                  {rescheduleHistory[index] && rescheduleHistory[index].content}
+                                </Typography>
+                              </Box>
+
+                              {/* Right Arrow */}
+                              <IconButton
+                                onClick={() => setIndex((prev) => Math.min(prev + 1, rescheduleHistory.length - 1))}
+                                disabled={index === rescheduleHistory.length - 1}
+                                sx={{
+                                  position: "absolute",
+                                  right: "4px",
+                                  top: "20%",
+                                  height: "30px",
+                                  width: "30px",
+                                  backgroundColor: "rgba(255,255,255,0.7)",
+                                }}
+                              >
+                                <ArrowForwardIos sx={{ fontSize: "14px", cursor: "pointer" }} />
+                              </IconButton>
+                            </Box>
+                          </AccordionDetails>
+                        </Accordion>
+                      )}
+                      {demoRunMethod === WITHOUT_LIQUID_AI && (
+                        <>
+                          <img
+                            src={Service_Provider1}
+                            alt="Service_Provider1"
+                            ref={serviceProviderRef1}
+                            style={{
                               position: "absolute",
-                              right: "4px",
-                              top: "20%",
-                              height: "30px",
-                              width: "30px",
-                              backgroundColor: "rgba(255,255,255,0.7)",
+                              top: "90%",
+                              left: "21.2%",
+                              width: "10%",
+                              zIndex: 2,
                             }}
-                          >
-                            <ArrowForwardIos sx={{ fontSize: "14px", cursor: "pointer" }} />
-                          </IconButton>
-                        </Box>
-                      </AccordionDetails>
-                    </Accordion>
-                  )}
-                  {demoRunMethod === WITHOUT_LIQUID_AI && (
-                    <>
-                      <img
-                        src={Service_Provider1}
-                        alt="Service_Provider1"
-                        ref={serviceProviderRef1}
-                        style={{
-                          position: "absolute",
-                          top: "90%",
-                          left: "21.2%",
-                          width: "10%",
-                          zIndex: 2,
-                        }}
-                      />
-                      <img
-                        src={Service_Provider2}
-                        alt="Service_Provider2"
-                        ref={serviceProviderRef2}
-                        style={{
-                          position: "absolute",
-                          top: "90%",
-                          left: "51.2%",
-                          width: "10%",
-                          zIndex: 2,
-                        }}
-                      />
-                      <AnimatePresence initial={false}>
-                        {hackerVisibility ? (
-                          <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            transition={{
-                              opacity: { duration: 1, ease: "easeInOut" },
+                          />
+                          <img
+                            src={Service_Provider2}
+                            alt="Service_Provider2"
+                            ref={serviceProviderRef2}
+                            style={{
+                              position: "absolute",
+                              top: "90%",
+                              left: "51.2%",
+                              width: "10%",
+                              zIndex: 2,
                             }}
-                          >
-                            <img
-                              src={HackerIcon}
-                              alt="HackerIcon"
-                              ref={hackerRef}
-                              style={{
-                                position: "absolute",
-                                top: "85%",
-                                left: "90.2%",
-                                width: "10%",
-                                height: "15%",
-                                zIndex: 2,
-                              }}
-                            />
-                          </motion.div>
-                        ) : null}
-                      </AnimatePresence>
+                          />
+                          <AnimatePresence initial={false}>
+                            {hackerVisibility ? (
+                              <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                transition={{
+                                  opacity: { duration: 1, ease: "easeInOut" },
+                                }}
+                              >
+                                <img
+                                  src={HackerIcon}
+                                  alt="HackerIcon"
+                                  ref={hackerRef}
+                                  style={{
+                                    position: "absolute",
+                                    top: "85%",
+                                    left: "90.2%",
+                                    width: "10%",
+                                    height: "15%",
+                                    zIndex: 2,
+                                  }}
+                                />
+                              </motion.div>
+                            ) : null}
+                          </AnimatePresence>
+                          <img
+                            src={CloudIcon}
+                            alt="CloudIcon"
+                            style={{
+                              position: "absolute",
+                              top: "87%",
+                              left: "11.2%",
+                              width: "65%",
+                              height: "19%",
+                              zIndex: 0,
+                            }}
+                          />
+                        </>
+                      )}
                       <img
-                        src={CloudIcon}
-                        alt="CloudIcon"
+                        src={houseImage}
+                        alt="House"
+                        className="house-image"
                         style={{
                           position: "absolute",
-                          top: "87%",
-                          left: "11.2%",
-                          width: "65%",
-                          height: "19%",
-                          zIndex: 0,
+                          top: "2%",
+                          left: "5%",
+                          width: "90%",
+                          height: "55%",
                         }}
                       />
-                    </>
-                  )}
-                  <img
-                    src={houseImage}
-                    alt="House"
-                    className="house-image"
-                    style={{
-                      position: "absolute",
-                      top: "2%",
-                      left: "5%",
-                      width: "90%",
-                      height: "55%",
-                    }}
-                  />
-                  <div>
-                    {/*Energy components inside the house*/}
-                    <Freezer ref={freezerRef} />
-                    <WashingMachine ref={washingMachineRef} />
-                    <ElectricCar1 ref={electricCar1Ref} isMainViewActive={isMainViewActive} />
-                    <ElectricCar2 ref={electricCar2Ref} isMainViewActive={isMainViewActive} />
-                    <Jacuzzi ref={jacuzziRef} />
-                    <EvCharger ref={evChargerRef} />
+                      <div>
+                        {/*Energy components inside the house*/}
+                        <Freezer ref={freezerRef} />
+                        <WashingMachine ref={washingMachineRef} />
+                        <ElectricCar1 ref={electricCar1Ref} isMainViewActive={isMainViewActive} />
+                        <ElectricCar2 ref={electricCar2Ref} isMainViewActive={isMainViewActive} />
+                        <Jacuzzi ref={jacuzziRef} />
+                        <EvCharger ref={evChargerRef} />
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
-            </Box>
-          </Grid>
-          </>
+                </Box>
+              </Grid>
+            </>
           ) : (
             <Grid item xs={12} sm={3} minWidth={"77vh"}>
               <Box>
@@ -1588,14 +1626,14 @@ const Demo = () => {
                       borderRadius: "4px",
                       boxShadow: "0 2px 4px rgba(0,0,0,0.2)"
                     }}
-                  /> 
+                  />
                 </div>
               </Box>
             </Grid>
           )}
-          <Grid item xs={2} style={{ position: "relative", marginTop: "15px"}}>
+          <Grid item xs={2} style={{ position: "relative", marginTop: "15px" }}>
             <Grid container spacing={1.5} columns={1} style={{ maxHeight: "100vh", overflowY: "auto", paddingRight: "8px" }}>
-              <Grid item xs={1} minWidth="50vh" style={{paddingLeft: "0px", marginBottom: "10px"}}>
+              <Grid item xs={1} minWidth="50vh" style={{ paddingLeft: "0px", marginBottom: "10px" }}>
                 <Box
                   style={{
                     padding: "1vh",
@@ -1631,13 +1669,14 @@ const Demo = () => {
                 <Grid item xs={1} paddingBottom="5px">
                   <Box>
                     <List
-                      sx={{ width: "100%",
-                      bgcolor: "background.paper",
-                      border: "1px solid #DCDCDC",
-                      borderRadius: "5px",
-                      boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.2)",
-                      paddingBottom: "0px",
-                      paddingTop: "0px"
+                      sx={{
+                        width: "100%",
+                        bgcolor: "background.paper",
+                        border: "1px solid #DCDCDC",
+                        borderRadius: "5px",
+                        boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.2)",
+                        paddingBottom: "0px",
+                        paddingTop: "0px"
                       }}
                     >
                       <ListItemButton

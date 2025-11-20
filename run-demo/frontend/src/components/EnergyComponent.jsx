@@ -10,7 +10,8 @@ const EnergyComponent = (props) => {
     description,
     isActive,
     deviceInfo,
-    supervisorName
+    supervisorName,
+    children
   } = props;
 
   return (
@@ -37,10 +38,10 @@ const EnergyComponent = (props) => {
         )}
         <Typography variant="body2" sx={{ marginBottom: 1 }}>
           <strong>
-            <ComputerIcon 
-              fontSize="small" 
-              style={{ verticalAlign: "middle", marginRight: "4px" }} 
-            /> 
+            <ComputerIcon
+              fontSize="small"
+              style={{ verticalAlign: "middle", marginRight: "4px" }}
+            />
             Supervisor: </strong>{supervisorName}
           <br />
         </Typography>
@@ -51,6 +52,7 @@ const EnergyComponent = (props) => {
         <Typography variant="body2">
           <strong>🔵 Module deployed: </strong> {deviceInfo !== undefined && deviceInfo.isActive && deviceInfo.existingModuleName ? deviceInfo.existingModuleName : "None"}
         </Typography>
+        {children}
       </CardContent>
     </Card>
   );
