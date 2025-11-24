@@ -2,19 +2,56 @@ import React, { useRef, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import EnergyMovingIcon from '../../assets/energy_moving.png';
 
-const GradientArrowLine = () => {
+const GradientArrowLine = ({ evPluggedIn }) => {
   const containerRef = useRef(null);
   const [containerWidth, setContainerWidth] = useState(0);
+  // Generate unique IDs for this instance to avoid conflicts with multiple lines
+  const uniqueId = useRef(`line-${Math.random().toString(36).substr(2, 9)}`).current;
 
-  // Measure container width for motion
+  // Measure container width and update when it changes
   useEffect(() => {
-    if (containerRef.current) {
-      setContainerWidth(containerRef.current.offsetWidth);
-    }
-  }, []);
+    if (!containerRef.current) return;
+
+    const updateWidth = () => {
+      if (containerRef.current) {
+        const width = containerRef.current.offsetWidth;
+        if (width > 0) {
+          setContainerWidth(width);
+        }
+      }
+    };
+
+    // Initial measurement
+    updateWidth();
+
+    // Watch for size changes (when drawLines sets the width)
+    const resizeObserver = new ResizeObserver(() => {
+      updateWidth();
+    });
+
+    // Watch for style changes (when drawLines modifies the style)
+    const mutationObserver = new MutationObserver(() => {
+      updateWidth();
+    });
+
+    resizeObserver.observe(containerRef.current);
+    mutationObserver.observe(containerRef.current, {
+      attributes: true,
+      attributeFilter: ['style']
+    });
+
+    // Also update after a short delay to catch async updates
+    const timeoutId = setTimeout(updateWidth, 100);
+
+    return () => {
+      resizeObserver.disconnect();
+      mutationObserver.disconnect();
+      clearTimeout(timeoutId);
+    };
+  }, [evPluggedIn]);
 
   return (
-    <div
+    evPluggedIn && (<div
       ref={containerRef}
       style={{
         position: 'relative',
@@ -29,21 +66,21 @@ const GradientArrowLine = () => {
       <svg width="100%" height="100%" style={{ overflow: 'visible' }}>
         <defs>
           {/* Gradient for the arrow line */}
-          <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+          <linearGradient id={`lineGradient-${uniqueId}`} x1="0%" y1="0%" x2="100%" y2="0%">
             <stop offset="0%" stopColor="#FFFF00" /> {/* yellow */}
             <stop offset="50%" stopColor="#FFA500" /> {/* orange */}
             <stop offset="100%" stopColor="#008000" /> {/* reddish-orange */}
           </linearGradient>
 
           {/* Arrow pattern */}
-          <pattern id="arrowPattern" x="0" y="0" width="8" height="30" patternUnits="userSpaceOnUse">
+          <pattern id={`arrowPattern-${uniqueId}`} x="0" y="0" width="8" height="30" patternUnits="userSpaceOnUse">
             <path d="M 0 5 L 6 15 L 0 25" fill="none" stroke="white" strokeWidth="3" />
           </pattern>
 
           {/* Mask for arrows */}
-          <mask id="arrowMask">
+          <mask id={`arrowMask-${uniqueId}`}>
             <rect x="0" y="0" width="100%" height="100%" fill="black" />
-            <rect x="0" y="0" width="100%" height="100%" fill="url(#arrowPattern)" />
+            <rect x="0" y="0" width="100%" height="100%" fill={`url(#arrowPattern-${uniqueId})`} />
           </mask>
 
           {/* Glow effect */}
@@ -57,7 +94,7 @@ const GradientArrowLine = () => {
         </defs>
 
         {/* Base gray arrows */}
-        <rect x="0" y="0" width="100%" height="100%" fill="#808080" mask="url(#arrowMask)" />
+        <rect x="0" y="0" width="100%" height="100%" fill="#808080" mask={`url(#arrowMask-${uniqueId})`} />
 
         {/* Animated gradient fill */}
         {containerWidth > 0 && (
@@ -66,8 +103,8 @@ const GradientArrowLine = () => {
             y={0}
             width="100%"
             height="100%"
-            fill="url(#lineGradient)"
-            mask="url(#arrowMask)"
+            fill={`url(#lineGradient-${uniqueId})`}
+            mask={`url(#arrowMask-${uniqueId})`}
             style={{ overflow: 'visible' }}
             initial={{ clipPath: 'inset(0 100% 0 0)' }}   // start fully hidden (right side hidden)
             animate={{ clipPath: 'inset(0 0% 0 0)' }}      // reveal full width
@@ -84,13 +121,11 @@ const GradientArrowLine = () => {
           alt="Energy Moving"
           style={{
             position: 'absolute',
-            // top: '-1px', // align with line
             left: 0,
             width: '28px',
             height: '28px',
-            zIndex: 999,
             pointerEvents: 'none',
-            transform: "rotate(90deg)"
+            rotate: "90deg"
           }}
           animate={{ x: [0, containerWidth - 28] }}
           transition={{
@@ -100,8 +135,8 @@ const GradientArrowLine = () => {
           }}
         />
       )}
-    </div>
-  );
+    </div>)
+  )
 };
 
 export default GradientArrowLine;

@@ -11,21 +11,29 @@ import { isDeviceOperating } from "../../utils/deviceUtils";
 import { useDemoControlContext } from "../demoControlContext/useDemoControlContext";
 import { useSyncedLocalStorage } from "../../services/SyncedLocalStorage";
 
+const createElectricCar = () => ({
+  pluggedIn: false,
+  provideEnergy: false,
+  totalEnergy: 0,
+  minReqEnergy: 80,
+  availableEnergy: 0
+});
+
 const DemoVisualizationContext = createContext({
   hackerVisibility: false,
   movingDeployments: [],
   dayPlans: initialDayPlan,
   historicalDayPlans: [initialDayPlan],
-  ev1PluggedIn: true,
-  ev2PluggedIn: true,
+  electricCar1: createElectricCar(),
+  electricCar2: createElectricCar(),
   deviceStatus: [],
-  changeHackerVisibility: () => {},
-  setMovingDeployments: () => {},
-  setDayPlans: () => {},
-  setHistoricalDayPlans: () => {},
-  setEv1PluggedIn: () => {},
-  setEv2PluggedIn: () => {},
-  setDeviceStatus: () => {},
+  changeHackerVisibility: () => { },
+  setMovingDeployments: () => { },
+  setDayPlans: () => { },
+  setHistoricalDayPlans: () => { },
+  setElectricCar1: () => { },
+  setElectricCar2: () => { },
+  setDeviceStatus: () => { },
 });
 
 export const DemoVisualizationProvider = ({ children }) => {
@@ -34,14 +42,14 @@ export const DemoVisualizationProvider = ({ children }) => {
   const [movingDeployments, setMovingDeployments] = useState([]);
   const [dayPlans, setDayPlans] = useSyncedLocalStorage("dayPlans", initialDayPlan);
   const [historicalDayPlans, setHistoricalDayPlans] = useSyncedLocalStorage("historicalDayPlans", [initialDayPlan]);
-  const [ev1PluggedIn, setEv1PluggedIn] = useState(false);
-  const [ev2PluggedIn, setEv2PluggedIn] = useState(false);
+  const [electricCar1, setElectricCar1] = useState(createElectricCar());
+  const [electricCar2, setElectricCar2] = useState(createElectricCar());
   const [deviceStatus, setDeviceStatus] = useState([
     {
       supervisorName: 'ev-charger',
       deviceName: EV_CHARGER,
       isEnergyIntensive: false,
-      
+
     },
     {
       supervisorName: 'washing-machine',
@@ -60,24 +68,24 @@ export const DemoVisualizationProvider = ({ children }) => {
     setHackerVisibility(isHackerVisible);
   };
 
- /*  useEffect(() => {
-    const handleStorageChange = () => {
-      console.log("change detected");
-      const deviceIdMapRaw = JSON.parse(localStorage.getItem("deviceIdMap") || "[]");
-      const deviceIdMap = deviceIdMapRaw.reduce((acc, [deviceName, supervisorId]) => {
-        acc[deviceName] = supervisorId;
-        return acc;
-      }, {});
-      setDeviceStatus((prevStatus) =>
-        prevStatus.map((device) => ({
-          ...device,
-          isSupervisorDetected: deviceIdMap[device.supervisorName] ? true : false
-        }))
-      );
-    };
-    window.addEventListener("deviceIdMapChanged", handleStorageChange);
-    return () => window.removeEventListener("deviceIdMapChanged", handleStorageChange);
-  }, []); */
+  /*  useEffect(() => {
+     const handleStorageChange = () => {
+       console.log("change detected");
+       const deviceIdMapRaw = JSON.parse(localStorage.getItem("deviceIdMap") || "[]");
+       const deviceIdMap = deviceIdMapRaw.reduce((acc, [deviceName, supervisorId]) => {
+         acc[deviceName] = supervisorId;
+         return acc;
+       }, {});
+       setDeviceStatus((prevStatus) =>
+         prevStatus.map((device) => ({
+           ...device,
+           isSupervisorDetected: deviceIdMap[device.supervisorName] ? true : false
+         }))
+       );
+     };
+     window.addEventListener("deviceIdMapChanged", handleStorageChange);
+     return () => window.removeEventListener("deviceIdMapChanged", handleStorageChange);
+   }, []); */
 
   useEffect(() => {
     /* setDeviceStatus([
@@ -98,7 +106,7 @@ export const DemoVisualizationProvider = ({ children }) => {
         isEnergyIntensive: isDeviceOperating(FREEZER, dayPlans, demoTime),
       },
     ]); */
-    
+
     setDeviceStatus((prevStatus) =>
       prevStatus.map((device) => ({
         ...device,
@@ -113,15 +121,15 @@ export const DemoVisualizationProvider = ({ children }) => {
       movingDeployments,
       dayPlans,
       historicalDayPlans,
-      ev1PluggedIn,
-      ev2PluggedIn,
+      electricCar1,
+      electricCar2,
       deviceStatus,
       changeHackerVisibility,
       setMovingDeployments,
       setDayPlans,
       setHistoricalDayPlans,
-      setEv1PluggedIn,
-      setEv2PluggedIn,
+      setElectricCar1,
+      setElectricCar2,
       setDeviceStatus
     }),
     [
@@ -129,8 +137,8 @@ export const DemoVisualizationProvider = ({ children }) => {
       movingDeployments,
       dayPlans,
       historicalDayPlans,
-      ev1PluggedIn,
-      ev2PluggedIn,
+      electricCar1,
+      electricCar2,
       deviceStatus,
     ]
   );

@@ -18,7 +18,7 @@ const WashingMachine = React.forwardRef((props, ref) => {
   const [deviceInfo, setDeviceInfo] = useState({});
   const [blinkState, setBlinkState] = useState(false);
   const { deviceStatus } = useDemoVisualizationContext();
-  const {voiceEnabled} = useDemoControlContext();
+  const { voiceEnabled } = useDemoControlContext();
   const prevValueRef = useRef(null);
   const isFirstMount = useRef(true);
 
@@ -32,12 +32,12 @@ const WashingMachine = React.forwardRef((props, ref) => {
     type: "consumer",
     description: "Washing machine turns dirty laundry clean in just a moment.",
     optimize: false,
-    isActive:  isActive,
+    isActive: isActive,
     deviceInfo: deviceInfo,
     supervisorName: getDeviceStatus.supervisorName
   };
 
-  
+
   useEffect(() => {
     const checkEquipment = () => {
       const devices = JSON.parse(localStorage.getItem("devices") || "[]");
@@ -78,7 +78,7 @@ const WashingMachine = React.forwardRef((props, ref) => {
         setBlinkState(prevState => !prevState);
       }, 500);
     } else {
-      setBlinkState(false); 
+      setBlinkState(false);
       clearInterval(intervalId);
     }
     return () => clearInterval(intervalId);
@@ -132,7 +132,7 @@ const WashingMachine = React.forwardRef((props, ref) => {
           backgroundColor: "transparent",
           border: "none",
           padding: "0%",
-          zIndex: 2,
+          zIndex: 5,
         }}
         onClick={handleClick}
         onMouseEnter={handleHoverOn}
@@ -147,7 +147,7 @@ const WashingMachine = React.forwardRef((props, ref) => {
             style={{
               width: "100%",
               height: "100%",
-              border: isActive 
+              border: isActive
                 ? blinkState
                   ? "5px solid #1976d2"
                   : "5px solid green"
@@ -196,7 +196,7 @@ const WashingMachine = React.forwardRef((props, ref) => {
           width: "8%",
           height: "10%",
           transform: "scale(0.2)",
-          zIndex: 2,
+          zIndex: 5
         }}
       />
       <Popover

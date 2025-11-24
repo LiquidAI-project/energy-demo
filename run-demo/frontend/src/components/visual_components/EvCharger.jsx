@@ -18,7 +18,7 @@ import PowerSettingsNewIcon from '@mui/icons-material/PowerSettingsNew';
 
 const evCharger = React.forwardRef((props, ref) => {
   const [anchorEl, setAnchorEl] = useState(null);
-  const { deviceStatus } = useDemoVisualizationContext();
+  const { deviceStatus, electricCar1, electricCar2 } = useDemoVisualizationContext();
   const { voiceEnabled } = useDemoControlContext();
   const [blinkState, setBlinkState] = useState(false);
   const [isActive, setIsActive] = useState(false);
@@ -59,7 +59,7 @@ const evCharger = React.forwardRef((props, ref) => {
   // Sets blinkState when the appliance is in running state
   useEffect(() => {
     let intervalId;
-    if (getDeviceStatus.isEnergyIntensive === "abc") {
+    if (getDeviceStatus.isEnergyIntensive) {
       intervalId = setInterval(() => {
         setBlinkState(prevState => !prevState);
       }, 500);
@@ -145,13 +145,13 @@ const evCharger = React.forwardRef((props, ref) => {
           borderRadius: "8px",
           transition: "border 0.2s",
           padding: "0%",
-          zIndex: 2,
+          zIndex: 5
         }}
         onClick={handleClick}
         onMouseEnter={handleHoverOn}
         onMouseLeave={handleHoverAway}
       >
-        <div style={{ position: "relative", width: "100%", height: "100%" }}>
+        <div style={{ position: "relative", width: "100%", height: "100%", zIndex: 5 }}>
           <img
             id="evCharger"
             src={EVChargerIcon}
@@ -183,7 +183,7 @@ const evCharger = React.forwardRef((props, ref) => {
                 justifyContent: "center",
                 alignItems: "center",
                 backgroundColor: "rgba(0, 0, 0, 0.3)", // semi-transparent overlay
-                borderRadius: "8px",
+                borderRadius: "8px"
               }}
             >
               <PowerSettingsNewIcon
@@ -207,7 +207,7 @@ const evCharger = React.forwardRef((props, ref) => {
           width: "8%",
           height: "10%",
           transform: "scale(0.2)",
-          zIndex: 2,
+          zIndex: 5
         }}
       />
       <Popover
@@ -243,13 +243,13 @@ const evCharger = React.forwardRef((props, ref) => {
                   Electric Car 1
                 </Typography>
                 <Typography variant="caption" display="block">
-                  - Total energy: 120 kWh
+                  - Total Energy: <b>{electricCar1.totalEnergy} kWh</b>
                 </Typography>
                 <Typography variant="caption" display="block">
-                  - Min Energy (Req): 80 kWh
+                  - Min Energy (Req): <b>{electricCar1.minReqEnergy} kWh</b>
                 </Typography>
                 <Typography variant="caption" display="block">
-                  - Energy Discharge: 40 kWh
+                  - Available Energy: <b>{electricCar1.availableEnergy} kWh</b>
                 </Typography>
               </Grid>
               <Grid item xs={6}>
@@ -257,13 +257,13 @@ const evCharger = React.forwardRef((props, ref) => {
                   Electric Car 2
                 </Typography>
                 <Typography variant="caption" display="block">
-                  - Total energy: 120 kWh
+                  - Total Energy: <b>{electricCar2.totalEnergy} kWh</b>
                 </Typography>
                 <Typography variant="caption" display="block">
-                  - Min Energy (Req): 80 kWh
+                  - Min Energy (Req): <b>{electricCar2.minReqEnergy} kWh</b>
                 </Typography>
                 <Typography variant="caption" display="block">
-                  - Energy Discharge: 40 kWh
+                  - Available Energy: <b>{electricCar2.availableEnergy} kWh</b>
                 </Typography>
               </Grid>
             </Grid>

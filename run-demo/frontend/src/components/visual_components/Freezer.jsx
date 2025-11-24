@@ -18,7 +18,7 @@ const Freezer = React.forwardRef((props, ref) => {
   const [deviceInfo, setDeviceInfo] = useState({});
   const [blinkState, setBlinkState] = useState(false);
   const { deviceStatus } = useDemoVisualizationContext();
-  const {voiceEnabled} = useDemoControlContext();
+  const { voiceEnabled } = useDemoControlContext();
   const prevValueRef = useRef(null);
   const isFirstMount = useRef(true);
 
@@ -32,7 +32,7 @@ const Freezer = React.forwardRef((props, ref) => {
     type: 'consumer',
     description: 'Food stays cold in the fridge and freezer.',
     optimize: false,
-    isActive:  isActive,
+    isActive: isActive,
     deviceInfo: deviceInfo,
     supervisorName: getDeviceStatus.supervisorName
   };
@@ -57,7 +57,7 @@ const Freezer = React.forwardRef((props, ref) => {
         setBlinkState(prevState => !prevState);
       }, 500);
     } else {
-      setBlinkState(false); 
+      setBlinkState(false);
       clearInterval(intervalId);
     }
     return () => clearInterval(intervalId);
@@ -128,7 +128,7 @@ const Freezer = React.forwardRef((props, ref) => {
           backgroundColor: "transparent",
           border: "none",
           padding: "0%",
-          zIndex: 2,
+          zIndex: 5,
         }}
         onClick={handleClick}
         onMouseEnter={handleHoverOn}
@@ -192,7 +192,7 @@ const Freezer = React.forwardRef((props, ref) => {
           width: "8%",
           height: "10%",
           transform: "scale(0.2)",
-          zIndex: 2,
+          zIndex: 5
         }}
       />
       <Popover

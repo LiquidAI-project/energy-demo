@@ -3,11 +3,16 @@ import { motion } from 'framer-motion';
 import carImage from "../../assets/car.png";
 import carChargerImage from "../../assets/car_charger.png";
 import { useDemoVisualizationContext } from '../../context/demoVisualizationContext/useDemoVisualizationContext';
-import NeonArrow from "./NeonArrow";
 import EnergyMovingIcon from "../../assets/energy_moving.png";
+import Battery20Icon from '@mui/icons-material/Battery20';
+import Battery50Icon from '@mui/icons-material/Battery50';
+import Battery80Icon from '@mui/icons-material/Battery80';
+import BatteryFullIcon from '@mui/icons-material/BatteryFull';
+import BatteryChargingFullIcon from '@mui/icons-material/BatteryChargingFull';
+
 const ElectricCar1 = React.forwardRef((props, ref) => {
 
-  const { ev1PluggedIn } = useDemoVisualizationContext();
+  const { electricCar1 } = useDemoVisualizationContext();
 
 
   return (
@@ -22,7 +27,7 @@ const ElectricCar1 = React.forwardRef((props, ref) => {
           backgroundColor: "transparent",
           border: "none",
           padding: "0%",
-          zIndex: 5, // ensure car is above lines
+          zIndex: 5
         }}
       >
         <img
@@ -34,9 +39,6 @@ const ElectricCar1 = React.forwardRef((props, ref) => {
             height: "20%",
           }}
         />
-
-
-
 
         {/* Animate the car image */}
         {/*  <motion.img
@@ -58,8 +60,8 @@ const ElectricCar1 = React.forwardRef((props, ref) => {
 
         <motion.div
           style={{ position: "relative", width: "100%", height: "100%" }}
-          initial={{ y: props.isMainViewActive && ev1PluggedIn ? 0 : '100vh' }}
-          animate={{ y: ev1PluggedIn ? 0 : '100vh' }}
+          initial={{ y: props.isMainViewActive && electricCar1.pluggedIn ? 0 : '100vh' }}
+          animate={{ y: electricCar1.pluggedIn ? 0 : '100vh' }}
           transition={{
             duration: 3,
             ease: 'easeInOut',
@@ -67,7 +69,7 @@ const ElectricCar1 = React.forwardRef((props, ref) => {
         >
           {/* Circular Glow behind the car */}
 
-          {ev1PluggedIn && <motion.div
+          {electricCar1.provideEnergy && <motion.div
             style={{
               position: "absolute",
               top: "-25%",
@@ -104,22 +106,79 @@ const ElectricCar1 = React.forwardRef((props, ref) => {
               zIndex: 1,
             }}
           />
+
+          {/* Battery Charging Indicator */}
+          {electricCar1.pluggedIn && (() => {
+            const energyLevel = parseInt(electricCar1.totalEnergy) || 0;
+            const maxEnergy = 120;
+            const percentage = (energyLevel / maxEnergy) * 100;
+
+            let BatteryIcon;
+            let color;
+
+            if (percentage >= 90) {
+              BatteryIcon = BatteryChargingFullIcon;
+              color = "#4caf50"; // green
+            } else if (percentage >= 60) {
+              BatteryIcon = Battery80Icon;
+              color = "#8bc34a"; // light green
+            } else if (percentage >= 30) {
+              BatteryIcon = Battery50Icon;
+              color = "#ffc107"; // amber
+            } else {
+              BatteryIcon = Battery20Icon;
+              color = "#f44336"; // red
+            }
+
+            return (
+              <div
+                style={{
+                  position: "absolute",
+                  top: "44%",
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                  display: "flex",
+                  alignItems: "center",
+                  backgroundColor: "rgba(255, 255, 255, 0.9)",
+                  borderRadius: "12px",
+                  padding: "4px 8px",
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
+                  zIndex: 3
+                }}
+              >
+                <BatteryIcon
+                  style={{
+                    fontSize: "24px",
+                    color: color,
+                    marginRight: "4px"
+                  }}
+                />
+                <span style={{
+                  fontSize: "11px",
+                  fontWeight: "bold",
+                  color: "#333"
+                }}>
+                  {energyLevel} kWh
+                </span>
+              </div>
+            );
+          })()}
         </motion.div>
 
-
-        {ev1PluggedIn && <img
+        {electricCar1.provideEnergy && <img
           src={EnergyMovingIcon}
           alt="Energy Moving"
           style={{
             position: "absolute",
             top: "4%",
-            left: "38%",
+            left: "52%",
             transform: "translateX(-50%)",
             width: "32px",
             height: "32px",
-            zIndex: 3,
+            zIndex: 3
           }}
         />}
+
 
         {/*  <motion.div
           style={{
@@ -128,67 +187,6 @@ const ElectricCar1 = React.forwardRef((props, ref) => {
             height: "100%",
           }}
         >
-          <motion.div
-            style={{
-              position: "absolute",
-              top: "-25%",
-              left: "-25%",
-              transform: "translate(-50%, -50%)",
-              width: "150%",            // larger than car for nice soft fade
-              height: "150%",
-              borderRadius: "50%",      // 🔥 makes glow circular
-              pointerEvents: "none",
-              zIndex: -1,
-              background: `radial-gradient(
-        circle,
-        rgba(215, 113, 41, 0.55) 0%,
-        rgba(255, 117, 5, 0.35) 30%,
-        rgba(227, 92, 58, 0.15) 60%,
-        rgba(233, 66, 20, 0) 80%
-      )`,
-            }}
-            initial={{ opacity: 0, scale: 0.4 }}
-            animate={
-              ev1PluggedIn
-                ? {
-                  opacity: [0, 1, 0],
-                  scale: [0.4, 1.2, 0.4],   // ✨ FIXED — return to small size
-                }
-                : { opacity: 0, scale: 0.4 }
-            }
-
-            transition={{
-              duration: 3,
-              ease: "easeOut",
-              repeat: Infinity,
-              repeatDelay: 0.4,
-            }}
-          />
-
-          <img
-            src={carImage}
-            alt="ElectricCar1"
-            style={{
-              width: "100%",
-              height: "100%",
-              position: "relative",
-              zIndex: 1,
-            }}
-          />
-
-          <img
-            src={EnergyMovingIcon}
-            alt="Energy Moving"
-            style={{
-              position: "absolute",
-              top: "-18%",
-              left: "50%",
-              transform: "translateX(-50%)",
-              width: "32px",
-              height: "32px",
-              zIndex: 3,
-            }}
-          />
 
           {/* Neon arrows positioned above the car */}
         {/* <div

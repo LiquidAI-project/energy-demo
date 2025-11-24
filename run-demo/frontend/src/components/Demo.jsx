@@ -119,7 +119,7 @@ const Demo = () => {
   const [warningBorderVisible, setWarningBorderVisible] = useState(false);
   const [open, setOpen] = useState(false);
   const [shouldBlink, setShouldBlink] = useState(false);
-  const { deviceStatus, hackerVisibility, movingDeployments, setMovingDeployments, ev1PluggedIn } = useDemoVisualizationContext();
+  const { deviceStatus, hackerVisibility, movingDeployments, setMovingDeployments, electricCar1, electricCar2 } = useDemoVisualizationContext();
   const { demoRunMethod, demoTime, scheduleProcessing, voiceEnabled } = useDemoControlContext();
   const [paused, setPaused] = useState(false);
   const pausedRef = useRef(paused);
@@ -606,6 +606,7 @@ const Demo = () => {
         const point_A_bounds = point_A_ref.current.getBoundingClientRect();
         const point_B_bounds = point_B_ref.current.getBoundingClientRect();
 
+
         let offsetX = 0;
         let offsetY = 0;
         if (lineElement.offsetParent) {
@@ -614,10 +615,19 @@ const Demo = () => {
           offsetY = parentRect.top;
         }
 
-        const x1 = point_A_bounds.left + point_A_bounds.width / 2 - offsetX;
-        const y1 = point_A_bounds.top + point_A_bounds.height / 2 - offsetY;
+        // For electric cars, use top-center as starting point so all lines share the same origin
+        let x1, y1;
+        if (point_A_name === "electricCar1" || point_A_name === "electricCar2") {
+          x1 = point_A_bounds.left + point_A_bounds.width / 2 - offsetX; // center horizontally
+          y1 = point_A_bounds.top - offsetY; // top edge
+        } else {
+          x1 = point_A_bounds.left + point_A_bounds.width / 2 - offsetX;
+          y1 = point_A_bounds.top + point_A_bounds.height / 2 - offsetY;
+        }
+
         const x2 = point_B_bounds.left + point_B_bounds.width / 2 - offsetX;
         const y2 = point_B_bounds.top + point_B_bounds.height / 2 - offsetY;
+
 
         const length = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
         const angle = Math.atan2(y2 - y1, x2 - x1) * (180 / Math.PI);
@@ -638,6 +648,16 @@ const Demo = () => {
     };
 
     if (demoRunMethod === WITH_LIQUID_AI) {
+      // Draw lines immediately when car animations complete
+      if (electricCar1.provideEnergy) {
+        drawLines(electricCar1Ref, "electricCar1", freezerRef, FREEZER, "transparent", 5);
+        drawLines(electricCar1Ref, "electricCar1", washingMachineRef, WASHING_MACHINE, "transparent", 5);
+      }
+      if (electricCar2.provideEnergy) {
+        drawLines(electricCar2Ref, "electricCar2", freezerRef, FREEZER, "transparent", 5);
+        drawLines(electricCar2Ref, "electricCar2", washingMachineRef, WASHING_MACHINE, "transparent", 5);
+      }
+
       drawLines(
         orchestratorRef,
         ORCHESTRATOR,
@@ -658,29 +678,6 @@ const Demo = () => {
         WASHING_MACHINE
       );
       drawLines(orchestratorRef, ORCHESTRATOR, evChargerRef, EV_CHARGER);
-      // Add drawLines for ElectricCar1 -> Freezer
-      /* drawLines(electricCar1Ref, "electricCar1", freezerRef, FREEZER, "transparent");
-      drawLines(
-        electricCar2Ref,
-        "electricCar2",
-        freezerRef,
-        FREEZER,
-        "orange"
-      );
-      drawLines(
-        electricCar1Ref,
-        "electricCar1",
-        washingMachineRef,
-        WASHING_MACHINE,
-        "orange"
-      );
-      drawLines(
-        electricCar2Ref,
-        "electricCar2",
-        washingMachineRef,
-        WASHING_MACHINE,
-        "orange"
-      ); */
       drawLines(
         energyCompanyRef,
         ENERGY_COMPANY,
@@ -855,6 +852,20 @@ const Demo = () => {
             INTELLIGENT_CONTROL
           )
         );
+        window.removeEventListener("resize", () => {
+          if (electricCar1.provideEnergy) {
+            setTimeout(() => {
+              drawLines(electricCar1Ref, "electricCar1", freezerRef, FREEZER, "transparent", 5);
+              drawLines(electricCar1Ref, "electricCar1", washingMachineRef, WASHING_MACHINE, "transparent", 5);
+            }, 3000);
+          }
+          if (electricCar2.provideEnergy) {
+            setTimeout(() => {
+              drawLines(electricCar2Ref, "electricCar2", freezerRef, FREEZER, "transparent", 5);
+              drawLines(electricCar2Ref, "electricCar2", washingMachineRef, WASHING_MACHINE, "transparent", 5);
+            }, 3000);
+          }
+        });
         /* window.removeEventListener("resize", () =>
           drawLines(orchestratorRef, ORCHESTRATOR, storageRef, STORAGE)
         ); */
@@ -887,31 +898,32 @@ const Demo = () => {
           );
         }
       }
-      if (ev1PluggedIn) {
-        setTimeout(() => {
-          drawLines(electricCar1Ref, "electricCar1", freezerRef, FREEZER, "transparent", 5);
-        }, 3100);
-      }
     };
-  }, [demoRunMethod, hackerVisibility, paused, isMainViewActive, ev1PluggedIn]);
+  }, [demoRunMethod, hackerVisibility, paused, isMainViewActive, electricCar1.provideEnergy, electricCar2.provideEnergy]);
 
-  useEffect(() => {
-    let intervalId;
-    if (isMainViewActive && demoRunMethod === WITH_LIQUID_AI) {
-      const runAllBoltAnimations = () => {
-        moveCodeAnimation(ELECTRIC_CAR_1, FREEZER, EnergyMovingIcon);
-        // moveCodeAnimation(ELECTRIC_CAR_2, FREEZER, EnergyMovingIcon);
-        // moveCodeAnimation(ELECTRIC_CAR_1, WASHING_MACHINE, EnergyMovingIcon);
-        // moveCodeAnimation(ELECTRIC_CAR_2, WASHING_MACHINE, EnergyMovingIcon);
-      };
-      //runAllBoltAnimations();
-      // intervalId = setInterval(runAllBoltAnimations, 3000);
+  // Track when EV1 animation completes (3 seconds after plugging in)
+  /* useEffect(() => {
+    if (ev1PluggedIn) {
+      const timer = setTimeout(() => {
+        setEv1Animation(true);
+      }, 3000); // Match car animation duration
+      return () => clearTimeout(timer);
+    } else {
+      setEv1Animation(false);
     }
-    return () => {
-      if (intervalId) clearInterval(intervalId);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isMainViewActive, demoRunMethod]);
+  }, [ev1PluggedIn]); */
+
+  // Track when EV2 animation completes (3 seconds after plugging in)
+  /*  useEffect(() => {
+     if (ev2PluggedIn) {
+       const timer = setTimeout(() => {
+         setev2Animation(true);
+       }, 3000); // Match car animation duration
+       return () => clearTimeout(timer);
+     } else {
+       setev2Animation(false);
+     }
+   }, [ev2PluggedIn]); */
 
   return (
     <div>
@@ -966,32 +978,72 @@ const Demo = () => {
                   <div id="flexibilityService-intelligentControl-line" />
                   <div id="userControl-intelligentControl-line" />
                   <div id="orchestrator-evCharger-line" />
-                  {/* Add line from ElectricCar1 to Freezer - orange and behind car */}
-                  {ev1PluggedIn &&
-                    <div
-                      id="electricCar1-freezer-line"
-                      style={{
-                        position: "absolute",
-                        top: "50%",        // adjust
-                        left: "10%",       // adjust
-                        width: "40%",      // FULL line width
-                        height: "40px",
-                        overflow: "visible",
-                        zIndex: 1,     // behind all icons
-                      }}
-                    >
-                      <GradientArrowLine />
-                    </div>
+                  {/* Add line from ElectricCar2 to devices - appears after car animation */}
+                  {electricCar2.provideEnergy &&
+                    <>
+                      <div
+                        id="electricCar2-freezer-line"
+                        style={{
+                          position: "absolute",
+                          top: "50%",
+                          left: "10%",
+                          width: "40%",
+                          height: "40px",
+                          overflow: "visible",
+                          zIndex: 1,
+                        }}
+                      >
+                        <GradientArrowLine evPluggedIn={electricCar2.provideEnergy} />
+                      </div>
+                      <div
+                        id="electricCar2-washingMachine-line"
+                        style={{
+                          position: "absolute",
+                          top: "50%",
+                          left: "10%",
+                          width: "40%",
+                          height: "40px",
+                          overflow: "visible",
+                          zIndex: 1,
+                        }}
+                      >
+                        <GradientArrowLine evPluggedIn={electricCar2.provideEnergy} />
+                      </div>
+                    </>
                   }
-
-
-                  {/* Add line from ElectricCar2 to Freezer */}
-                  <div id="electricCar2-freezer-line" style={{ zIndex: 0, opacity: 0 }} />
-                  {/* Add line from ElectricCar1 to WashingMachine */}
-                  <div id="electricCar1-washingMachine-line" style={{ zIndex: 0, opacity: 0 }} />
-                  {/* Add line from ElectricCar2 to WashingMachine */}
-                  <div id="electricCar2-washingMachine-line" style={{ zIndex: 0, opacity: 0 }} />
-                  {/* <div id="orchestrator-storage-line" /> */}
+                  {/* Add line from ElectricCar1 to devices - appears after car animation */}
+                  {electricCar1.provideEnergy &&
+                    <>
+                      <div
+                        id="electricCar1-washingMachine-line"
+                        style={{
+                          position: "absolute",
+                          top: "30%",
+                          left: "10%",
+                          width: "80%",
+                          height: "120px",
+                          overflow: "visible",
+                          zIndex: 1,
+                        }}
+                      >
+                        <GradientArrowLine evPluggedIn={electricCar1.provideEnergy} />
+                      </div>
+                      <div
+                        id="electricCar1-freezer-line"
+                        style={{
+                          position: "absolute",
+                          top: "30%",
+                          left: "10%",
+                          width: "80%",
+                          height: "120px",
+                          overflow: "visible",
+                          zIndex: 1,
+                        }}
+                      >
+                        <GradientArrowLine evPluggedIn={electricCar1.provideEnergy} />
+                      </div>
+                    </>
+                  }
                 </>
               )}
               {demoRunMethod === WITHOUT_LIQUID_AI && (
