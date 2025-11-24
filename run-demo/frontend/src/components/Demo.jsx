@@ -119,7 +119,7 @@ const Demo = () => {
   const [warningBorderVisible, setWarningBorderVisible] = useState(false);
   const [open, setOpen] = useState(false);
   const [shouldBlink, setShouldBlink] = useState(false);
-  const { deviceStatus, hackerVisibility, movingDeployments, setMovingDeployments, electricCar1, electricCar2 } = useDemoVisualizationContext();
+  const { deviceStatus, hackerVisibility, movingDeployments, setMovingDeployments, electricCar1, electricCar2, blackoutActive } = useDemoVisualizationContext();
   const { demoRunMethod, demoTime, scheduleProcessing, voiceEnabled } = useDemoControlContext();
   const [paused, setPaused] = useState(false);
   const pausedRef = useRef(paused);
@@ -650,12 +650,20 @@ const Demo = () => {
     if (demoRunMethod === WITH_LIQUID_AI) {
       // Draw lines immediately when car animations complete
       if (electricCar1.provideEnergy) {
-        drawLines(electricCar1Ref, "electricCar1", freezerRef, FREEZER, "transparent", 5);
-        drawLines(electricCar1Ref, "electricCar1", washingMachineRef, WASHING_MACHINE, "transparent", 5);
+        if (electricCar1.lineToFreezer) {
+          drawLines(electricCar1Ref, "electricCar1", freezerRef, FREEZER, "transparent", 5);
+        }
+        if (electricCar1.lineToWashingMachine) {
+          drawLines(electricCar1Ref, "electricCar1", washingMachineRef, WASHING_MACHINE, "transparent", 5);
+        }
       }
       if (electricCar2.provideEnergy) {
-        drawLines(electricCar2Ref, "electricCar2", freezerRef, FREEZER, "transparent", 5);
-        drawLines(electricCar2Ref, "electricCar2", washingMachineRef, WASHING_MACHINE, "transparent", 5);
+        if (electricCar2.lineToFreezer) {
+          drawLines(electricCar2Ref, "electricCar2", freezerRef, FREEZER, "transparent", 5);
+        }
+        if (electricCar2.lineToWashingMachine) {
+          drawLines(electricCar2Ref, "electricCar2", washingMachineRef, WASHING_MACHINE, "transparent", 5);
+        }
       }
 
       drawLines(
@@ -979,7 +987,7 @@ const Demo = () => {
                   <div id="userControl-intelligentControl-line" />
                   <div id="orchestrator-evCharger-line" />
                   {/* Add line from ElectricCar2 to devices - appears after car animation */}
-                  {electricCar2.provideEnergy &&
+                  {electricCar2.provideEnergy && electricCar2.lineToFreezer &&
                     <>
                       <div
                         id="electricCar2-freezer-line"
@@ -995,6 +1003,10 @@ const Demo = () => {
                       >
                         <GradientArrowLine evPluggedIn={electricCar2.provideEnergy} />
                       </div>
+                    </>
+                  }
+                  {electricCar2.provideEnergy && electricCar2.lineToWashingMachine &&
+                    <>
                       <div
                         id="electricCar2-washingMachine-line"
                         style={{
@@ -1012,7 +1024,7 @@ const Demo = () => {
                     </>
                   }
                   {/* Add line from ElectricCar1 to devices - appears after car animation */}
-                  {electricCar1.provideEnergy &&
+                  {electricCar1.provideEnergy && electricCar1.lineToWashingMachine &&
                     <>
                       <div
                         id="electricCar1-washingMachine-line"
@@ -1028,6 +1040,10 @@ const Demo = () => {
                       >
                         <GradientArrowLine evPluggedIn={electricCar1.provideEnergy} />
                       </div>
+                    </>
+                  }
+                  {electricCar1.provideEnergy && electricCar1.lineToFreezer &&
+                    <>
                       <div
                         id="electricCar1-freezer-line"
                         style={{
@@ -1643,6 +1659,35 @@ const Demo = () => {
                           height: "55%",
                         }}
                       />
+
+                      {/* Blackout Overlay */}
+                      {blackoutActive && (
+                        <div
+                          style={{
+                            position: "absolute",
+                            top: "2%",
+                            left: "5%",
+                            width: "90%",
+                            height: "55%",
+                            backgroundColor: "rgba(0, 0, 0, 0.65)",
+                            zIndex: 3,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            animation: "fadeIn 0.5s ease-in",
+                          }}
+                        >
+                          <div style={{
+                            color: "white",
+                            fontSize: "24px",
+                            fontWeight: "bold",
+                            textShadow: "0 0 10px rgba(255,0,0,0.8)",
+                          }}>
+                            ⚠️ POWER OUTAGE
+                          </div>
+                        </div>
+                      )}
+
                       <div>
                         {/*Energy components inside the house*/}
                         <Freezer ref={freezerRef} />

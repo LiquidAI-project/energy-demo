@@ -53,13 +53,15 @@ const ANIMATION_MOVING_TIME = import.meta.env.VITE_ANIMATION_MOVING_TIME;
 const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused, pausedRef, pauseAwareDelay, referenceLineEnabled, setReferenceLineEnabled, handlePopOverClose, setRescheduleHistory, animationSessionRef }) => {
   const {
     deviceStatus,
+    blackoutActive,
     movingDeployments,
     changeHackerVisibility,
     setDayPlans,
     setHistoricalDayPlans,
     setElectricCar1,
     setElectricCar2,
-    setMovingDeployments
+    setMovingDeployments,
+    setBlackoutActive
   } = useDemoVisualizationContext();
   const { voiceEnabled, demoRunMethod, demoRunning, scheduleProcessing, demoTime, demoStatus, setDemoRunning, resetArchitectutreAnimations, setScheduleProcessing, setDemoTime, setVoiceEnabled, setDemoStatus } = useDemoControlContext();
 
@@ -252,12 +254,28 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       handlePopOverClose();
     }
 
-    if (currentHour == 6 && currentMinute === 40) {
+    // Blackout simulation at 6:50
+    if (currentHour == 6 && currentMinute === 20) {
+      setBlackoutActive(true);
+      if (voiceEnabled)
+        speak("Power outage detected");
+    }
+
+    if (currentHour == 6 && currentMinute === 50) {
       const sessionId = uuidv4();
       animationSessionRef.current = sessionId;
       const result = await deployAndExecute("6904c91175d1501dc7b259a6", "Fibo_Freezer", FREEZER, { "param0": 10 });
       if (result === "Success") {
         runMoveCodeAnimation(ORCHESTRATOR, FREEZER, WasmWithOnnxIcon, null, sessionId);
+        if (blackoutActive) {
+          setElectricCar2(prev => ({
+            ...prev,
+            provideEnergy: true,
+            lineToFreezer: true,
+            totalEnergy: Math.max(0, prev.totalEnergy - 0.50),
+            availableEnergy: Math.max(0, prev.availableEnergy - 0.50)
+          }));
+        }
         if (voiceEnabled)
           speak("Module is deployed on Freezer");
       } else {
@@ -272,6 +290,15 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       const result = await deployAndExecute("6904c93375d1501dc7b25a00", "Fibo_WM", WASHING_MACHINE, { "param0": 6 });
       if (result === "Success") {
         runMoveCodeAnimation(ORCHESTRATOR, WASHING_MACHINE, WasmWithOnnxIcon, null, sessionId);
+        if (blackoutActive) {
+          setElectricCar1(prev => ({
+            ...prev,
+            provideEnergy: true,
+            lineToWashingMachine: true,
+            totalEnergy: Math.max(0, prev.totalEnergy - 2.0),
+            availableEnergy: Math.max(0, prev.availableEnergy - 2.0)
+          }));
+        }
         if (voiceEnabled)
           speak("Module is deployed on washing machine");
       } else {
@@ -280,8 +307,17 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       }
     }
 
+    // End blackout at 9:00
+    if (currentHour == 9 && currentMinute === 0) {
+      setBlackoutActive(false);
+      setElectricCar2(prev => ({ ...prev, provideEnergy: false, lineToFreezer: false }));
+      setElectricCar1(prev => ({ ...prev, provideEnergy: false, lineToWashingMachine: false }));
+      if (voiceEnabled)
+        speak("Power restored");
+    }
+
     // EV unplug simulation
-    if (currentHour == 8 && currentMinute === 0) {
+    if (currentHour == 10 && currentMinute === 0) {
       const sessionId = uuidv4();
       animationSessionRef.current = sessionId;
       setElectricCar1(prev => ({ ...prev, pluggedIn: false }));

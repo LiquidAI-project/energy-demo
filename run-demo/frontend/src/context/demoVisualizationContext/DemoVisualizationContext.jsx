@@ -16,7 +16,9 @@ const createElectricCar = () => ({
   provideEnergy: false,
   totalEnergy: 0,
   minReqEnergy: 80,
-  availableEnergy: 0
+  availableEnergy: 0,
+  lineToFreezer: false,
+  lineToWashingMachine: false
 });
 
 const DemoVisualizationContext = createContext({
@@ -27,6 +29,7 @@ const DemoVisualizationContext = createContext({
   electricCar1: createElectricCar(),
   electricCar2: createElectricCar(),
   deviceStatus: [],
+  blackoutActive: false,
   changeHackerVisibility: () => { },
   setMovingDeployments: () => { },
   setDayPlans: () => { },
@@ -34,6 +37,7 @@ const DemoVisualizationContext = createContext({
   setElectricCar1: () => { },
   setElectricCar2: () => { },
   setDeviceStatus: () => { },
+  setBlackoutActive: () => { },
 });
 
 export const DemoVisualizationProvider = ({ children }) => {
@@ -44,6 +48,7 @@ export const DemoVisualizationProvider = ({ children }) => {
   const [historicalDayPlans, setHistoricalDayPlans] = useSyncedLocalStorage("historicalDayPlans", [initialDayPlan]);
   const [electricCar1, setElectricCar1] = useState(createElectricCar());
   const [electricCar2, setElectricCar2] = useState(createElectricCar());
+  const [blackoutActive, setBlackoutActive] = useState(false);
   const [deviceStatus, setDeviceStatus] = useState([
     {
       supervisorName: 'ev-charger',
@@ -124,13 +129,15 @@ export const DemoVisualizationProvider = ({ children }) => {
       electricCar1,
       electricCar2,
       deviceStatus,
+      blackoutActive,
       changeHackerVisibility,
       setMovingDeployments,
       setDayPlans,
       setHistoricalDayPlans,
       setElectricCar1,
       setElectricCar2,
-      setDeviceStatus
+      setDeviceStatus,
+      setBlackoutActive
     }),
     [
       hackerVisibility,
@@ -140,6 +147,7 @@ export const DemoVisualizationProvider = ({ children }) => {
       electricCar1,
       electricCar2,
       deviceStatus,
+      blackoutActive,
     ]
   );
 
