@@ -6,6 +6,7 @@
 import { Grid, Typography, Box } from "@mui/material";
 import { useDemoVisualizationContext } from "../../context/demoVisualizationContext/useDemoVisualizationContext";
 import { useDemoControlContext } from "../../context/demoControlContext/useDemoControlContext";
+import { EV_CHARGER } from "../../../constants";
 
 // Helper function to calculate the duration in hours
 const calculateDurationInHours = (start, end) => {
@@ -36,7 +37,7 @@ const mergeSlots = (historicalSlots, currentSlots) => {
 };
 
 const OperatingTimeChart = () => {
-  const { dayPlans, historicalDayPlans } = useDemoVisualizationContext();
+  const { dayPlans, historicalDayPlans, dischargingSlots } = useDemoVisualizationContext();
   const { demoTime } = useDemoControlContext();
   const chartWidth = "100%";
   const hourWidth = 100 / 24;
@@ -49,16 +50,47 @@ const OperatingTimeChart = () => {
   // Render the dayPlans with slots
   const renderDeviceRows = dayPlans.map((devicePlan, index) => {
     // Historical plan for this device (if exists)
-    const historicalSlotsForDevice = historicalDayPlans
-    .map((plan) => plan[index])
-    .filter(Boolean)
-    .flatMap((devicePlan) => devicePlan.slots);
+    let historicalSlotsForDevice = historicalDayPlans
+      .map((plan) => plan[index])
+      .filter(Boolean)
+      .flatMap((devicePlan) => devicePlan.slots);
 
-    const mergedSlots = mergeSlots(historicalSlotsForDevice, devicePlan.slots);
+    // For EV_CHARGER, check if discharging slots should be in current or historical
+    let deviceSlotsWithDischarging = devicePlan.slots;
+
+    if (devicePlan.id === EV_CHARGER && dischargingSlots.length > 0) {
+      // Get current demo time in hours (e.g., 6.83 for 6:50)
+      const currentDemoHour = new Date(demoTime).getHours() + (new Date(demoTime).getMinutes() / 60);
+
+      // Check if current time is within any discharging slot period
+      const isDischargingNow = dischargingSlots.some(slot =>
+        currentDemoHour >= slot.start && currentDemoHour < slot.end
+      );
+
+      if (isDischargingNow) {
+        // Discharging is active now - add to current slots (bright orange)
+        deviceSlotsWithDischarging = [...devicePlan.slots, ...dischargingSlots];
+      } else {
+        // Discharging is not active - add to historical only (faded orange)
+        historicalSlotsForDevice = [...historicalSlotsForDevice, ...dischargingSlots];
+      }
+    }
+
+    const mergedSlots = mergeSlots(historicalSlotsForDevice, deviceSlotsWithDischarging);
 
     const renderSlots = mergedSlots.map((slot, slotIndex) => {
       const taskDuration = calculateDurationInHours(slot.start, slot.end);
       const taskOffset = slot.start * hourWidth;
+
+      // Determine color based on slot type and discharging status
+      let backgroundColor;
+      if (slot.isDischarging) {
+        // Orange for discharging (car providing energy)
+        backgroundColor = slot.type === "current" ? "#ff9800" : "#ffcc80"; // orange / faded orange
+      } else {
+        // Blue for normal operation
+        backgroundColor = slot.type === "current" ? "#1976d2" : "#b0bec5"; // blue / gray
+      }
 
       return (
         <div
@@ -68,7 +100,7 @@ const OperatingTimeChart = () => {
             left: `${taskOffset}%`,
             width: `${taskDuration * hourWidth}%`,
             height: "30px",
-            backgroundColor: slot.type === "current" ? "#1976d2" : "#b0bec5",
+            backgroundColor: backgroundColor,
             borderRadius: "4px",
           }}
         />
@@ -196,7 +228,7 @@ const OperatingTimeChart = () => {
                     width: `${100 / 24}%`,
                     textAlign: "center",
                     position: "absolute",
-                    left:`${((hour - 0.5) / 24) * 100}%`, // center others
+                    left: `${((hour - 0.5) / 24) * 100}%`, // center others
                   }}
                 >
                   {hour}

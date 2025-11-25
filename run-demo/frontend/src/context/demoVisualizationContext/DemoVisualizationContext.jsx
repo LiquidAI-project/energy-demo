@@ -14,9 +14,10 @@ import { useSyncedLocalStorage } from "../../services/SyncedLocalStorage";
 const createElectricCar = () => ({
   pluggedIn: false,
   provideEnergy: false,
-  totalEnergy: 0,
-  minReqEnergy: 80,
-  availableEnergy: 0,
+  totalEnergy: 60,
+  currentEnergy: 10,
+  minReqEnergy: 40,
+  dischargeableEnergy: 0,
   lineToFreezer: false,
   lineToWashingMachine: false
 });
@@ -30,6 +31,7 @@ const DemoVisualizationContext = createContext({
   electricCar2: createElectricCar(),
   deviceStatus: [],
   blackoutActive: false,
+  dischargingSlots: [],
   changeHackerVisibility: () => { },
   setMovingDeployments: () => { },
   setDayPlans: () => { },
@@ -38,6 +40,7 @@ const DemoVisualizationContext = createContext({
   setElectricCar2: () => { },
   setDeviceStatus: () => { },
   setBlackoutActive: () => { },
+  setDischargingSlots: () => { },
 });
 
 export const DemoVisualizationProvider = ({ children }) => {
@@ -49,6 +52,7 @@ export const DemoVisualizationProvider = ({ children }) => {
   const [electricCar1, setElectricCar1] = useState(createElectricCar());
   const [electricCar2, setElectricCar2] = useState(createElectricCar());
   const [blackoutActive, setBlackoutActive] = useState(false);
+  const [dischargingSlots, setDischargingSlots] = useSyncedLocalStorage("dischargingSlots", []);
   const [deviceStatus, setDeviceStatus] = useState([
     {
       supervisorName: 'ev-charger',
@@ -130,6 +134,7 @@ export const DemoVisualizationProvider = ({ children }) => {
       electricCar2,
       deviceStatus,
       blackoutActive,
+      dischargingSlots,
       changeHackerVisibility,
       setMovingDeployments,
       setDayPlans,
@@ -137,7 +142,8 @@ export const DemoVisualizationProvider = ({ children }) => {
       setElectricCar1,
       setElectricCar2,
       setDeviceStatus,
-      setBlackoutActive
+      setBlackoutActive,
+      setDischargingSlots
     }),
     [
       hackerVisibility,
@@ -148,6 +154,7 @@ export const DemoVisualizationProvider = ({ children }) => {
       electricCar2,
       deviceStatus,
       blackoutActive,
+      dischargingSlots,
     ]
   );
 

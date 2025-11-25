@@ -90,8 +90,8 @@ const ElectricCar2 = React.forwardRef((props, ref) => {
 
           {/* Battery Charging Indicator */}
           {electricCar2.pluggedIn && (() => {
-            const energyLevel = parseInt(electricCar2.totalEnergy) || 0;
-            const maxEnergy = 120;
+            const energyLevel = parseInt(electricCar2.currentEnergy) || 0;
+            const maxEnergy = parseInt(electricCar2.totalEnergy) || 60;
             const percentage = (energyLevel / maxEnergy) * 100;
 
             let BatteryIcon;

@@ -61,7 +61,8 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
     setElectricCar1,
     setElectricCar2,
     setMovingDeployments,
-    setBlackoutActive
+    setBlackoutActive,
+    setDischargingSlots
   } = useDemoVisualizationContext();
   const { voiceEnabled, demoRunMethod, demoRunning, scheduleProcessing, demoTime, demoStatus, setDemoRunning, resetArchitectutreAnimations, setScheduleProcessing, setDemoTime, setVoiceEnabled, setDemoStatus } = useDemoControlContext();
 
@@ -146,7 +147,7 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       handlePopOverClose();
     }
 
-    if (currentHour == 1 && currentMinute === 40) {
+    if (currentHour == 0 && currentMinute === 50) {
       const sessionId = uuidv4();
       animationSessionRef.current = sessionId;
       const result = await deployAndExecute("6904c92175d1501dc7b259d3", "Fibo_EV", EV_CHARGER, { "param0": 8 });
@@ -175,51 +176,54 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       }
     }
 
-    // Electric car charging simulation (hours 2-5)
-    if (currentHour >= 2 && currentHour < 5) {
-      // Calculate progress: 0 at hour 2, 100% at hour 5
-      // Total duration: 3 hours = 180 minutes
-      const startHour = 2;
-      const endHour = 5;
-      const totalMinutes = (endHour - startHour) * 60; // 180 minutes
-      const elapsedMinutes = (currentHour - startHour) * 60 + currentMinute;
-      const progress = Math.min(elapsedMinutes / totalMinutes, 1); // 0 to 1
+    // Electric car charging simulation (hours 1-5)
+    // Battery: 60 kWh total capacity
+    // Starting charge: 12 kWh
+    // Charging rate: 11 kWh per hour
+    // After 4 hours (1-5): 12 + 44 = 56 kWh
+    if (currentHour >= 1 && currentHour < 5) {
+      const startHour = 1;
+      const startingCharge = 10; // kWh
+      const chargingRatePerHour = 11; // kWh per hour
+      const hoursElapsed = (currentHour - startHour) + (currentMinute / 60);
 
-      // Calculate energy levels
-      const maxTotalEnergy = 120;
-      const maxAvailableEnergy = 40;
-      const currentTotalEnergy = Math.floor(progress * maxTotalEnergy);
-      const currentAvailableEnergy = Math.floor(progress * maxAvailableEnergy);
+      // Calculate current energy (starting charge + charged amount)
+      const chargedAmount = hoursElapsed * chargingRatePerHour;
+      const currentEnergyLevel = Math.min(startingCharge + chargedAmount, 60); // Cap at total capacity
+      const currentEnergy = Math.floor(currentEnergyLevel);
+
+      // Available energy is current - minimum required (40 kWh)
+      const minRequired = 40;
+      const currentAvailableEnergy = Math.max(0, currentEnergy - minRequired);
 
       // Update both cars
       setElectricCar1(prev => ({
         ...prev,
-        totalEnergy: currentTotalEnergy.toString(),
-        availableEnergy: currentAvailableEnergy.toString()
+        currentEnergy: currentEnergy,
+        dischargeableEnergy: currentAvailableEnergy
       }));
 
       setElectricCar2(prev => ({
         ...prev,
-        totalEnergy: currentTotalEnergy.toString(),
-        availableEnergy: currentAvailableEnergy.toString()
+        currentEnergy: currentEnergy,
+        dischargeableEnergy: currentAvailableEnergy
       }));
     }
 
-    // Set to full charge at hour 5
+    // Set to final charge at hour 5 (12 + 44 = 56 kWh after 4 hours of charging)
     if (currentHour === 5 && currentMinute === 0) {
       setElectricCar1(prev => ({
         ...prev,
-        totalEnergy: "120",
-        availableEnergy: "40"
+        currentEnergy: 56,
+        dischargeableEnergy: 16  // 56 - 40 (min required) = 16
       }));
 
       setElectricCar2(prev => ({
         ...prev,
-        totalEnergy: "120",
-        availableEnergy: "40"
+        currentEnergy: 56,
+        dischargeableEnergy: 16
       }));
     }
-
 
     // Demand spike simulation
     if (currentHour == 4 && currentMinute === 30) {
@@ -272,9 +276,12 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
             ...prev,
             provideEnergy: true,
             lineToFreezer: true,
-            totalEnergy: Math.max(0, prev.totalEnergy - 0.50),
-            availableEnergy: Math.max(0, prev.availableEnergy - 0.50)
+            currentEnergy: Math.max(0, prev.currentEnergy - 0.50),
+            dischargeableEnergy: Math.max(0, prev.dischargeableEnergy - 0.50)
           }));
+
+          // Add discharging slot (6:50 to 9:00)
+          setDischargingSlots(prev => [...prev, { start: 7, end: 9, isDischarging: true }]);
         }
         if (voiceEnabled)
           speak("Module is deployed on Freezer");
@@ -295,8 +302,8 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
             ...prev,
             provideEnergy: true,
             lineToWashingMachine: true,
-            totalEnergy: Math.max(0, prev.totalEnergy - 2.0),
-            availableEnergy: Math.max(0, prev.availableEnergy - 2.0)
+            currentEnergy: Math.max(0, prev.currentEnergy - 2.0),
+            dischargeableEnergy: Math.max(0, prev.dischargeableEnergy - 2.0)
           }));
         }
         if (voiceEnabled)
@@ -434,8 +441,8 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       animationSessionRef.current = sessionId;
       setDemoRunning(false);
       setScheduleProcessing(true);
-      setElectricCar1(prev => ({ ...prev, pluggedIn: true }));
-      setElectricCar2(prev => ({ ...prev, pluggedIn: true }));
+      setElectricCar1(prev => ({ ...prev, pluggedIn: true, currentEnergy: 35.5, dischargeableEnergy: 0 }));
+      setElectricCar2(prev => ({ ...prev, pluggedIn: true, currentEnergy: 34, dischargeableEnergy: 0 }));
       await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef, sessionId);
       if (voiceEnabled) {
         speak("Electric cars are available for charging again");
@@ -651,11 +658,12 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
     animationSessionRef.current = null;
     setMovingDeployments([]);
     setDayPlans(initialDayPlan);
-    setElectricCar1(prev => ({ ...prev, pluggedIn: false, provideEnergy: false, totalEnergy: 0, minReqEnergy: 80, availableEnergy: 0 }));
-    setElectricCar2(prev => ({ ...prev, pluggedIn: false, provideEnergy: false, totalEnergy: 0, minReqEnergy: 80, availableEnergy: 0 }));
+    setElectricCar1(prev => ({ ...prev, pluggedIn: false, provideEnergy: false, currentEnergy: 10, dischargeableEnergy: 0 }));
+    setElectricCar2(prev => ({ ...prev, pluggedIn: false, provideEnergy: false, currentEnergy: 10, dischargeableEnergy: 0 }));
     setPaused(false);
     setHistoricalDayPlans([initialDayPlan]);
     setRescheduleHistory([]);
+    setDischargingSlots([]);
   }
 
   const handleVoiceFeedback = () => {

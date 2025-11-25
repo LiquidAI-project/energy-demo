@@ -2,6 +2,7 @@ import { useEffect, useState, memo } from "react";
 import { Box, Typography } from "@mui/material";
 import { BarChart } from "@mui/x-charts/BarChart";
 import { hourlyEnergyData } from "../../assets/mockData/spotPrice";
+import { useDemoVisualizationContext } from "../../context/demoVisualizationContext/useDemoVisualizationContext";
 
 const Price = ({ price }) => {
   if (price !== null && price !== undefined) {
@@ -70,28 +71,28 @@ const Chart = memo(function Chart({ consumptionData }) {
   const yAxis =
     visibleSeries.length === 1
       ? [
-          {
-            id: visibleSeries[0].id,
-            label: visibleSeries[0].label,
-            color: visibleSeries[0].color,
-            position: "left",
-            tickLabelStyle: { fontSize: 14 },
-            labelStyle: { fontSize: 12 }
-          },
-        ]
+        {
+          id: visibleSeries[0].id,
+          label: visibleSeries[0].label,
+          color: visibleSeries[0].color,
+          position: "left",
+          tickLabelStyle: { fontSize: 14 },
+          labelStyle: { fontSize: 12 }
+        },
+      ]
       : [{}];
 
   return (
     <Box
-        sx={{
-          background: "white",
-          width: "69vh",
-          height: "30vh",
-          paddingLeft: "12px",
-          display: "flex",
-          flexDirection: "column",
-        }}
-      >
+      sx={{
+        background: "white",
+        width: "69vh",
+        height: "30vh",
+        paddingLeft: "12px",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
       {/* Custom legend */}
       <Box display="flex" gap={1} ml={14}>
         {allSeries.map((s) => (
@@ -124,9 +125,9 @@ const Chart = memo(function Chart({ consumptionData }) {
       </Box>
       {/* Bar Chart with built-in legend hidden */}
       <BarChart
-        xAxis={[{ 
-          data: consumptionData.map((entry) => entry.hour), 
-          scaleType: "band", 
+        xAxis={[{
+          data: consumptionData.map((entry) => entry.hour),
+          scaleType: "band",
           label: "Time (h)",
           tickLabelStyle: { fontSize: 14 },
           labelStyle: { fontSize: 12 }
@@ -138,19 +139,57 @@ const Chart = memo(function Chart({ consumptionData }) {
         }}
       />
     </Box>
-    );
+  );
 });
 
 function ElectricityPrice({ demoTime, demoPassedHrs, totalConsumption }) {
+  const { dischargingSlots } = useDemoVisualizationContext();
   const [currentPrice, setCurrentPrice] = useState(null);
   const [currentConsumption, setCurrentConsumption] = useState(null);
-  const [consumptionData, setConsumptionData] = useState(Array.from({ length: 24 }, (_, hour) => ({
-    hour,
-    total: 0,
-    consumption: 0.0
-  })));
+
+  // Initialize consumptionData from sessionStorage or default
+  const [consumptionData, setConsumptionData] = useState(() => {
+    const stored = window.sessionStorage.getItem("consumptionData");
+    if (stored) {
+      try {
+        return JSON.parse(stored);
+      } catch (e) {
+        console.error("Failed to parse consumptionData from sessionStorage", e);
+      }
+    }
+    return Array.from({ length: 24 }, (_, hour) => ({
+      hour,
+      total: 0,
+      consumption: 0.0
+    }));
+  });
+
   const [total, setTotal] = useState(0);
   const [totalPrice, setTotalPrice] = useState(0);
+
+  // Helper function to check if an hour is in discharging period
+  const isHourDischarging = (hour) => {
+    return dischargingSlots.some(slot => hour >= Math.floor(slot.start) && hour < Math.ceil(slot.end));
+  }
+
+  // Recalculate totals when consumptionData or totalConsumption changes (e.g., on page refresh)
+  useEffect(() => {
+    if (totalConsumption.length > 0 && demoPassedHrs > 0) {
+      const currentHour = new Date(demoTime).getHours();
+
+      const total = totalConsumption
+        .filter((entry) => entry.hour <= currentHour && !isHourDischarging(entry.hour))
+        .reduce((sum, entry) => sum + entry.value, 0);
+
+      const totalPrice = consumptionData
+        .filter((entry) => entry.hour <= currentHour && !isHourDischarging(entry.hour))
+        .reduce((sum, entry) => sum + entry.total, 0);
+
+      setTotal(total);
+      setTotalPrice(totalPrice);
+    }
+  }, [consumptionData, totalConsumption, demoTime, demoPassedHrs, dischargingSlots]);
+
 
   useEffect(() => {
     const newPrice = updateCurrentPrice(hourlyEnergyData, demoTime);
@@ -169,39 +208,48 @@ function ElectricityPrice({ demoTime, demoPassedHrs, totalConsumption }) {
       }));
       initialData[0] = {
         hour: 0,
-        total: newPrice * newCurrentConsumption,     
+        total: newPrice * newCurrentConsumption,
         consumption: currentConsumption
       };
       setConsumptionData(initialData);
-      window.sessionStorage.setItem("consumptionData", JSON.stringify(consumptionData));
+      window.sessionStorage.setItem("consumptionData", JSON.stringify(initialData));
+
+      // Reset totals on restart
+      setTotal(0);
+      setTotalPrice(0);
     } else if (demoPassedHrs < 24 && new Date(demoTime).getMinutes() === 50) {
-      setConsumptionData((prev) => {
-        const newItem = {
-          hour: new Date(demoTime).getHours(),
-          total: newPrice * newCurrentConsumption
-        };
-      
-        const updated = prev.map((item) =>
-          item.hour === newItem.hour ? { ...item, total: newItem.total, consumption: currentConsumption } : item
-        );
-      
-        window.sessionStorage.setItem("consumptionData", JSON.stringify(updated));
-        return updated;
-      });
+      const currentHour = new Date(demoTime).getHours();
+
+      // Skip updating data for discharging hours
+      if (!isHourDischarging(currentHour)) {
+        setConsumptionData((prev) => {
+          const newItem = {
+            hour: currentHour,
+            total: newPrice * newCurrentConsumption
+          };
+
+          const updated = prev.map((item) =>
+            item.hour === newItem.hour ? { ...item, total: newItem.total, consumption: currentConsumption } : item
+          );
+
+          window.sessionStorage.setItem("consumptionData", JSON.stringify(updated));
+          return updated;
+        });
+      }
 
       const total = totalConsumption
-        .filter((entry) => entry.hour <= new Date(demoTime).getHours())
+        .filter((entry) => entry.hour <= new Date(demoTime).getHours() && !isHourDischarging(entry.hour))
         .reduce((sum, entry) => sum + entry.value, 0);
 
       const totalPrice = consumptionData
-        .filter((entry) => entry.hour <= new Date(demoTime).getHours())
+        .filter((entry) => entry.hour <= new Date(demoTime).getHours() && !isHourDischarging(entry.hour))
         .reduce((sum, entry) => sum + entry.total, 0);
 
       setTotal(total);
       setTotalPrice(totalPrice);
     }
 
-    
+
   }, [demoPassedHrs, demoTime, totalConsumption]);
 
   function updateCurrentConsumption(totalConsumption, demoTime) {

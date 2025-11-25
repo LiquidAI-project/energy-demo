@@ -243,13 +243,16 @@ const evCharger = React.forwardRef((props, ref) => {
                   Electric Car 1
                 </Typography>
                 <Typography variant="caption" display="block">
-                  - Total Energy: <b>{electricCar1.totalEnergy} kWh</b>
+                  - Total Capacity: <b>{electricCar1.totalEnergy} kWh</b>
+                </Typography>
+                <Typography variant="caption" display="block">
+                  - Current Energy: <b>{electricCar1.currentEnergy} kWh</b>
                 </Typography>
                 <Typography variant="caption" display="block">
                   - Min Energy (Req): <b>{electricCar1.minReqEnergy} kWh</b>
                 </Typography>
                 <Typography variant="caption" display="block">
-                  - Available Energy: <b>{electricCar1.availableEnergy} kWh</b>
+                  - Dischargeable Energy: <b>{electricCar1.dischargeableEnergy} kWh</b>
                 </Typography>
               </Grid>
               <Grid item xs={6}>
@@ -257,13 +260,16 @@ const evCharger = React.forwardRef((props, ref) => {
                   Electric Car 2
                 </Typography>
                 <Typography variant="caption" display="block">
-                  - Total Energy: <b>{electricCar2.totalEnergy} kWh</b>
+                  - Total Capacity: <b>{electricCar2.totalEnergy} kWh</b>
+                </Typography>
+                <Typography variant="caption" display="block">
+                  - Current Energy: <b>{electricCar2.currentEnergy} kWh</b>
                 </Typography>
                 <Typography variant="caption" display="block">
                   - Min Energy (Req): <b>{electricCar2.minReqEnergy} kWh</b>
                 </Typography>
                 <Typography variant="caption" display="block">
-                  - Available Energy: <b>{electricCar2.availableEnergy} kWh</b>
+                  - Dischargeable Energy: <b>{electricCar2.dischargeableEnergy} kWh</b>
                 </Typography>
               </Grid>
             </Grid>
