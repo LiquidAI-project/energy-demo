@@ -76,11 +76,16 @@ const Chart = memo(function Chart({ consumptionData }) {
           label: visibleSeries[0].label,
           color: visibleSeries[0].color,
           position: "left",
+          min: 0,
+          max: 20,
           tickLabelStyle: { fontSize: 14 },
           labelStyle: { fontSize: 12 }
         },
       ]
-      : [{}];
+      : [{
+        min: 0,
+        max: 20
+      }];
 
   return (
     <Box
@@ -136,6 +141,11 @@ const Chart = memo(function Chart({ consumptionData }) {
         yAxis={yAxis}
         slots={{
           legend: () => null
+        }}
+        sx={{
+          '& .MuiChartsAxis-bottom .MuiChartsAxis-tickLabel': {
+            transform: 'translateX(-12px)'
+          }
         }}
       />
     </Box>
