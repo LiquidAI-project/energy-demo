@@ -62,11 +62,11 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
   const handleAccordionChange = async (type, id, expanded) => {
     if (!expanded) return; // only fetch when opened
     if (detailsCache[id]) return; // already fetched
-  
+
     let url = type === 'module'
       ? `https://orchestrator.tlt-cityiot.rd.tuni.fi/file/module/${id}`
       : `https://orchestrator.tlt-cityiot.rd.tuni.fi/file/manifest/${id}`;
-  
+
     try {
       const response = await fetch(url);
       const data = await response.json();
@@ -78,7 +78,7 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
 
 
   const fetchAndSetData = async () => {
-    if(eventAnimationActive) return;
+    if (eventAnimationActive) return;
     try {
       setLoading(true);
       setExpanded(false);
@@ -98,7 +98,7 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
         setDeployments(deployments);
         await new Promise(resolve => setTimeout(resolve, 1200));
         setLoading(false);
-        setExpanded(true); 
+        setExpanded(true);
       }
     } catch (error) {
       console.error("Error fetching deployments:", error);
@@ -107,18 +107,18 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
   };
 
   const runAnimationEvent = async (event) => {
-   // const storageKey = `dayPlanExecution_${event.id}`;
-  
+    // const storageKey = `dayPlanExecution_${event.id}`;
+
     // 1️⃣ Load progress from sessionStorage or memory
     //let storedProgress = JSON.parse(sessionStorage.getItem(event.id) || "{}");
     setEventAnimationActive(true);
     let storedProgress = eventProgress[event.id];
     const currentStep = storedProgress.step || 1;
-    const totalSteps = event.steps.length; 
+    const totalSteps = event.steps.length;
     if (storedProgress.completed) return; // already finished
-    if (isPausedRef.current) return;  
+    if (isPausedRef.current) return;
     for (let i = currentStep; i <= totalSteps; i++) {
-      const step = event.steps[i-1];
+      const step = event.steps[i - 1];
       // 2️⃣ Update sessionStorage and state *after each step completes*
       const updatedProgress = { step: i, completed: i >= totalSteps };
       setEventProgress((prev) => ({
@@ -148,24 +148,24 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
   }, [isPaused]);
 
   useEffect(() => {
-    const handleSocketMsg = async() => {
+    const handleSocketMsg = async () => {
       if (!socketMsg) return;
 
       // Skip processing if paused
       if (isPausedRef.current || eventAnimationActive) return;
 
       console.log(socketMsg);
-      
+
       if (socketMsg && socketMsg.funcName.includes("thingi_health") && socketMsg.loglevel === "INFO") {
-        if(socketMsg.deviceName === "freezer") {
+        if (socketMsg.deviceName === "freezer") {
           await runGlobalAnimation("normalDir", "freezerLine", "SocketMsgIcon", "Health check done", isPausedRef);
           setIsFreezerActive(devices.find(device => device.name === "freezer").isActive);
         }
-        if(socketMsg.deviceName === "washing-machine") {
+        if (socketMsg.deviceName === "washing-machine") {
           await runGlobalAnimation("normalDir", "wmLine", "SocketMsgIcon", "Health check done", isPausedRef);
           setIsWMActive(devices.find(device => device.name === "washing-machine").isActive);
         }
-        if(socketMsg.deviceName === "ev-charger") {
+        if (socketMsg.deviceName === "ev-charger") {
           await runGlobalAnimation("normalDir", "evLine", "SocketMsgIcon", "Health check done", isPausedRef);
           setIsEVActive(devices.find(device => device.name === "ev-charger").isActive);
         }
@@ -173,12 +173,12 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
       }
 
       //if(socketMsg && socketMsg.funcName.includes("deployment_create"))
-        //await runGlobalAnimation("normalDir", socketMsg.deviceName == "ev-charger" ? "evLine" : ( socketMsg.deviceName == "washing-machine" ? "wmLine" : "freezerLine" ), WasmWithOnnxIcon, isPausedRef);
-        
-      if(socketMsg && socketMsg.funcName.includes("do_wasm_work")) {  // Write in relevant device box the name of module deloyed
+      //await runGlobalAnimation("normalDir", socketMsg.deviceName == "ev-charger" ? "evLine" : ( socketMsg.deviceName == "washing-machine" ? "wmLine" : "freezerLine" ), WasmWithOnnxIcon, isPausedRef);
+
+      if (socketMsg && socketMsg.funcName.includes("do_wasm_work")) {  // Write in relevant device box the name of module deloyed
         const timeValue = socketMsg.timestamp?.$date?.$numberLong
-        ? Number(socketMsg.timestamp.$date.$numberLong)
-        : Date.now();
+          ? Number(socketMsg.timestamp.$date.$numberLong)
+          : Date.now();
 
         // Convert it to readable local time
         const formattedTime = new Date(timeValue).toLocaleTimeString([], {
@@ -199,8 +199,8 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
         console.log(deviceWorkInfo);
       }
     }
-    
-    if (demoRunning && demoStatus === "running") 
+
+    if (demoRunning && demoStatus === "running")
       handleSocketMsg();
   }, [socketMsg, demoRunning, demoStatus]);
 
@@ -288,7 +288,7 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
           <Grid item sx={{ pr: 0 }}>
             <img src={DatabaseImg} alt="MongoDB Database" style={{ width: 120, height: 120, objectFit: "contain", verticalAlign: 'middle' }} />
           </Grid>
-          <Grid item sx={{ px: 0, mx: -2, zIndex: 2, display:'flex', alignItems:'center' }}>
+          <Grid item sx={{ px: 0, mx: -2, zIndex: 2, display: 'flex', alignItems: 'center' }}>
             <svg width="150px" height="64px" style={{ display: 'block', position: 'relative', zIndex: 2 }}>
               <defs>
                 <marker
@@ -329,14 +329,14 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
                 markerEnd="url(#arrowheadRight)"
               />
               <text
-                  x="75"
-                  y="10"
-                  textAnchor="middle"
-                  fontSize="9"
-                  fill="#094C7A"
-                  fontFamily="monospace"
+                x="75"
+                y="10"
+                textAnchor="middle"
+                fontSize="9"
+                fill="#094C7A"
+                fontFamily="monospace"
               >
-                  Reads/Writes data
+                Reads/Writes data
               </text>
               {animateLines.dbLine.active && (
                 <g
@@ -346,8 +346,8 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
                     animationDirection: animateLines.dbLine.direction === "normalDir" ? "normal" : "reverse",
                     animationPlayState: isPaused ? "paused" : "running"
                   }}
-                  //transform={`translate(${11 + 129 * animateLines.dbLine.progress})`} // x1 + (x2-x1)*progress
-                    //transform={`translate(${x1 + (x2 - x1) * animateLines.dbLine.progress}, ${y1 + (y2 - y1) * animateLines.dbLine.progress})`}
+                //transform={`translate(${11 + 129 * animateLines.dbLine.progress})`} // x1 + (x2-x1)*progress
+                //transform={`translate(${x1 + (x2 - x1) * animateLines.dbLine.progress}, ${y1 + (y2 - y1) * animateLines.dbLine.progress})`}
                 >
                   <circle cx="0" cy="17" r="8" fill="#00bcd4" />
                 </g>
@@ -407,7 +407,7 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
               <svg
                 width="100%"
                 height="100%"
-                style={{ 
+                style={{
                   position: "absolute",
                   top: "100%", // adjust as needed
                   left: 0,
@@ -479,7 +479,7 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
                       animationDirection: animateLines.freezerLine.direction === "normalDir" ? "normal" : "reverse",
                       animationPlayState: isPaused ? "paused" : "running"
                     }}
-                      //transform={`translate(${x1 + (x2 - x1) * animateLines.freezerLine.progress}, ${y1 + (y2 - y1) * animateLines.freezerLine.progress})`}
+                  //transform={`translate(${x1 + (x2 - x1) * animateLines.freezerLine.progress}, ${y1 + (y2 - y1) * animateLines.freezerLine.progress})`}
                   >
                     <image
                       href={iconMap[animateLines.freezerLine.icon]}
@@ -511,18 +511,18 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
                   markerStart="url(#arrowheadLeft)"
                   markerEnd="url(#arrowheadRight)"
                 />
-               {animateLines.wmLine.active && (
-                 /*  <image
-                    key={animateLines.wmLine.runId}
-                    href={iconMap[animateLines.wmLine.icon]}
-                    width="30"
-                    height="30"
-                    style={{
-                      animation: "moveAlongWM 2s linear forwards",
-                      animationDirection: animateLines.wmLine.direction === "normalDir" ? "normal" : "reverse",
-                      animationPlayState: isPaused ? "paused" : "running",
-                    }}
-                  /> */
+                {animateLines.wmLine.active && (
+                  /*  <image
+                     key={animateLines.wmLine.runId}
+                     href={iconMap[animateLines.wmLine.icon]}
+                     width="30"
+                     height="30"
+                     style={{
+                       animation: "moveAlongWM 2s linear forwards",
+                       animationDirection: animateLines.wmLine.direction === "normalDir" ? "normal" : "reverse",
+                       animationPlayState: isPaused ? "paused" : "running",
+                     }}
+                   /> */
                   <g
                     key={animateLines.wmLine.runId}
                     //transform={`translate(${50 + 0 * animateLines.wmLine.progress})`} // x1 + (x2-x1)*progress
@@ -531,10 +531,10 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
                       animationDirection: animateLines.wmLine.direction === "normalDir" ? "normal" : "reverse",
                       animationPlayState: isPaused ? "paused" : "running",
                     }}
-                      //transform={`translate(${x1 + (x2 - x1) * animateLines.wmLine.progress}, ${y1 + (y2 - y1) * animateLines.wmLine.progress})`}
+                  //transform={`translate(${x1 + (x2 - x1) * animateLines.wmLine.progress}, ${y1 + (y2 - y1) * animateLines.wmLine.progress})`}
                   >
                     <image
-                      
+
                       href={iconMap[animateLines.wmLine.icon]}
                       width="30"
                       height="30"
@@ -564,7 +564,7 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
                   markerStart="url(#arrowheadLeft)"
                   markerEnd="url(#arrowheadRight)"
                 />
-                { animateLines.evLine.active && (
+                {animateLines.evLine.active && (
                   /* <image
                     key={animateLines.evLine.runId}
                     href={iconMap[animateLines.evLine.icon]}
@@ -579,13 +579,13 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
                   <g
                     key={animateLines.evLine.runId}
                     //transform={animateLines.evLine.direction === "normalDir" ? `translate(${58 + 97 * animateLines.evLine.progress}, ${8 + 191 * animateLines.evLine.progress})` : `translate(${155 - 80 * animateLines.evLine.progress}, ${199 - 200 * animateLines.evLine.progress})`} // x1 + (x2-x1)*progress
-              
+
                     style={{
                       animation: "moveAlongEV 2s linear forwards",
                       animationDirection: animateLines.evLine.direction === "normalDir" ? "normal" : "reverse",
                       animationPlayState: isPaused ? "paused" : "running",
                     }}
-                     // transform={`translate(${x1 + (x2 - x1) * animateLines.evLine.progress}, ${y1 + (y2 - y1) * animateLines.evLine.progress})`}
+                  // transform={`translate(${x1 + (x2 - x1) * animateLines.evLine.progress}, ${y1 + (y2 - y1) * animateLines.evLine.progress})`}
                   >
                     <image
                       href={iconMap[animateLines.evLine.icon]}
@@ -594,7 +594,7 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
                     />
                     <text
                       x="30"
-                      y="25"  
+                      y="25"
                       fontSize="10"
                       fill="#094C7A"
                       fontFamily="monospace"
@@ -602,7 +602,7 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
                       {animateLines.evLine.eventMsg}
                     </text>
                   </g>
-                )} 
+                )}
               </svg>
               {expanded && modules && (
                 <>
@@ -686,7 +686,7 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
               <IconButton
                 size="small"
                 onClick={() => (modules || deployments) && setExpanded((e) => !e)}
-                disabled={!(modules || deployments) }
+                disabled={!(modules || deployments)}
                 sx={{
                   mt: 1,
                   color: (modules || deployments) ? '#fff' : '#aaa',
@@ -712,9 +712,9 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
                 <DialogContent dividers>
                   <Typography variant="h6" gutterBottom>Modules</Typography>
                   {modules.map((mod, index) => (
-                    <Accordion 
-                     key={mod._id}
-                     onChange={(e, expanded) => handleAccordionChange('module', mod._id, expanded)}
+                    <Accordion
+                      key={mod._id}
+                      onChange={(e, expanded) => handleAccordionChange('module', mod._id, expanded)}
                     >
                       <AccordionSummary
                         expandIcon={<ExpandMoreIcon />}
@@ -724,16 +724,16 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
                         <Typography>{mod.name || mod}</Typography> {/* show name or module string */}
                       </AccordionSummary>
                       <AccordionDetails>
-                      <Typography component="pre" variant="body2" fontFamily="monospace" sx={{ whiteSpace: 'pre-wrap' }}>
-                        {detailsCache[mod._id] ? JSON.stringify(detailsCache[mod._id], null, 2) : 'Loading...'}
-                      </Typography>
+                        <Typography component="pre" variant="body2" fontFamily="monospace" sx={{ whiteSpace: 'pre-wrap' }}>
+                          {detailsCache[mod._id] ? JSON.stringify(detailsCache[mod._id], null, 2) : 'Loading...'}
+                        </Typography>
                       </AccordionDetails>
                     </Accordion>
                   ))}
 
                   <Typography variant="h6" gutterBottom mt="20px">Deployments</Typography>
                   {deployments.map((dep, index) => (
-                    <Accordion 
+                    <Accordion
                       key={index}
                       onChange={(e, expanded) => handleAccordionChange('deployment', dep._id, expanded)}
                     >
@@ -758,7 +758,7 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
               </Dialog>
             </Box>
           </Grid>
-          <Grid item sx={{ px: 0, mx: -2, zIndex: 2, display:'flex', alignItems:'center' }}>
+          <Grid item sx={{ px: 0, mx: -2, zIndex: 2, display: 'flex', alignItems: 'center' }}>
             <svg width="150px" height="64px" style={{ display: 'block', position: 'relative', zIndex: 2 }}>
               <defs>
                 <marker
@@ -799,17 +799,17 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
                 markerEnd="url(#arrowheadRight)"
               />
               <text
-                  x="75"
-                  y="-10"
-                  textAnchor="middle"
-                  fontSize="9"
-                  fill="#094C7A"
-                  fontFamily="monospace"
+                x="75"
+                y="-10"
+                textAnchor="middle"
+                fontSize="9"
+                fill="#094C7A"
+                fontFamily="monospace"
               >
-                  <tspan x="75" dy="24">Receives instructions</tspan>
-                  <tspan x="75" dy="12">for deployment</tspan>
-                  <tspan x="75" dy="12">and execution</tspan>
-                  
+                <tspan x="75" dy="24">Receives instructions</tspan>
+                <tspan x="75" dy="12">for deployment</tspan>
+                <tspan x="75" dy="12">and execution</tspan>
+
               </text>
               {animateLines.icLine.active && (
                 /*<image
@@ -831,7 +831,7 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
                     animationDirection: animateLines.icLine.direction === "normalDir" ? "normal" : "reverse",
                     animationPlayState: isPausedRef.current ? "paused" : "running",
                   }}
-                    //transform={`translate(${x1 + (x2 - x1) * animateLines.icLine.progress}, ${y1 + (y2 - y1) * animateLines.icLine.progress})`}
+                //transform={`translate(${x1 + (x2 - x1) * animateLines.icLine.progress}, ${y1 + (y2 - y1) * animateLines.icLine.progress})`}
                 >
                   <image
                     href={iconMap[animateLines.icLine.icon]}
@@ -847,7 +847,7 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
                   >
                     {animateLines.icLine.eventMsg}
                   </text>
-                </g> 
+                </g>
               )}
             </svg>
           </Grid>
@@ -855,7 +855,7 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
             <img src={IntelligenceControlImg} alt="Intelligence Control" style={{ width: 120, height: 120, objectFit: "contain" }} />
           </Grid>
         </Grid>
-        
+
         {/* Supervisors Section */}
         <Box mt={20} px={8} sx={{ border: 2, borderColor: '#c7c7c7', p: 2, bgcolor: '#f7f7f7' }}>
           <Typography>Supervisors</Typography>

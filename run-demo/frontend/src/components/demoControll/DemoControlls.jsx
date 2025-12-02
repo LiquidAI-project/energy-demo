@@ -31,6 +31,7 @@ import DemandSpikeIcon from "../../assets/demand_spike.png";
 import UserInputIcon from "../../assets/user_input.png";
 import WasmWithOnnxIcon from "../../assets/wasm_with_onnx.png";
 import ScheduleIcon from "../../assets/schedule.png";
+import WasmWithOnnxScheduleIcon from "../../assets/wasm_with_onnx_schedule.png";
 import OnnxFileIcon from "../../assets/onnx_file.png";
 import DropdownMenu from "./DropdownMenu";
 import { useDemoControlContext } from "../../context/demoControlContext/useDemoControlContext";
@@ -137,9 +138,9 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       if (animationSessionRef.current !== sessionId) return;
       await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef, sessionId);
       setDayPlans(predefinedDayPlan1);
-      runMoveCodeAnimation(ORCHESTRATOR, FREEZER, ScheduleIcon, null, sessionId);
-      runMoveCodeAnimation(ORCHESTRATOR, WASHING_MACHINE, ScheduleIcon, null, sessionId);
-      runMoveCodeAnimation(ORCHESTRATOR, EV_CHARGER, ScheduleIcon, null, sessionId);
+      runMoveCodeAnimation(ORCHESTRATOR, FREEZER, WasmWithOnnxScheduleIcon, null, sessionId);
+      runMoveCodeAnimation(ORCHESTRATOR, WASHING_MACHINE, WasmWithOnnxScheduleIcon, null, sessionId);
+      runMoveCodeAnimation(ORCHESTRATOR, EV_CHARGER, WasmWithOnnxScheduleIcon, null, sessionId);
       if (animationSessionRef.current !== sessionId) return;
       await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef, sessionId);
       setDemoRunning(true);
@@ -152,7 +153,6 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       animationSessionRef.current = sessionId;
       const result = await deployAndExecute("6904c92175d1501dc7b259d3", "Fibo_EV", EV_CHARGER, { "param0": 8 });
       if (result === "Success") {
-        runMoveCodeAnimation(ORCHESTRATOR, EV_CHARGER, WasmWithOnnxIcon, null, sessionId);
         if (voiceEnabled)
           speak("Module is deployed on E V Charger");
       } else {
@@ -165,9 +165,7 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       const sessionId = uuidv4();
       animationSessionRef.current = sessionId;
       const result = await deployAndExecute("6904c91175d1501dc7b259a6", "Fibo_Freezer", FREEZER, { "param0": 10 });
-      console.log(result);
       if (result === "Success") {
-        runMoveCodeAnimation(ORCHESTRATOR, FREEZER, WasmWithOnnxIcon, null, sessionId);
         if (voiceEnabled)
           speak("Module is deployed on Freezer");
       } else {
@@ -249,8 +247,9 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef, sessionId);
       setDayPlans(predefinedDayPlan2);
       setHistoricalDayPlans(prev => [...prev, predefinedDayPlan1]);
-      runMoveCodeAnimation(ORCHESTRATOR, FREEZER, ScheduleIcon, null, sessionId);
-      runMoveCodeAnimation(ORCHESTRATOR, EV_CHARGER, ScheduleIcon, null, sessionId);
+      runMoveCodeAnimation(ORCHESTRATOR, WASHING_MACHINE, WasmWithOnnxScheduleIcon, null, sessionId);
+      runMoveCodeAnimation(ORCHESTRATOR, FREEZER, WasmWithOnnxScheduleIcon, null, sessionId);
+      runMoveCodeAnimation(ORCHESTRATOR, EV_CHARGER, WasmWithOnnxScheduleIcon, null, sessionId);
       if (animationSessionRef.current !== sessionId) return;
       await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef, sessionId);
       setDemoRunning(true);
@@ -270,14 +269,12 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       animationSessionRef.current = sessionId;
       const result = await deployAndExecute("6904c91175d1501dc7b259a6", "Fibo_Freezer", FREEZER, { "param0": 10 });
       if (result === "Success") {
-        runMoveCodeAnimation(ORCHESTRATOR, FREEZER, WasmWithOnnxIcon, null, sessionId);
         if (blackoutActive) {
           setElectricCar2(prev => ({
             ...prev,
             provideEnergy: true,
             lineToFreezer: true,
-            currentEnergy: Math.max(0, prev.currentEnergy - 0.50),
-            dischargeableEnergy: Math.max(0, prev.dischargeableEnergy - 0.50)
+            // Initial drop or setup for discharge
           }));
 
           // Add discharging slot (6:50 to 9:00)
@@ -291,19 +288,45 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       }
     }
 
+    // Discharge simulation for ElectricCar2 (6:50 - 9:00)
+    // Total discharge needed: 2.50 kWh
+    // Duration: 2 hours
+    // Discharge rate: 2.50 kWh/hour
+    if (currentHour >= 7 && currentHour < 9) {
+      const startHour = 7;
+      const currentTime = currentHour + (currentMinute / 60);
+      const hoursElapsed = currentTime - startHour;
+
+      const dischargeRate = 2.5; // kWh per hour
+      const dischargedAmount = hoursElapsed * dischargeRate;
+
+      // Starting energy at 6:50 is 56 kWh (from previous logic)
+      const startingEnergy = 56;
+      const currentEnergyLevel = Math.max(startingEnergy - dischargedAmount, 0);
+      const currentEnergy = Math.floor(currentEnergyLevel * 10) / 10; // Keep 1 decimal for smoother look
+
+      // Available energy is current - minimum required (40 kWh)
+      const minRequired = 40;
+      const currentAvailableEnergy = Math.max(0, currentEnergy - minRequired);
+
+      setElectricCar2(prev => ({
+        ...prev,
+        currentEnergy: currentEnergy,
+        dischargeableEnergy: currentAvailableEnergy
+      }));
+    }
+
     if (currentHour == 7 && currentMinute === 40) {
       const sessionId = uuidv4();
       animationSessionRef.current = sessionId;
       const result = await deployAndExecute("6904c93375d1501dc7b25a00", "Fibo_WM", WASHING_MACHINE, { "param0": 6 });
       if (result === "Success") {
-        runMoveCodeAnimation(ORCHESTRATOR, WASHING_MACHINE, WasmWithOnnxIcon, null, sessionId);
         if (blackoutActive) {
           setElectricCar1(prev => ({
             ...prev,
             provideEnergy: true,
             lineToWashingMachine: true,
-            currentEnergy: Math.max(0, prev.currentEnergy - 2.0),
-            dischargeableEnergy: Math.max(0, prev.dischargeableEnergy - 2.0)
+            // Initial drop or setup for discharge
           }));
         }
         if (voiceEnabled)
@@ -312,6 +335,30 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
         if (voiceEnabled)
           speak(result);
       }
+    }
+
+    if (currentHour >= 8 && currentHour < 9) {
+      const startHour = 8;
+      const currentTime = currentHour + (currentMinute / 60);
+      const hoursElapsed = currentTime - startHour;
+
+      const dischargeRate = 2.5; // kWh per hour
+      const dischargedAmount = hoursElapsed * dischargeRate;
+
+      // Starting energy at 7:40 is 56 kWh (assuming it was full/same as start)
+      const startingEnergy = 56;
+      const currentEnergyLevel = Math.max(startingEnergy - dischargedAmount, 0);
+      const currentEnergy = Math.floor(currentEnergyLevel * 10) / 10; // Keep 1 decimal for smoother look
+
+      // Available energy is current - minimum required (40 kWh)
+      const minRequired = 40;
+      const currentAvailableEnergy = Math.max(0, currentEnergy - minRequired);
+
+      setElectricCar1(prev => ({
+        ...prev,
+        currentEnergy: currentEnergy,
+        dischargeableEnergy: currentAvailableEnergy
+      }));
     }
 
     // End blackout at 9:00
@@ -331,6 +378,36 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       setElectricCar2(prev => ({ ...prev, pluggedIn: false }));
       if (voiceEnabled)
         speak("Electric cars are not available");
+    }
+
+    // Car usage simulation (10:00 - 18:00)
+    // Car 1: 50.7 -> 25 (Diff 25.7 over 8h) => 3.2125 kWh/h
+    // Car 2: 51.0 -> 34 (Diff 17.0 over 8h) => 2.125 kWh/h
+    if (currentHour >= 10 && currentHour < 18) {
+      const startHour = 10;
+      const currentTime = currentHour + (currentMinute / 60);
+      const hoursElapsed = currentTime - startHour;
+
+      // Car 1
+      const startEnergy1 = 53.9;
+      const rate = 5;
+      const currentEnergy1 = Math.max(0, startEnergy1 - (hoursElapsed * rate));
+
+      setElectricCar1(prev => ({
+        ...prev,
+        currentEnergy: Math.floor(currentEnergy1 * 10) / 10,
+        dischargeableEnergy: Math.max(0, currentEnergy1 - 40) // Not plugged in
+      }));
+
+      // Car 2
+      const startEnergy2 = 51.4;
+      const currentEnergy2 = Math.max(0, startEnergy2 - (hoursElapsed * rate));
+
+      setElectricCar2(prev => ({
+        ...prev,
+        currentEnergy: Math.floor(currentEnergy2 * 10) / 10,
+        dischargeableEnergy: Math.max(0, currentEnergy2 - 40) // Not plugged in
+      }));
     }
 
     // Washing machine set to simulation and EV unplug simulation
@@ -356,12 +433,11 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       if (animationSessionRef.current !== sessionId) return;
       await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef, sessionId);
       setDayPlans(predefinedDayPlan3);
-      runMoveCodeAnimation(ORCHESTRATOR, WASHING_MACHINE, ScheduleIcon, null, sessionId);
+      runMoveCodeAnimation(ORCHESTRATOR, WASHING_MACHINE, WasmWithOnnxScheduleIcon, null, sessionId);
       if (animationSessionRef.current !== sessionId) return;
       await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef, sessionId);
       const result = await deployAndExecute("6904c93375d1501dc7b25a00", "Fibo_WM", WASHING_MACHINE, { "param0": 6 });
       if (result === "Success") {
-        runMoveCodeAnimation(ORCHESTRATOR, WASHING_MACHINE, WasmWithOnnxIcon, null, sessionId);
         if (voiceEnabled)
           speak("Module is deployed on washing machine");
       } else {
@@ -372,20 +448,6 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       setDemoRunning(true);
       setScheduleProcessing(false);
       handlePopOverClose();
-    }
-
-    if (currentHour == 11 && currentMinute === 40) {
-      const sessionId = uuidv4();
-      animationSessionRef.current = sessionId;
-      const result = await deployAndExecute("6904c91175d1501dc7b259a6", "Fibo_Freezer", FREEZER, { "param0": 8 });
-      if (result === "Success") {
-        runMoveCodeAnimation(ORCHESTRATOR, FREEZER, WasmWithOnnxIcon, null, sessionId);
-        if (voiceEnabled)
-          speak("Module is deployed on freezer");
-      } else {
-        if (voiceEnabled)
-          speak(result);
-      }
     }
 
     // Demand spike simulation
@@ -411,8 +473,8 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       if (animationSessionRef.current !== sessionId) return;
       await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef, sessionId);
       setDayPlans(predefinedDayPlan4);
-      runMoveCodeAnimation(ORCHESTRATOR, FREEZER, ScheduleIcon, null, sessionId);
-      runMoveCodeAnimation(ORCHESTRATOR, WASHING_MACHINE, ScheduleIcon, null, sessionId);
+      runMoveCodeAnimation(ORCHESTRATOR, FREEZER, WasmWithOnnxScheduleIcon, null, sessionId);
+      runMoveCodeAnimation(ORCHESTRATOR, WASHING_MACHINE, WasmWithOnnxScheduleIcon, null, sessionId);
       if (animationSessionRef.current !== sessionId) return;
       await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef, sessionId);
       setHistoricalDayPlans(prev => [...prev, predefinedDayPlan3]);
@@ -426,7 +488,6 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       animationSessionRef.current = sessionId;
       const result = await deployAndExecute("6904c93375d1501dc7b25a00", "Fibo_WM", WASHING_MACHINE, { "param0": 6 });
       if (result === "Success") {
-        runMoveCodeAnimation(ORCHESTRATOR, WASHING_MACHINE, WasmWithOnnxIcon, null, sessionId);
         if (voiceEnabled)
           speak("Module is deployed on washing machine");
       } else {
@@ -441,8 +502,8 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       animationSessionRef.current = sessionId;
       setDemoRunning(false);
       setScheduleProcessing(true);
-      setElectricCar1(prev => ({ ...prev, pluggedIn: true, currentEnergy: 35.5, dischargeableEnergy: 0 }));
-      setElectricCar2(prev => ({ ...prev, pluggedIn: true, currentEnergy: 34, dischargeableEnergy: 0 }));
+      setElectricCar1(prev => ({ ...prev, pluggedIn: true }));
+      setElectricCar2(prev => ({ ...prev, pluggedIn: true }));
       await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef, sessionId);
       if (voiceEnabled) {
         speak("Electric cars are available for charging again");
@@ -466,7 +527,7 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       if (animationSessionRef.current !== sessionId) return;
       await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef, sessionId);
       setDayPlans(predefinedDayPlan5);
-      runMoveCodeAnimation(ORCHESTRATOR, EV_CHARGER, ScheduleIcon, null, sessionId);
+      runMoveCodeAnimation(ORCHESTRATOR, EV_CHARGER, WasmWithOnnxScheduleIcon, null, sessionId);
       if (animationSessionRef.current !== sessionId) return;
       await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef, sessionId);
       setHistoricalDayPlans(prev => [...prev, predefinedDayPlan4]);
@@ -475,12 +536,11 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       handlePopOverClose();
     }
 
-    if (currentHour == 18 && currentMinute === 40) {
+    if (currentHour == 19 && currentMinute === 40) {
       const sessionId = uuidv4();
       animationSessionRef.current = sessionId;
       const result = await deployAndExecute("6904c91175d1501dc7b259a6", "Fibo_Freezer", FREEZER, { "param0": 10 });
       if (result === "Success") {
-        runMoveCodeAnimation(ORCHESTRATOR, FREEZER, WasmWithOnnxIcon, null, sessionId);
         if (voiceEnabled)
           speak("Module is deployed on Freezer");
       } else {
@@ -512,8 +572,7 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       if (animationSessionRef.current !== sessionId) return;
       await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef, sessionId);
       setDayPlans(predefinedDayPlan6);
-      runMoveCodeAnimation(ORCHESTRATOR, FREEZER, ScheduleIcon, null, sessionId);
-      runMoveCodeAnimation(ORCHESTRATOR, EV_CHARGER, ScheduleIcon, null, sessionId);
+      runMoveCodeAnimation(ORCHESTRATOR, EV_CHARGER, WasmWithOnnxScheduleIcon, null, sessionId);
       if (animationSessionRef.current !== sessionId) return;
       await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef, sessionId);
       setHistoricalDayPlans(prev => [...prev, predefinedDayPlan5]);
@@ -527,8 +586,6 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       animationSessionRef.current = sessionId;
       let result = await deployAndExecute("6904c91175d1501dc7b259a6", "Fibo_Freezer", FREEZER, { "param0": 8 });
       if (result === "Success") {
-        runMoveCodeAnimation(ORCHESTRATOR, FREEZER, WasmWithOnnxIcon, null, sessionId);
-        if (animationSessionRef.current !== sessionId) return;
         if (voiceEnabled)
           speak("Module is deployed on freezer");
         await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef, sessionId);
@@ -539,14 +596,45 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
 
       result = await deployAndExecute("6904c92175d1501dc7b259d3", "Fibo_EV", EV_CHARGER, { "param0": 6 });
       if (result === "Success") {
-        runMoveCodeAnimation(ORCHESTRATOR, EV_CHARGER, WasmWithOnnxIcon, null, sessionId);
-        if (animationSessionRef.current !== sessionId) return;
         if (voiceEnabled)
           speak("Module is deployed on E V Charger");
       } else {
         if (voiceEnabled)
           speak(result);
       }
+    }
+
+    if (currentHour >= 22 && currentHour < 23) {
+      const startHour = 22;
+      const startingCharge1 = 14.7; // kWh
+      const startingCharge2 = 12.2; // kWh
+      const chargingRatePerHour = 11; // kWh per hour
+      const hoursElapsed = (currentHour - startHour) + (currentMinute / 60);
+
+      // Calculate current energy (starting charge + charged amount)
+      const chargedAmount = hoursElapsed * chargingRatePerHour;
+      const currentEnergyLevel1 = Math.min(startingCharge1 + chargedAmount, 60); // Cap at total capacity
+      const currentEnergyLevel2 = Math.min(startingCharge2 + chargedAmount, 60); // Cap at total capacity
+      const currentEnergy1 = Math.floor(currentEnergyLevel1);
+      const currentEnergy2 = Math.floor(currentEnergyLevel2);
+
+      // Available energy is current - minimum required (40 kWh)
+      const minRequired = 40;
+      const currentAvailableEnergy1 = Math.max(0, currentEnergy1 - minRequired);
+      const currentAvailableEnergy2 = Math.max(0, currentEnergy2 - minRequired);
+
+      // Update both cars
+      setElectricCar1(prev => ({
+        ...prev,
+        currentEnergy: currentEnergy1,
+        dischargeableEnergy: currentAvailableEnergy1
+      }));
+
+      setElectricCar2(prev => ({
+        ...prev,
+        currentEnergy: currentEnergy2,
+        dischargeableEnergy: currentAvailableEnergy2
+      }));
     }
 
     if (currentHour == 23 && currentMinute == 50)

@@ -119,7 +119,7 @@ export const predefinedDayPlan1 = [
     slots: [
       { start: 3, end: 5 },
       { start: 7, end: 9 },
-      { start: 19, end: 20 },
+      { start: 18, end: 20 },
     ],
   },
   {
@@ -144,7 +144,7 @@ export const predefinedDayPlan2 = [
     name: 'Freezer',
     slots: [
       { start: 7, end: 9 },
-      { start: 19, end: 20 },
+      { start: 18, end: 20 },
     ],
   },
   {
@@ -166,8 +166,8 @@ export const predefinedDayPlan3 = [
     id: FREEZER,
     name: 'Freezer',
     slots: [
-      { start: 12, end: 13 },
-      { start: 19, end: 20 },
+      { start: 7, end: 9 },
+      { start: 18, end: 20 },
     ],
   },
   {
@@ -189,7 +189,7 @@ export const predefinedDayPlan4 = [
     id: FREEZER,
     name: 'Freezer',
     slots: [
-      { start: 19, end: 20 },
+      { start: 20, end: 22 },
     ],
   },
   {
@@ -209,7 +209,7 @@ export const predefinedDayPlan5 = [
     id: FREEZER,
     name: 'Freezer',
     slots: [
-      { start: 19, end: 20 },
+      { start: 20, end: 22 },
     ],
   },
   {
@@ -231,7 +231,7 @@ export const predefinedDayPlan6 = [
     id: FREEZER,
     name: 'Freezer',
     slots: [
-      { start: 22, end: 23 },
+      { start: 20, end: 22 },
     ],
   },
   {

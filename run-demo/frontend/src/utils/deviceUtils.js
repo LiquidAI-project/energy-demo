@@ -4,7 +4,8 @@
 // Author(s): Lakshan Rathnayaka <lakshan.rathnayaka@tuni.fi>, Ville Heikkilä <ville.heikkila@tuni.fi>.
 
 import { sendPostData } from "../services/apiService";
-
+// eslint-disable-next-line no-undef
+const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
 /**
  * Retrieves the device ID map from local storage.
  * The map is stored as a JSON string in the local storage under the key "deviceIdMap".
@@ -81,19 +82,45 @@ export const isDeviceOperating = (deviceId, currentPlan, currentDemoTime) => {
  */
 export const speak = (text) => {
   if ("speechSynthesis" in window) {
+    // 🔥 Stop any ongoing or queued speech
+    window.speechSynthesis.cancel();
+
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = "en-US";
     utterance.rate = 1.3;
     utterance.pitch = 1.3;
+
     const voices = window.speechSynthesis.getVoices();
     if (voices.length > 0) {
-      utterance.voice = voices[0]; // or voices.find(voice => voice.name.includes('Female'))
+      utterance.voice = voices[0];
     }
+
+    // 🔥 Speak only the latest request
     window.speechSynthesis.speak(utterance);
   } else {
     console.error("Speech Synthesis not supported in this browser.");
   }
 };
+
+export const openaiSpeak = async (text) => {
+  const response = await fetch("https://api.openai.com/v1/audio/speech", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${OPENAI_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "gpt-4o-mini-tts",   // TTS model
+      voice: "alloy",             // voice choice
+      input: text,                // what you want it to say
+    }),
+  });
+
+  const audioBlob = await response.blob();
+  const url = URL.createObjectURL(audioBlob);
+  const audio = new Audio(url);
+  audio.play();
+}
 
 /**
  * Calls deploy and execute APIs
@@ -110,11 +137,11 @@ export const deployAndExecute = async (deploymentId, deploymentName, deviceName,
     console.log(`Sending ${deploymentName} manifest deploy request`);
     const manifestRes = await sendPostData(`/file/manifest/${deploymentId}`);
     const status = Object.values(manifestRes.deviceResponses)
-                  .find(d => d.deploymentId === deploymentId)
-                  ?.status;
+      .find(d => d.deploymentId === deploymentId)
+      ?.status;
     if (status === "success") {
       console.log(`Sending ${deploymentName} execution request`);
-      const execRes = await sendPostData(`/execute/${deploymentId}`, params);   
+      const execRes = await sendPostData(`/execute/${deploymentId}`, params);
       if (execRes.result) {
         return "Success";
       } else {
