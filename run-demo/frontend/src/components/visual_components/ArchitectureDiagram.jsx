@@ -26,13 +26,13 @@ import { ANIMATION_EVENT_SEQUENCE } from "../../assets/mockData/eventSequence";
 import NewDeviceDiscoveryIcon from "../../assets/new-device.png";
 import NewDeviceInfoIcon from "../../assets/new-device-info.png";
 import SocketMsgIcon from "../../assets/socket-icon.png";
-import WasmWithOnnxIcon from "../../assets/wasm_with_onnx.png";
+import WasmWithOnnxScheduleIcon from "../../assets/wasm_with_onnx_schedule.png";
 import ScheduleIcon from "../../assets/schedule.png";
 
 const iconMap = {
   NewDeviceDiscoveryIcon,
   NewDeviceInfoIcon,
-  WasmWithOnnxIcon,
+  WasmWithOnnxScheduleIcon,
   SocketMsgIcon,
   ScheduleIcon
 };
@@ -154,8 +154,6 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
       // Skip processing if paused
       if (isPausedRef.current || eventAnimationActive) return;
 
-      console.log(socketMsg);
-
       if (socketMsg && socketMsg.funcName.includes("thingi_health") && socketMsg.loglevel === "INFO") {
         if (socketMsg.deviceName === "freezer") {
           await runGlobalAnimation("normalDir", "freezerLine", "SocketMsgIcon", "Health check done", isPausedRef);
@@ -172,10 +170,7 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
 
       }
 
-      //if(socketMsg && socketMsg.funcName.includes("deployment_create"))
-      //await runGlobalAnimation("normalDir", socketMsg.deviceName == "ev-charger" ? "evLine" : ( socketMsg.deviceName == "washing-machine" ? "wmLine" : "freezerLine" ), WasmWithOnnxIcon, isPausedRef);
-
-      if (socketMsg && socketMsg.funcName.includes("do_wasm_work")) {  // Write in relevant device box the name of module deloyed
+      /*if (socketMsg && socketMsg.funcName.includes("do_wasm_work")) {  // Write in relevant device box the name of module deloyed
         const timeValue = socketMsg.timestamp?.$date?.$numberLong
           ? Number(socketMsg.timestamp.$date.$numberLong)
           : Date.now();
@@ -197,7 +192,7 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
           ],
         }));
         console.log(deviceWorkInfo);
-      }
+      }*/
     }
 
     if (demoRunning && demoStatus === "running")
@@ -216,6 +211,32 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
         runAnimationEvent(event);
       }
     });
+
+    if (currentHour == 0 && currentMinute === 50) {
+      setDeviceWorkInfo(prev => ({
+        ...prev,
+        ["ev-charger"]: [
+          ...prev["ev-charger"],
+          {
+            module: "StartCharging()",
+            time: "01:00",
+          },
+        ],
+      }));
+    }
+
+    if (currentHour == 2 && currentMinute === 50) {
+      setDeviceWorkInfo(prev => ({
+        ...prev,
+        ["freezer"]: [
+          ...prev["freezer"],
+          {
+            module: "TurnOnFreezer()",
+            time: "03:00",
+          },
+        ],
+      }));
+    }
   }, [demoTime]);
 
   /*useEffect(() => {

@@ -8,26 +8,26 @@ export const ANIMATION_EVENT_SEQUENCE = [
             ["normalDir", "icLine", "NewDeviceInfoIcon", "Forwarding new device info"],
             ["reverseDir", "icLine", "ScheduleIcon", "Sending new schedule"],
             [
-                ["normalDir", "freezerLine", "ScheduleIcon", "Forwards schedule"],
-                ["normalDir", "wmLine", "ScheduleIcon", "Forwards schedule"],
-                ["normalDir", "evLine", "ScheduleIcon", "Forwards schedule"]
+                ["normalDir", "freezerLine", "WasmWithOnnxScheduleIcon", "Forwards schedule"],
+                ["normalDir", "wmLine", "WasmWithOnnxScheduleIcon", "Forwards schedule"],
+                ["normalDir", "evLine", "WasmWithOnnxScheduleIcon", "Forwards schedule"]
             ]
         ],
     },
     {
-        id: "dayPlanExecution_0140",
+        id: "dayPlanExecution_0150",
         hour: 1,
-        minute: 40,
+        minute: 50,
         steps: [
-            ["normalDir", "evLine", "WasmWithOnnxIcon", "Deploying and running module"]
+            ["normalDir", "evLine", "", ""]
         ],
     },
     {
-        id: "dayPlanExecution_0240",
+        id: "dayPlanExecution_0250",
         hour: 2,
-        minute: 40,
+        minute: 50,
         steps: [
-            ["normalDir", "freezerLine", "WasmWithOnnxIcon", "Deploying and running module"]
+            ["normalDir", "freezerLine", "", ""]
         ],
     },
     {
@@ -37,13 +37,13 @@ export const ANIMATION_EVENT_SEQUENCE = [
         steps: [
             ["reverseDir", "icLine", "ScheduleIcon", "Sending new schedule"],
             [
-                ["normalDir", "evLine", "ScheduleIcon", "Forwards schedule"],
-                ["normalDir", "freezerLine", "ScheduleIcon", "Forwards schedule"]
+                ["normalDir", "evLine", "WasmWithOnnxScheduleIcon", "Forwards schedule"],
+                ["normalDir", "freezerLine", "WasmWithOnnxScheduleIcon", "Forwards schedule"]
             ]
         ],
     },
     {
-        id: "dayPlanExecution_0640", 
+        id: "dayPlanExecution_0640",
         hour: 6,
         minute: 40,
         steps: [
@@ -64,12 +64,12 @@ export const ANIMATION_EVENT_SEQUENCE = [
         minute: 40,
         steps: [
             ["reverseDir", "icLine", "ScheduleIcon", "Sending new schedule"],
-            ["normalDir", "wmLine", "ScheduleIcon", "Forwards schedule"],
-            ["normalDir", "wmLine", "WasmWithOnnxIcon", "Forwards schedule"]
+            ["normalDir", "wmLine", "WasmWithOnnxScheduleIcon", "Forwards schedule"],
+            ["normalDir", "wmLine", "WasmWithOnnxScheduleIcon", "Forwards schedule"]
         ],
     },
     {
-        id: "dayPlanExecution_1140", 
+        id: "dayPlanExecution_1140",
         hour: 11,
         minute: 40,
         steps: [
@@ -83,13 +83,13 @@ export const ANIMATION_EVENT_SEQUENCE = [
         steps: [
             ["reverseDir", "icLine", "ScheduleIcon", "Sending new schedule"],
             [
-                ["normalDir", "wmLine", "ScheduleIcon", "Forwards schedule"],
-                ["normalDir", "freezerLine", "ScheduleIcon", "Forwards schedule"]
+                ["normalDir", "wmLine", "WasmWithOnnxScheduleIcon", "Forwards schedule"],
+                ["normalDir", "freezerLine", "WasmWithOnnxScheduleIcon", "Forwards schedule"]
             ]
         ],
     },
     {
-        id: "dayPlanExecution_1440", 
+        id: "dayPlanExecution_1440",
         hour: 14,
         minute: 40,
         steps: [
@@ -104,11 +104,11 @@ export const ANIMATION_EVENT_SEQUENCE = [
             ["reverseDir", "evLine", "NewDeviceDiscoveryIcon", "New device connected"],
             ["normalDir", "icLine", "NewDeviceInfoIcon", "Forwarding new device info"],
             ["reverseDir", "icLine", "ScheduleIcon", "Sending new schedule"],
-            ["normalDir", "evLine", "ScheduleIcon", "Forwards schedule"]
+            ["normalDir", "evLine", "WasmWithOnnxScheduleIcon", "Forwards schedule"]
         ],
     },
     {
-        id: "dayPlanExecution_1840", 
+        id: "dayPlanExecution_1840",
         hour: 18,
         minute: 40,
         steps: [
@@ -122,13 +122,13 @@ export const ANIMATION_EVENT_SEQUENCE = [
         steps: [
             ["reverseDir", "icLine", "ScheduleIcon", "Sending new schedule"],
             [
-                ["normalDir", "evLine", "ScheduleIcon", "Forwards schedule"],
-                ["normalDir", "freezerLine", "ScheduleIcon", "Forwards schedule"]
+                ["normalDir", "evLine", "WasmWithOnnxScheduleIcon", "Forwards schedule"],
+                ["normalDir", "freezerLine", "WasmWithOnnxScheduleIcon", "Forwards schedule"]
             ]
         ],
     },
     {
-        id: "dayPlanExecution_2140", 
+        id: "dayPlanExecution_2140",
         hour: 21,
         minute: 40,
         steps: [

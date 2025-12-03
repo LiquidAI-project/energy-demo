@@ -73,7 +73,7 @@ const Freezer = React.forwardRef((props, ref) => {
     // Only run if the value actually changed
     if (prevValueRef.current === getDeviceStatus.isEnergyIntensive) return;
     if (getDeviceStatus.isEnergyIntensive) {
-      if (voiceEnabled) speak("Freezer is turned on");
+      if (voiceEnabled) speak("Module is deployed and Freezer is turned on");
     } else {
       if (voiceEnabled) speak("Freezer is turned off");
     }

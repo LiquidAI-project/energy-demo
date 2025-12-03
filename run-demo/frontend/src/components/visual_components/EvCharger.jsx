@@ -80,7 +80,7 @@ const evCharger = React.forwardRef((props, ref) => {
     // Only run if the value actually changed
     if (prevValueRef.current === getDeviceStatus.isEnergyIntensive) return;
     if (getDeviceStatus.isEnergyIntensive) {
-      if (voiceEnabled) speak("Electric cars are connected for charging");
+      if (voiceEnabled) speak("Charging module is deployed and Electric cars are connected for charging");
     } else {
       if (voiceEnabled) speak("Electric cars are removed from charging");
     }

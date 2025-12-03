@@ -58,17 +58,20 @@ export const DemoVisualizationProvider = ({ children }) => {
       supervisorName: 'ev-charger',
       deviceName: EV_CHARGER,
       isEnergyIntensive: false,
+      existingModuleName: null
 
     },
     {
       supervisorName: 'washing-machine',
       deviceName: WASHING_MACHINE,
       isEnergyIntensive: false,
+      existingModuleName: null
     },
     {
       supervisorName: 'freezer',
       deviceName: FREEZER,
       isEnergyIntensive: false,
+      existingModuleName: null
     },
   ]);
 

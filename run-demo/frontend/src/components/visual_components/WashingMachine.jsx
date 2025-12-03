@@ -64,7 +64,7 @@ const WashingMachine = React.forwardRef((props, ref) => {
     // Only run if the value actually changed
     if (prevValueRef.current === getDeviceStatus.isEnergyIntensive) return;
     if (getDeviceStatus.isEnergyIntensive) {
-      if (voiceEnabled) speak("Washing machine is turned on");
+      if (voiceEnabled) speak("Module is deployed and Washing machine is turned on");
     } else {
       if (voiceEnabled) speak("Washing machine is turned off");
     }

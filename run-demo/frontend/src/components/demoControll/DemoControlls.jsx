@@ -55,6 +55,8 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
   const {
     deviceStatus,
     blackoutActive,
+    electricCar1,
+    electricCar2,
     movingDeployments,
     changeHackerVisibility,
     setDayPlans,
@@ -63,7 +65,8 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
     setElectricCar2,
     setMovingDeployments,
     setBlackoutActive,
-    setDischargingSlots
+    setDischargingSlots,
+    setDeviceStatus
   } = useDemoVisualizationContext();
   const { voiceEnabled, demoRunMethod, demoRunning, scheduleProcessing, demoTime, demoStatus, setDemoRunning, resetArchitectutreAnimations, setScheduleProcessing, setDemoTime, setVoiceEnabled, setDemoStatus } = useDemoControlContext();
 
@@ -97,6 +100,27 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
     };
 
   /**
+   * Helper to update device status and localStorage with active module info.
+  */
+  const updateDeviceModuleStatus = (deviceName, moduleName) => {
+    // Update local state
+    setDeviceStatus(prev => prev.map(device =>
+      device.deviceName === deviceName
+        ? { ...device, existingModuleName: moduleName }
+        : device
+    ));
+
+    // Update localStorage
+    const storedDevices = JSON.parse(localStorage.getItem("devices") || "[]");
+    const updatedDevices = storedDevices.map(device =>
+      device.name === deviceName
+        ? { ...device, existingModuleName: moduleName, isModuleActive: true }
+        : device
+    );
+    localStorage.setItem("devices", JSON.stringify(updatedDevices));
+  };
+
+  /**
    * Plan of application and date movement simulation.
    */
   const dayPlanExecution = async () => {
@@ -105,6 +129,8 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
     const currentMinute = currentDate.getMinutes();
 
     //mlModelRetrainSimulation(currentMinute);
+
+
 
     // Spot price fetch simulation
     if (currentHour == 0 && currentMinute === 30) {
@@ -149,36 +175,10 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
     }
 
     if (currentHour == 0 && currentMinute === 50) {
-      const sessionId = uuidv4();
-      animationSessionRef.current = sessionId;
-      const result = await deployAndExecute("6904c92175d1501dc7b259d3", "Fibo_EV", EV_CHARGER, { "param0": 8 });
-      if (result === "Success") {
-        if (voiceEnabled)
-          speak("Module is deployed on E V Charger");
-      } else {
-        if (voiceEnabled)
-          speak(result);
-      }
+      await deployAndExecute("6930224675d1501dc7da3403", "StartCharging", "ev-charger", {});
+      updateDeviceModuleStatus("ev-charger", "ev_control:StartCharging()");
     }
 
-    if (currentHour == 2 && currentMinute === 40) {
-      const sessionId = uuidv4();
-      animationSessionRef.current = sessionId;
-      const result = await deployAndExecute("6904c91175d1501dc7b259a6", "Fibo_Freezer", FREEZER, { "param0": 10 });
-      if (result === "Success") {
-        if (voiceEnabled)
-          speak("Module is deployed on Freezer");
-      } else {
-        if (voiceEnabled)
-          speak(result);
-      }
-    }
-
-    // Electric car charging simulation (hours 1-5)
-    // Battery: 60 kWh total capacity
-    // Starting charge: 12 kWh
-    // Charging rate: 11 kWh per hour
-    // After 4 hours (1-5): 12 + 44 = 56 kWh
     if (currentHour >= 1 && currentHour < 5) {
       const startHour = 1;
       const startingCharge = 10; // kWh
@@ -208,19 +208,9 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       }));
     }
 
-    // Set to final charge at hour 5 (12 + 44 = 56 kWh after 4 hours of charging)
-    if (currentHour === 5 && currentMinute === 0) {
-      setElectricCar1(prev => ({
-        ...prev,
-        currentEnergy: 56,
-        dischargeableEnergy: 16  // 56 - 40 (min required) = 16
-      }));
-
-      setElectricCar2(prev => ({
-        ...prev,
-        currentEnergy: 56,
-        dischargeableEnergy: 16
-      }));
+    if (currentHour == 2 && currentMinute === 50) {
+      await deployAndExecute("693021d475d1501dc7da3346", "TurnOnFreezer", FREEZER, {});
+      updateDeviceModuleStatus(FREEZER, "freezer:TurnOnFreezer()");
     }
 
     // Demand spike simulation
@@ -257,6 +247,24 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       handlePopOverClose();
     }
 
+    if (currentHour === 5 && currentMinute === 0) {
+      setElectricCar1(prev => ({
+        ...prev,
+        currentEnergy: 56,
+        dischargeableEnergy: 16
+      }));
+
+      setElectricCar2(prev => ({
+        ...prev,
+        currentEnergy: 56,
+        dischargeableEnergy: 16
+      }));
+      await deployAndExecute("693021e575d1501dc7da3369", "TurnOffFreezer", FREEZER, {});
+      updateDeviceModuleStatus(FREEZER, "freezer:TurnOffFreezer()");
+      await deployAndExecute("6930224675d1501dc7da3403", "StopCharging", "ev-charger", {});
+      updateDeviceModuleStatus("ev-charger", "ev_control:StopCharging()");
+    }
+
     // Blackout simulation at 6:50
     if (currentHour == 6 && currentMinute === 20) {
       setBlackoutActive(true);
@@ -267,31 +275,24 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
     if (currentHour == 6 && currentMinute === 50) {
       const sessionId = uuidv4();
       animationSessionRef.current = sessionId;
-      const result = await deployAndExecute("6904c91175d1501dc7b259a6", "Fibo_Freezer", FREEZER, { "param0": 10 });
-      if (result === "Success") {
-        if (blackoutActive) {
-          setElectricCar2(prev => ({
-            ...prev,
-            provideEnergy: true,
-            lineToFreezer: true,
-            // Initial drop or setup for discharge
-          }));
-
-          // Add discharging slot (6:50 to 9:00)
-          setDischargingSlots(prev => [...prev, { start: 7, end: 9, isDischarging: true }]);
-        }
-        if (voiceEnabled)
-          speak("Module is deployed on Freezer");
-      } else {
-        if (voiceEnabled)
-          speak(result);
+      if (voiceEnabled)
+        speak("Electric car 2 is used to provide energy to the Freezer");
+      await deployAndExecute("6930227575d1501dc7da345a", "ProvideEnergyToDevices", "ev-charger", {});
+      updateDeviceModuleStatus("ev-charger", "ev_control:enable_cars_to_devices()");
+      await deployAndExecute("693021d475d1501dc7da3346", "TurnOnFreezer", FREEZER, {});
+      updateDeviceModuleStatus(FREEZER, "freezer:TurnOnFreezer()");
+      if (blackoutActive) {
+        setElectricCar2(prev => ({
+          ...prev,
+          provideEnergy: true,
+          lineToFreezer: true
+        }));
+        setDischargingSlots(prev => [...prev, { start: 7, end: 9, isDischarging: true }]);
       }
+
     }
 
-    // Discharge simulation for ElectricCar2 (6:50 - 9:00)
-    // Total discharge needed: 2.50 kWh
-    // Duration: 2 hours
-    // Discharge rate: 2.50 kWh/hour
+    // Reduce ElectricCar2 energy
     if (currentHour >= 7 && currentHour < 9) {
       const startHour = 7;
       const currentTime = currentHour + (currentMinute / 60);
@@ -319,24 +320,22 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
     if (currentHour == 7 && currentMinute === 40) {
       const sessionId = uuidv4();
       animationSessionRef.current = sessionId;
-      const result = await deployAndExecute("6904c93375d1501dc7b25a00", "Fibo_WM", WASHING_MACHINE, { "param0": 6 });
-      if (result === "Success") {
-        if (blackoutActive) {
-          setElectricCar1(prev => ({
-            ...prev,
-            provideEnergy: true,
-            lineToWashingMachine: true,
-            // Initial drop or setup for discharge
-          }));
-        }
-        if (voiceEnabled)
-          speak("Module is deployed on washing machine");
-      } else {
-        if (voiceEnabled)
-          speak(result);
+      if (voiceEnabled)
+        speak("Electric car 1 is used to provide energy to the Washing machine");
+      await deployAndExecute("6930227575d1501dc7da345a", "ProvideEnergyToDevices", "ev-charger", {});
+      updateDeviceModuleStatus("ev-charger", "ev_control:enable_cars_to_devices()");
+      await deployAndExecute("693021fc75d1501dc7da339b", "StartWashing", "washing-machine", {});
+      updateDeviceModuleStatus("washing-machine", "wm_module:StartWashing()");
+      if (blackoutActive) {
+        setElectricCar1(prev => ({
+          ...prev,
+          provideEnergy: true,
+          lineToWashingMachine: true
+        }));
       }
     }
 
+    // Reduce ElectricCar1 energy
     if (currentHour >= 8 && currentHour < 9) {
       const startHour = 8;
       const currentTime = currentHour + (currentMinute / 60);
@@ -368,6 +367,46 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       setElectricCar1(prev => ({ ...prev, provideEnergy: false, lineToWashingMachine: false }));
       if (voiceEnabled)
         speak("Power restored");
+      await deployAndExecute("693021e575d1501dc7da3369", "TurnOffFreezer", FREEZER, {});
+      updateDeviceModuleStatus(FREEZER, "freezer:TurnOffFreezer()");
+      await deployAndExecute("6930221875d1501dc7da33c5", "StopWashing", "washing-machine", {});
+      updateDeviceModuleStatus("washing-machine", "wm_module:StopWashing()");
+      await deployAndExecute("693022a575d1501dc7da34a8", "StopProvidingEnergy", "ev-charger", {});
+      updateDeviceModuleStatus("ev-charger", "ev_control:StopProvidingEnergy()");
+    }
+
+    // Washing machine set to simulation and EV unplug simulation
+    if (currentHour == 9 && currentMinute === 40) {
+      const sessionId = uuidv4();
+      animationSessionRef.current = sessionId;
+      setDemoRunning(false);
+      setScheduleProcessing(true);
+      setRescheduleHistory((prev) => [
+        ...prev,
+        {
+          title: "10:00",
+          content:
+            "The user requests optimal schedules from the Intelligence Control, which recalculates them and forwards them to the Orchestrator. The Orchestrator then distributes the updated schedules to target devices for efficient energy use."
+        }
+      ]);
+      runMoveCodeAnimation(USER_CONTROL, INTELLIGENT_CONTROL, UserInputIcon, null, sessionId);
+      if (animationSessionRef.current !== sessionId) return;
+      if (voiceEnabled)
+        speak("User wants to turn on washing machine, rescheduling time");
+      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef, sessionId);
+      runMoveCodeAnimation(INTELLIGENT_CONTROL, ORCHESTRATOR, ScheduleIcon, null, sessionId);
+      if (animationSessionRef.current !== sessionId) return;
+      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef, sessionId);
+      runMoveCodeAnimation(ORCHESTRATOR, WASHING_MACHINE, WasmWithOnnxScheduleIcon, null, sessionId);
+      if (animationSessionRef.current !== sessionId) return;
+      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef, sessionId);
+      setDayPlans(predefinedDayPlan3);
+      await deployAndExecute("693021fc75d1501dc7da339b", "StartWashing", "washing-machine", {});
+      updateDeviceModuleStatus("washing-machine", "wm_module:StartWashing()");
+      setHistoricalDayPlans(prev => [...prev, predefinedDayPlan2]);
+      setDemoRunning(true);
+      setScheduleProcessing(false);
+      handlePopOverClose();
     }
 
     // EV unplug simulation
@@ -380,9 +419,7 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
         speak("Electric cars are not available");
     }
 
-    // Car usage simulation (10:00 - 18:00)
-    // Car 1: 50.7 -> 25 (Diff 25.7 over 8h) => 3.2125 kWh/h
-    // Car 2: 51.0 -> 34 (Diff 17.0 over 8h) => 2.125 kWh/h
+    // Reduce Cars battery for the period they are away
     if (currentHour >= 10 && currentHour < 18) {
       const startHour = 10;
       const currentTime = currentHour + (currentMinute / 60);
@@ -408,46 +445,6 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
         currentEnergy: Math.floor(currentEnergy2 * 10) / 10,
         dischargeableEnergy: Math.max(0, currentEnergy2 - 40) // Not plugged in
       }));
-    }
-
-    // Washing machine set to simulation and EV unplug simulation
-    if (currentHour == 9 && currentMinute === 40) {
-      const sessionId = uuidv4();
-      animationSessionRef.current = sessionId;
-      setDemoRunning(false);
-      setScheduleProcessing(true);
-      setRescheduleHistory((prev) => [
-        ...prev,
-        {
-          title: "10:00",
-          content:
-            "The user requests optimal schedules from the Intelligence Control, which recalculates them and forwards them to the Orchestrator. The Orchestrator then distributes the updated schedules to target devices for efficient energy use."
-        }
-      ]);
-      runMoveCodeAnimation(USER_CONTROL, INTELLIGENT_CONTROL, UserInputIcon, null, sessionId);
-      if (animationSessionRef.current !== sessionId) return;
-      if (voiceEnabled)
-        speak("User wants to turn on washing machine, rescheduling time");
-      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef, sessionId);
-      runMoveCodeAnimation(INTELLIGENT_CONTROL, ORCHESTRATOR, ScheduleIcon, null, sessionId);
-      if (animationSessionRef.current !== sessionId) return;
-      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef, sessionId);
-      setDayPlans(predefinedDayPlan3);
-      runMoveCodeAnimation(ORCHESTRATOR, WASHING_MACHINE, WasmWithOnnxScheduleIcon, null, sessionId);
-      if (animationSessionRef.current !== sessionId) return;
-      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef, sessionId);
-      const result = await deployAndExecute("6904c93375d1501dc7b25a00", "Fibo_WM", WASHING_MACHINE, { "param0": 6 });
-      if (result === "Success") {
-        if (voiceEnabled)
-          speak("Module is deployed on washing machine");
-      } else {
-        if (voiceEnabled)
-          speak(result);
-      }
-      setHistoricalDayPlans(prev => [...prev, predefinedDayPlan2]);
-      setDemoRunning(true);
-      setScheduleProcessing(false);
-      handlePopOverClose();
     }
 
     // Demand spike simulation
@@ -481,19 +478,18 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       setDemoRunning(true);
       setScheduleProcessing(false);
       handlePopOverClose();
+      await deployAndExecute("6930221875d1501dc7da33c5", "StopWashing", "washing-machine", {});
+      updateDeviceModuleStatus("washing-machine", "wm_module:StopWashing()");
     }
 
     if (currentHour == 14 && currentMinute === 40) {
-      const sessionId = uuidv4();
-      animationSessionRef.current = sessionId;
-      const result = await deployAndExecute("6904c93375d1501dc7b25a00", "Fibo_WM", WASHING_MACHINE, { "param0": 6 });
-      if (result === "Success") {
-        if (voiceEnabled)
-          speak("Module is deployed on washing machine");
-      } else {
-        if (voiceEnabled)
-          speak(result);
-      }
+      await deployAndExecute("693021fc75d1501dc7da339b", "StartWashing", "washing-machine", {});
+      updateDeviceModuleStatus("washing-machine", "wm_module:StartWashing()");
+    }
+
+    if (currentHour == 17 && currentMinute === 0) {
+      await deployAndExecute("6930221875d1501dc7da33c5", "StopWashing", "washing-machine", {});
+      updateDeviceModuleStatus("washing-machine", "wm_module:StopWashing()");
     }
 
     // EV plug back in simulation
@@ -536,17 +532,14 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       handlePopOverClose();
     }
 
-    if (currentHour == 19 && currentMinute === 40) {
-      const sessionId = uuidv4();
-      animationSessionRef.current = sessionId;
-      const result = await deployAndExecute("6904c91175d1501dc7b259a6", "Fibo_Freezer", FREEZER, { "param0": 10 });
-      if (result === "Success") {
-        if (voiceEnabled)
-          speak("Module is deployed on Freezer");
-      } else {
-        if (voiceEnabled)
-          speak(result);
-      }
+    if ((currentHour == 19 && currentMinute === 40)) {
+      await deployAndExecute("693021d475d1501dc7da3346", "TurnOnFreezer", FREEZER, {});
+      updateDeviceModuleStatus(FREEZER, "freezer:TurnOnFreezer()");
+    }
+
+    if (currentHour == 22 && currentMinute === 0) {
+      await deployAndExecute("693021e575d1501dc7da3369", "TurnOffFreezer", FREEZER, {});
+      updateDeviceModuleStatus(FREEZER, "freezer:TurnOffFreezer()");
     }
 
     // Demand spike simulation
@@ -582,28 +575,15 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
     }
 
     if (currentHour == 21 && currentMinute === 40) {
-      const sessionId = uuidv4();
-      animationSessionRef.current = sessionId;
-      let result = await deployAndExecute("6904c91175d1501dc7b259a6", "Fibo_Freezer", FREEZER, { "param0": 8 });
-      if (result === "Success") {
-        if (voiceEnabled)
-          speak("Module is deployed on freezer");
-        await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef, sessionId);
-      } else {
-        if (voiceEnabled)
-          speak(result);
-      }
-
-      result = await deployAndExecute("6904c92175d1501dc7b259d3", "Fibo_EV", EV_CHARGER, { "param0": 6 });
-      if (result === "Success") {
-        if (voiceEnabled)
-          speak("Module is deployed on E V Charger");
-      } else {
-        if (voiceEnabled)
-          speak(result);
-      }
+      await deployAndExecute("6930224675d1501dc7da3403", "StartCharging", "ev-charger", {});
+      updateDeviceModuleStatus("ev-charger", "ev_control:StartCharging()");
     }
 
+    if (currentHour == 23 && currentMinute === 0) {
+      await deployAndExecute("6930225a75d1501dc7da3437", "StopCharging", "ev-charger", {});
+      updateDeviceModuleStatus("ev-charger", "ev_control:StopCharging()");
+    }
+    // Charge ElectricCars
     if (currentHour >= 22 && currentHour < 23) {
       const startHour = 22;
       const startingCharge1 = 14.7; // kWh
