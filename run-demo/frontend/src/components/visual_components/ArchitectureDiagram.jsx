@@ -7,8 +7,6 @@
 import React from "react";
 import { useEffect, useState, useRef } from "react";
 import { Box, Grid, Typography, CircularProgress, Button, Dialog, DialogTitle, DialogContent, DialogActions, Accordion, AccordionSummary, AccordionDetails, Tooltip } from "@mui/material";
-import { useEffect, useState, useRef } from "react";
-import { Box, Grid, Typography, CircularProgress, Button, Dialog, DialogTitle, DialogContent, DialogActions, Accordion, AccordionSummary, AccordionDetails, Tooltip } from "@mui/material";
 import DatabaseImg from '../../assets/database.png';
 import OrchestratorImg from '../../assets/orchestrator.png';
 import IntelligenceControlImg from '../../assets/intelligent_control.jpg';
