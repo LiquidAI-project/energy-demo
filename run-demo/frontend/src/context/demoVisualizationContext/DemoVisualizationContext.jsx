@@ -32,6 +32,7 @@ const DemoVisualizationContext = createContext({
   deviceStatus: [],
   blackoutActive: false,
   dischargingSlots: [],
+  deviceWorkInfo: {},
   changeHackerVisibility: () => { },
   setMovingDeployments: () => { },
   setDayPlans: () => { },
@@ -41,6 +42,7 @@ const DemoVisualizationContext = createContext({
   setDeviceStatus: () => { },
   setBlackoutActive: () => { },
   setDischargingSlots: () => { },
+  setDeviceWorkInfo: () => { }
 });
 
 export const DemoVisualizationProvider = ({ children }) => {
@@ -53,6 +55,11 @@ export const DemoVisualizationProvider = ({ children }) => {
   const [electricCar2, setElectricCar2] = useState(createElectricCar());
   const [blackoutActive, setBlackoutActive] = useState(false);
   const [dischargingSlots, setDischargingSlots] = useSyncedLocalStorage("dischargingSlots", []);
+  const [deviceWorkInfo, setDeviceWorkInfo] = useSyncedLocalStorage("deviceWorkInfo", {
+    "freezer": [],
+    "washing-machine": [],
+    "ev-charger": [],
+  });
   const [deviceStatus, setDeviceStatus] = useState([
     {
       supervisorName: 'ev-charger',
@@ -80,45 +87,7 @@ export const DemoVisualizationProvider = ({ children }) => {
     setHackerVisibility(isHackerVisible);
   };
 
-  /*  useEffect(() => {
-     const handleStorageChange = () => {
-       console.log("change detected");
-       const deviceIdMapRaw = JSON.parse(localStorage.getItem("deviceIdMap") || "[]");
-       const deviceIdMap = deviceIdMapRaw.reduce((acc, [deviceName, supervisorId]) => {
-         acc[deviceName] = supervisorId;
-         return acc;
-       }, {});
-       setDeviceStatus((prevStatus) =>
-         prevStatus.map((device) => ({
-           ...device,
-           isSupervisorDetected: deviceIdMap[device.supervisorName] ? true : false
-         }))
-       );
-     };
-     window.addEventListener("deviceIdMapChanged", handleStorageChange);
-     return () => window.removeEventListener("deviceIdMapChanged", handleStorageChange);
-   }, []); */
-
   useEffect(() => {
-    /* setDeviceStatus([
-      {
-        deviceName: EV_CHARGER,
-        isEnergyIntensive: isDeviceOperating(EV_CHARGER, dayPlans, demoTime),
-      },
-      {
-        deviceName: WASHING_MACHINE,
-        isEnergyIntensive: isDeviceOperating(
-          WASHING_MACHINE,
-          dayPlans,
-          demoTime
-        ),
-      },
-      {
-        deviceName: FREEZER,
-        isEnergyIntensive: isDeviceOperating(FREEZER, dayPlans, demoTime),
-      },
-    ]); */
-
     setDeviceStatus((prevStatus) =>
       prevStatus.map((device) => ({
         ...device,
@@ -138,6 +107,7 @@ export const DemoVisualizationProvider = ({ children }) => {
       deviceStatus,
       blackoutActive,
       dischargingSlots,
+      deviceWorkInfo,
       changeHackerVisibility,
       setMovingDeployments,
       setDayPlans,
@@ -146,7 +116,8 @@ export const DemoVisualizationProvider = ({ children }) => {
       setElectricCar2,
       setDeviceStatus,
       setBlackoutActive,
-      setDischargingSlots
+      setDischargingSlots,
+      setDeviceWorkInfo
     }),
     [
       hackerVisibility,
@@ -158,6 +129,7 @@ export const DemoVisualizationProvider = ({ children }) => {
       deviceStatus,
       blackoutActive,
       dischargingSlots,
+      deviceWorkInfo
     ]
   );
 

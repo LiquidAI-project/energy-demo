@@ -55,9 +55,7 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
   const {
     deviceStatus,
     blackoutActive,
-    electricCar1,
-    electricCar2,
-    movingDeployments,
+    setDeviceWorkInfo,
     changeHackerVisibility,
     setDayPlans,
     setHistoricalDayPlans,
@@ -99,6 +97,16 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       }
     };
 
+  const updateDeviceWorkInfo = (device, module, time) => {
+    setDeviceWorkInfo(prev => ({
+      ...prev,
+      [device]: [
+        ...prev[device],
+        { module, time }
+      ]
+    }));
+  };
+
   /**
    * Helper to update device status and localStorage with active module info.
   */
@@ -129,8 +137,6 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
     const currentMinute = currentDate.getMinutes();
 
     //mlModelRetrainSimulation(currentMinute);
-
-
 
     // Spot price fetch simulation
     if (currentHour == 0 && currentMinute === 30) {
@@ -177,6 +183,7 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
     if (currentHour == 0 && currentMinute === 50) {
       await deployAndExecute("6930224675d1501dc7da3403", "StartCharging", "ev-charger", {});
       updateDeviceModuleStatus("ev-charger", "ev_control:StartCharging()");
+      updateDeviceWorkInfo("ev-charger", "StartCharging()", "01:00");
     }
 
     if (currentHour >= 1 && currentHour < 5) {
@@ -211,6 +218,7 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
     if (currentHour == 2 && currentMinute === 50) {
       await deployAndExecute("693021d475d1501dc7da3346", "TurnOnFreezer", FREEZER, {});
       updateDeviceModuleStatus(FREEZER, "freezer:TurnOnFreezer()");
+      updateDeviceWorkInfo("freezer", "TurnOnFreezer()", "03:00");
     }
 
     // Demand spike simulation
@@ -263,6 +271,8 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       updateDeviceModuleStatus(FREEZER, "freezer:TurnOffFreezer()");
       await deployAndExecute("6930224675d1501dc7da3403", "StopCharging", "ev-charger", {});
       updateDeviceModuleStatus("ev-charger", "ev_control:StopCharging()");
+      updateDeviceWorkInfo("freezer", "TurnOffFreezer()", "05:00");
+      updateDeviceWorkInfo("ev-charger", "StopCharging()", "05:00");
     }
 
     // Blackout simulation at 6:50
@@ -281,6 +291,8 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       updateDeviceModuleStatus("ev-charger", "ev_control:enable_cars_to_devices()");
       await deployAndExecute("693021d475d1501dc7da3346", "TurnOnFreezer", FREEZER, {});
       updateDeviceModuleStatus(FREEZER, "freezer:TurnOnFreezer()");
+      updateDeviceWorkInfo("ev-charger", "enable_cars_to_devices()", "07:00");
+      updateDeviceWorkInfo("freezer", "TurnOnFreezer()", "07:00");
       if (blackoutActive) {
         setElectricCar2(prev => ({
           ...prev,
@@ -326,6 +338,8 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       updateDeviceModuleStatus("ev-charger", "ev_control:enable_cars_to_devices()");
       await deployAndExecute("693021fc75d1501dc7da339b", "StartWashing", "washing-machine", {});
       updateDeviceModuleStatus("washing-machine", "wm_module:StartWashing()");
+      updateDeviceWorkInfo("ev-charger", "enable_cars_to_devices()", "08:00");
+      updateDeviceWorkInfo("washing-machine", "StartWashing()", "08:00");
       if (blackoutActive) {
         setElectricCar1(prev => ({
           ...prev,
@@ -367,6 +381,9 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       setElectricCar1(prev => ({ ...prev, provideEnergy: false, lineToWashingMachine: false }));
       if (voiceEnabled)
         speak("Power restored");
+      updateDeviceWorkInfo("freezer", "TurnOffFreezer()", "09:00");
+      updateDeviceWorkInfo("washing-machine", "StopWashing()", "09:00");
+      updateDeviceWorkInfo("ev-charger", "StopProvidingEnergy()", "09:00");
       await deployAndExecute("693021e575d1501dc7da3369", "TurnOffFreezer", FREEZER, {});
       updateDeviceModuleStatus(FREEZER, "freezer:TurnOffFreezer()");
       await deployAndExecute("6930221875d1501dc7da33c5", "StopWashing", "washing-machine", {});
@@ -404,6 +421,7 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       await deployAndExecute("693021fc75d1501dc7da339b", "StartWashing", "washing-machine", {});
       updateDeviceModuleStatus("washing-machine", "wm_module:StartWashing()");
       setHistoricalDayPlans(prev => [...prev, predefinedDayPlan2]);
+      updateDeviceWorkInfo("washing-machine", "StartWashing()", "10:00");
       setDemoRunning(true);
       setScheduleProcessing(false);
       handlePopOverClose();
@@ -475,6 +493,7 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       if (animationSessionRef.current !== sessionId) return;
       await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef, sessionId);
       setHistoricalDayPlans(prev => [...prev, predefinedDayPlan3]);
+      updateDeviceWorkInfo("washing-machine", "StopWashing()", "13:00");
       setDemoRunning(true);
       setScheduleProcessing(false);
       handlePopOverClose();
@@ -485,11 +504,13 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
     if (currentHour == 14 && currentMinute === 40) {
       await deployAndExecute("693021fc75d1501dc7da339b", "StartWashing", "washing-machine", {});
       updateDeviceModuleStatus("washing-machine", "wm_module:StartWashing()");
+      updateDeviceWorkInfo("washing-machine", "StartWashing()", "15:00");
     }
 
     if (currentHour == 17 && currentMinute === 0) {
       await deployAndExecute("6930221875d1501dc7da33c5", "StopWashing", "washing-machine", {});
       updateDeviceModuleStatus("washing-machine", "wm_module:StopWashing()");
+      updateDeviceWorkInfo("washing-machine", "StopWashing()", "17:00");
     }
 
     // EV plug back in simulation
@@ -535,11 +556,13 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
     if ((currentHour == 19 && currentMinute === 40)) {
       await deployAndExecute("693021d475d1501dc7da3346", "TurnOnFreezer", FREEZER, {});
       updateDeviceModuleStatus(FREEZER, "freezer:TurnOnFreezer()");
+      updateDeviceWorkInfo("freezer", "TurnOnFreezer()", "20:00");
     }
 
     if (currentHour == 22 && currentMinute === 0) {
       await deployAndExecute("693021e575d1501dc7da3369", "TurnOffFreezer", FREEZER, {});
       updateDeviceModuleStatus(FREEZER, "freezer:TurnOffFreezer()");
+      updateDeviceWorkInfo("freezer", "TurnOffFreezer()", "22:00");
     }
 
     // Demand spike simulation
@@ -577,11 +600,13 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
     if (currentHour == 21 && currentMinute === 40) {
       await deployAndExecute("6930224675d1501dc7da3403", "StartCharging", "ev-charger", {});
       updateDeviceModuleStatus("ev-charger", "ev_control:StartCharging()");
+      updateDeviceWorkInfo("ev-charger", "StartCharging()", "22:00");
     }
 
     if (currentHour == 23 && currentMinute === 0) {
       await deployAndExecute("6930225a75d1501dc7da3437", "StopCharging", "ev-charger", {});
       updateDeviceModuleStatus("ev-charger", "ev_control:StopCharging()");
+      updateDeviceWorkInfo("ev-charger", "StopCharging()", "23:00");
     }
     // Charge ElectricCars
     if (currentHour >= 22 && currentHour < 23) {

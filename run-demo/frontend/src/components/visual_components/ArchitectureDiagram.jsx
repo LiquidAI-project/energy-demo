@@ -7,6 +7,8 @@
 import React from "react";
 import { useEffect, useState, useRef } from "react";
 import { Box, Grid, Typography, CircularProgress, Button, Dialog, DialogTitle, DialogContent, DialogActions, Accordion, AccordionSummary, AccordionDetails, Tooltip } from "@mui/material";
+import { useEffect, useState, useRef } from "react";
+import { Box, Grid, Typography, CircularProgress, Button, Dialog, DialogTitle, DialogContent, DialogActions, Accordion, AccordionSummary, AccordionDetails, Tooltip } from "@mui/material";
 import DatabaseImg from '../../assets/database.png';
 import OrchestratorImg from '../../assets/orchestrator.png';
 import IntelligenceControlImg from '../../assets/intelligent_control.jpg';
@@ -15,11 +17,11 @@ import WashingMachineImg from '../../assets/washing_machine.png';
 import EVChargerImg from '../../assets/ev_charger.png';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import IconButton from '@mui/material/IconButton';
-import { useSyncedLocalStorage } from "../../services/SyncedLocalStorage";
 import { fetchData } from '../../services/apiService';
 import activeIcon from '../../assets/active.png';
 import inactiveIcon from '../../assets/inactive.png';
 import { useDemoControlContext } from "../../context/demoControlContext/useDemoControlContext";
+import { useDemoVisualizationContext } from "../../context/demoVisualizationContext/useDemoVisualizationContext";
 import { WITH_LIQUID_AI } from "../../../constants";
 import { v4 as uuidv4 } from 'uuid';
 import { ANIMATION_EVENT_SEQUENCE } from "../../assets/mockData/eventSequence";
@@ -49,11 +51,7 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
   const [isEVActive, setIsEVActive] = useState(devices.find(device => device.name === "ev-charger").isActive);
   const isPausedRef = useRef(isPaused);
   const { demoRunning, demoStatus, demoTime, changeDemoRunMethod, eventProgress, setEventProgress, animateLines, eventAnimationActive, setEventAnimationActive, runGlobalAnimation } = useDemoControlContext();
-  const [deviceWorkInfo, setDeviceWorkInfo] = useSyncedLocalStorage("deviceWorkInfo", {
-    "freezer": [],
-    "washing-machine": [],
-    "ev-charger": [],
-  });
+  const { deviceWorkInfo } = useDemoVisualizationContext();
   const [openOrchestratorDialog, setOpenOrchestratorDialog] = useState(false);
   const [expandedAccordion, setExpandedAccordion] = useState(null);
   const [detailsCache, setDetailsCache] = useState({}); // cache fetched info
@@ -219,57 +217,6 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
         runAnimationEvent(event);
       }
     });
-
-    if (currentHour == 0 && currentMinute === 50)
-      updateDeviceWorkInfo("ev-charger", "StartCharging()", "01:00");
-
-    if (currentHour == 2 && currentMinute === 50)
-      updateDeviceWorkInfo("freezer", "TurnOnFreezer()", "03:00");
-
-    if (currentHour == 5 && currentMinute === 0) {
-      updateDeviceWorkInfo("freezer", "TurnOffFreezer()", "05:00");
-      updateDeviceWorkInfo("ev-charger", "StopCharging()", "05:00");
-    }
-
-    if (currentHour == 6 && currentMinute === 50) {
-      updateDeviceWorkInfo("ev-charger", "enable_cars_to_devices()", "07:00");
-      updateDeviceWorkInfo("freezer", "TurnOnFreezer()", "07:00");
-    }
-
-    if (currentHour == 7 && currentMinute === 40) {
-      updateDeviceWorkInfo("ev-charger", "enable_cars_to_devices()", "08:00");
-      updateDeviceWorkInfo("washing-machine", "StartWashing()", "08:00");
-    }
-
-    if (currentHour == 9 && currentMinute === 0) {
-      updateDeviceWorkInfo("freezer", "TurnOffFreezer()", "09:00");
-      updateDeviceWorkInfo("washing-machine", "StopWashing()", "09:00");
-      updateDeviceWorkInfo("ev-charger", "StopProvidingEnergy()", "09:00");
-    }
-
-    if (currentHour == 9 && currentMinute === 50)
-      updateDeviceWorkInfo("washing-machine", "StartWashing()", "10:00");
-
-    if (currentHour == 13 && currentMinute === 0)
-      updateDeviceWorkInfo("washing-machine", "StopWashing()", "13:00");
-
-    if (currentHour == 14 && currentMinute === 50)
-      updateDeviceWorkInfo("washing-machine", "StartWashing()", "15:00");
-
-    if (currentHour == 17 && currentMinute === 0)
-      updateDeviceWorkInfo("washing-machine", "StopWashing()", "17:00");
-
-    if ((currentHour == 19 && currentMinute === 50))
-      updateDeviceWorkInfo("freezer", "TurnOnFreezer()", "20:00");
-
-    if (currentHour == 22 && currentMinute === 0)
-      updateDeviceWorkInfo("freezer", "TurnOffFreezer()", "22:00");
-
-    if (currentHour == 21 && currentMinute === 50)
-      updateDeviceWorkInfo("ev-charger", "StartCharging()", "22:00");
-
-    if (currentHour == 23 && currentMinute === 0)
-      updateDeviceWorkInfo("ev-charger", "StopCharging()", "23:00");
   }, [demoTime]);
 
   /*useEffect(() => {
