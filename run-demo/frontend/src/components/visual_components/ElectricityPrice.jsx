@@ -144,7 +144,7 @@ const Chart = memo(function Chart({ consumptionData }) {
         }}
         sx={{
           '& .MuiChartsAxis-bottom .MuiChartsAxis-tickLabel': {
-            transform: 'translateX(-12px)'
+            transform: 'translateX(-10px)'
           }
         }}
       />

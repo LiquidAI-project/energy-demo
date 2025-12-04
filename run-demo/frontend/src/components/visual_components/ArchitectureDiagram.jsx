@@ -5,7 +5,8 @@
 
 
 import React from "react";
-import { Box, Grid, Typography, CircularProgress, Button, Dialog, DialogTitle, DialogContent, DialogActions, Accordion, AccordionSummary, AccordionDetails } from "@mui/material";
+import { useEffect, useState, useRef } from "react";
+import { Box, Grid, Typography, CircularProgress, Button, Dialog, DialogTitle, DialogContent, DialogActions, Accordion, AccordionSummary, AccordionDetails, Tooltip } from "@mui/material";
 import DatabaseImg from '../../assets/database.png';
 import OrchestratorImg from '../../assets/orchestrator.png';
 import IntelligenceControlImg from '../../assets/intelligent_control.jpg';
@@ -14,7 +15,7 @@ import WashingMachineImg from '../../assets/washing_machine.png';
 import EVChargerImg from '../../assets/ev_charger.png';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import IconButton from '@mui/material/IconButton';
-import { useState, useEffect, useRef } from 'react';
+import { useSyncedLocalStorage } from "../../services/SyncedLocalStorage";
 import { fetchData } from '../../services/apiService';
 import activeIcon from '../../assets/active.png';
 import inactiveIcon from '../../assets/inactive.png';
@@ -22,7 +23,6 @@ import { useDemoControlContext } from "../../context/demoControlContext/useDemoC
 import { WITH_LIQUID_AI } from "../../../constants";
 import { v4 as uuidv4 } from 'uuid';
 import { ANIMATION_EVENT_SEQUENCE } from "../../assets/mockData/eventSequence";
-
 import NewDeviceDiscoveryIcon from "../../assets/new-device.png";
 import NewDeviceInfoIcon from "../../assets/new-device-info.png";
 import SocketMsgIcon from "../../assets/socket-icon.png";
@@ -49,7 +49,7 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
   const [isEVActive, setIsEVActive] = useState(devices.find(device => device.name === "ev-charger").isActive);
   const isPausedRef = useRef(isPaused);
   const { demoRunning, demoStatus, demoTime, changeDemoRunMethod, eventProgress, setEventProgress, animateLines, eventAnimationActive, setEventAnimationActive, runGlobalAnimation } = useDemoControlContext();
-  const [deviceWorkInfo, setDeviceWorkInfo] = useState({
+  const [deviceWorkInfo, setDeviceWorkInfo] = useSyncedLocalStorage("deviceWorkInfo", {
     "freezer": [],
     "washing-machine": [],
     "ev-charger": [],
@@ -135,12 +135,20 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
     setEventAnimationActive(false);
   };
 
+  const updateDeviceWorkInfo = (device, module, time) => {
+    setDeviceWorkInfo(prev => ({
+      ...prev,
+      [device]: [
+        ...prev[device],
+        { module, time }
+      ]
+    }));
+  };
+
   useEffect(() => {
     changeDemoRunMethod(WITH_LIQUID_AI);
     if (new Date(demoTime).getHours() == 0)
       fetchAndSetData();
-    //const intervalId = setInterval(fetchAndSetData, 10 * 60 * 1000);
-    //return() => { clearInterval(intervalId); }
   }, []);
 
   useEffect(() => {
@@ -212,31 +220,56 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
       }
     });
 
-    if (currentHour == 0 && currentMinute === 50) {
-      setDeviceWorkInfo(prev => ({
-        ...prev,
-        ["ev-charger"]: [
-          ...prev["ev-charger"],
-          {
-            module: "StartCharging()",
-            time: "01:00",
-          },
-        ],
-      }));
+    if (currentHour == 0 && currentMinute === 50)
+      updateDeviceWorkInfo("ev-charger", "StartCharging()", "01:00");
+
+    if (currentHour == 2 && currentMinute === 50)
+      updateDeviceWorkInfo("freezer", "TurnOnFreezer()", "03:00");
+
+    if (currentHour == 5 && currentMinute === 0) {
+      updateDeviceWorkInfo("freezer", "TurnOffFreezer()", "05:00");
+      updateDeviceWorkInfo("ev-charger", "StopCharging()", "05:00");
     }
 
-    if (currentHour == 2 && currentMinute === 50) {
-      setDeviceWorkInfo(prev => ({
-        ...prev,
-        ["freezer"]: [
-          ...prev["freezer"],
-          {
-            module: "TurnOnFreezer()",
-            time: "03:00",
-          },
-        ],
-      }));
+    if (currentHour == 6 && currentMinute === 50) {
+      updateDeviceWorkInfo("ev-charger", "enable_cars_to_devices()", "07:00");
+      updateDeviceWorkInfo("freezer", "TurnOnFreezer()", "07:00");
     }
+
+    if (currentHour == 7 && currentMinute === 40) {
+      updateDeviceWorkInfo("ev-charger", "enable_cars_to_devices()", "08:00");
+      updateDeviceWorkInfo("washing-machine", "StartWashing()", "08:00");
+    }
+
+    if (currentHour == 9 && currentMinute === 0) {
+      updateDeviceWorkInfo("freezer", "TurnOffFreezer()", "09:00");
+      updateDeviceWorkInfo("washing-machine", "StopWashing()", "09:00");
+      updateDeviceWorkInfo("ev-charger", "StopProvidingEnergy()", "09:00");
+    }
+
+    if (currentHour == 9 && currentMinute === 50)
+      updateDeviceWorkInfo("washing-machine", "StartWashing()", "10:00");
+
+    if (currentHour == 13 && currentMinute === 0)
+      updateDeviceWorkInfo("washing-machine", "StopWashing()", "13:00");
+
+    if (currentHour == 14 && currentMinute === 50)
+      updateDeviceWorkInfo("washing-machine", "StartWashing()", "15:00");
+
+    if (currentHour == 17 && currentMinute === 0)
+      updateDeviceWorkInfo("washing-machine", "StopWashing()", "17:00");
+
+    if ((currentHour == 19 && currentMinute === 50))
+      updateDeviceWorkInfo("freezer", "TurnOnFreezer()", "20:00");
+
+    if (currentHour == 22 && currentMinute === 0)
+      updateDeviceWorkInfo("freezer", "TurnOffFreezer()", "22:00");
+
+    if (currentHour == 21 && currentMinute === 50)
+      updateDeviceWorkInfo("ev-charger", "StartCharging()", "22:00");
+
+    if (currentHour == 23 && currentMinute === 0)
+      updateDeviceWorkInfo("ev-charger", "StopCharging()", "23:00");
   }, [demoTime]);
 
   /*useEffect(() => {
@@ -882,127 +915,122 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
           <Typography>Supervisors</Typography>
           <Grid container spacing={4} justifyContent="center">
             <Grid item>
-              <Box sx={{ p: 2, bgcolor: "#ad8a29", color: "#fff", borderRadius: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' }}>
-                <Typography align="center" sx={{ mb: 1 }}>freezer</Typography>
-                <img src={FreezerImg} alt="Freezer" style={{ width: 60, height: 60 }} />
-                <img
-                  src={isFreezerActive ? activeIcon : inactiveIcon}
-                  alt={isFreezerActive ? "active" : "inactive"}
-                  style={{
-                    position: "absolute",
-                    top: "0",
-                    right: "0",
-                    width: "20%",
-                    zIndex: 2
-                  }}
-                />
-                {deviceWorkInfo["freezer"].length > 0 && (
-                  <Box
-                    sx={{
-                      mt: 1,
-                      bgcolor: "#ffffff33",
-                      borderRadius: 1,
-                      p: 1,
-                      width: "100%",
-                      maxHeight: 100,
-                      overflowY: "auto",
+              <Tooltip
+                title={
+                  deviceWorkInfo["freezer"].length > 0 ? (
+                    <Box sx={{ p: 1 }}>
+                      <Typography variant="subtitle2" sx={{ mb: 1, textDecoration: 'underline' }}>Deployed Modules:</Typography>
+                      {deviceWorkInfo["freezer"].map((info, index) => (
+                        <Typography key={index} variant="caption" display="block">
+                          {info.module} — <span style={{ color: "#ddd" }}>{info.time}</span>
+                        </Typography>
+                      ))}
+                    </Box>
+                  ) : ""
+                }
+                arrow
+                placement="right"
+              >
+                <Box sx={{ p: 2, bgcolor: "#ad8a29", color: "#fff", borderRadius: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative', cursor: 'pointer' }}>
+                  <Typography align="center" sx={{ mb: 1 }}>freezer</Typography>
+                  <img src={FreezerImg} alt="Freezer" style={{ width: 60, height: 60 }} />
+                  <img
+                    src={isFreezerActive ? activeIcon : inactiveIcon}
+                    alt={isFreezerActive ? "active" : "inactive"}
+                    style={{
+                      position: "absolute",
+                      top: "0",
+                      right: "0",
+                      width: "20%",
+                      zIndex: 2
                     }}
-                  >
-                    {deviceWorkInfo["freezer"].map((info, index) => (
-                      <Typography
-                        key={index}
-                        variant="caption"
-                        align="center"
-                        sx={{ color: "#fff", display: "block" }}
-                      >
-                        {info.module} — <span style={{ color: "#ddd" }}>{info.time}</span>
-                      </Typography>
-                    ))}
-                  </Box>
-                )}
-              </Box>
+                  />
+                  {deviceWorkInfo["freezer"].length > 0 && (
+                    <Typography variant="caption" sx={{ mt: 1, bgcolor: 'rgba(0,0,0,0.2)', px: 1, borderRadius: 1 }}>
+                      {deviceWorkInfo["freezer"].length} Deployment(s)
+                    </Typography>
+                  )}
+                </Box>
+              </Tooltip>
             </Grid>
             <Grid item>
-              <Box sx={{ p: 2, bgcolor: "#ad8a29", color: "#fff", borderRadius: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' }}>
-                <Typography align="center" sx={{ mb: 1 }}>washing-machine</Typography>
-                <img src={WashingMachineImg} alt="Washing Machine" style={{ width: 60, height: 60 }} />
-                <img
-                  src={isWMActive ? activeIcon : inactiveIcon}
-                  alt={isWMActive ? "active" : "inactive"}
-                  style={{
-                    position: "absolute",
-                    top: "0",
-                    right: "0",
-                    width: "14%",
-                    zIndex: 2
-                  }}
-                />
-                {deviceWorkInfo["washing-machine"].length > 0 && (
-                  <Box
-                    sx={{
-                      mt: 1,
-                      bgcolor: "#ffffff33",
-                      borderRadius: 1,
-                      p: 1,
-                      width: "100%",
-                      maxHeight: 100,
-                      overflowY: "auto",
+              <Tooltip
+                title={
+                  deviceWorkInfo["washing-machine"].length > 0 ? (
+                    <Box sx={{ p: 1 }}>
+                      <Typography variant="subtitle2" sx={{ mb: 1, textDecoration: 'underline' }}>Deployed Modules:</Typography>
+                      {deviceWorkInfo["washing-machine"].map((info, index) => (
+                        <Typography key={index} variant="caption" display="block">
+                          {info.module} — <span style={{ color: "#ddd" }}>{info.time}</span>
+                        </Typography>
+                      ))}
+                    </Box>
+                  ) : ""
+                }
+                arrow
+                placement="right"
+              >
+                <Box sx={{ p: 2, bgcolor: "#ad8a29", color: "#fff", borderRadius: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative', cursor: 'pointer' }}>
+                  <Typography align="center" sx={{ mb: 1 }}>washing-machine</Typography>
+                  <img src={WashingMachineImg} alt="Washing Machine" style={{ width: 60, height: 60 }} />
+                  <img
+                    src={isWMActive ? activeIcon : inactiveIcon}
+                    alt={isWMActive ? "active" : "inactive"}
+                    style={{
+                      position: "absolute",
+                      top: "0",
+                      right: "0",
+                      width: "14%",
+                      zIndex: 2
                     }}
-                  >
-                    {deviceWorkInfo["washing-machine"].map((info, index) => (
-                      <Typography
-                        key={index}
-                        variant="caption"
-                        align="center"
-                        sx={{ color: "#fff", display: "block" }}
-                      >
-                        {info.module} — <span style={{ color: "#ddd" }}>{info.time}</span>
-                      </Typography>
-                    ))}
-                  </Box>
-                )}
-              </Box>
+                  />
+                  {deviceWorkInfo["washing-machine"].length > 0 && (
+                    <Typography variant="caption" sx={{ mt: 1, bgcolor: 'rgba(0,0,0,0.2)', px: 1, borderRadius: 1 }}>
+                      {deviceWorkInfo["washing-machine"].length} Deployment(s)
+                    </Typography>
+                  )}
+                </Box>
+              </Tooltip>
             </Grid>
             <Grid item>
-              <Box sx={{ p: 2, bgcolor: "#ad8a29", color: "#fff", borderRadius: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' }}>
-                <Typography align="center" sx={{ mb: 1 }}>ev-charger</Typography>
-                <img src={EVChargerImg} alt="EV Charger" style={{ width: 60, height: 60 }} />
-                <img
-                  src={isEVActive ? activeIcon : inactiveIcon}
-                  alt={isEVActive ? "active" : "inactive"}
-                  style={{
-                    position: "absolute",
-                    top: "0",
-                    right: "0",
-                    width: "18%",
-                    zIndex: 2
-                  }}
-                />
-                {deviceWorkInfo["ev-charger"].length > 0 && (
-                  <Box
-                    sx={{
-                      mt: 1,
-                      bgcolor: "#ffffff33",
-                      borderRadius: 1,
-                      p: 1,
-                      width: "100%",
-                      maxHeight: 100,
-                      overflowY: "auto",
+              <Tooltip
+                title={
+                  deviceWorkInfo["ev-charger"].length > 0 ? (
+                    <Box sx={{ p: 1 }}>
+                      <Typography variant="subtitle2" sx={{ mb: 1, textDecoration: 'underline' }}>Deployed Modules:</Typography>
+                      {deviceWorkInfo["ev-charger"].map((info, index) => (
+                        <Typography key={index} variant="caption" display="block">
+                          {info.module} — <span style={{ color: "#ddd" }}>{info.time}</span>
+                        </Typography>
+                      ))}
+                    </Box>
+                  ) : ""
+                }
+                arrow
+                placement="right"
+              >
+                <Box sx={{ p: 2, bgcolor: "#ad8a29", color: "#fff", borderRadius: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative', cursor: 'pointer' }}>
+                  <Typography align="center" sx={{ mb: 1 }}>ev-charger</Typography>
+                  <img src={EVChargerImg} alt="EV Charger" style={{ width: 60, height: 60 }} />
+                  <img
+                    src={isEVActive ? activeIcon : inactiveIcon}
+                    alt={isEVActive ? "active" : "inactive"}
+                    style={{
+                      position: "absolute",
+                      top: "0",
+                      right: "0",
+                      width: "18%",
+                      zIndex: 2
                     }}
-                  >
-                    {deviceWorkInfo["ev-charger"].map((info, index) => (
-                      <Typography
-                        key={index}
-                        variant="caption"
-                        align="center"
-                        sx={{ color: "#fff", display: "block" }}
-                      >
-                        {info.module} — <span style={{ color: "#ddd" }}>{info.time}</span>
-                      </Typography>
-                    ))}
-                  </Box>
-                )}
-              </Box>
+                  />
+                  {/* Small indicator that modules are present */}
+                  {deviceWorkInfo["ev-charger"].length > 0 && (
+                    <Typography variant="caption" sx={{ mt: 1, bgcolor: 'rgba(0,0,0,0.2)', px: 1, borderRadius: 1 }}>
+                      {deviceWorkInfo["ev-charger"].length} Deployment(s)
+                    </Typography>
+                  )}
+                </Box>
+              </Tooltip>
             </Grid>
           </Grid>
         </Box>

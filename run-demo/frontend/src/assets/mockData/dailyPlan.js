@@ -166,7 +166,6 @@ export const predefinedDayPlan3 = [
     id: FREEZER,
     name: 'Freezer',
     slots: [
-      { start: 7, end: 9 },
       { start: 18, end: 20 },
     ],
   },

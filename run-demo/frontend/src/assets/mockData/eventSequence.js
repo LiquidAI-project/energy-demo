@@ -15,7 +15,7 @@ export const ANIMATION_EVENT_SEQUENCE = [
         ],
     },
     {
-        id: "dayPlanExecution_0150",
+        id: "dayPlanExecution_0050",
         hour: 1,
         minute: 50,
         steps: [
@@ -43,11 +43,20 @@ export const ANIMATION_EVENT_SEQUENCE = [
         ],
     },
     {
-        id: "dayPlanExecution_0640",
-        hour: 6,
-        minute: 40,
+        id: "dayPlanExecution_0500",
+        hour: 5,
+        minute: 0,
         steps: [
-            ["normalDir", "freezerLine", "WasmWithOnnxIcon", "Deploying and running module"]
+            ["normalDir", "freezerLine", "", ""],
+            ["normalDir", "evLine", "", ""]
+        ],
+    },
+    {
+        id: "dayPlanExecution_0650",
+        hour: 6,
+        minute: 50,
+        steps: [
+            ["normalDir", "freezerLine", "", ""]
         ],
     },
     {
@@ -55,7 +64,7 @@ export const ANIMATION_EVENT_SEQUENCE = [
         hour: 7,
         minute: 40,
         steps: [
-            ["normalDir", "wmLine", "WasmWithOnnxIcon", "Deploying and running module"]
+            ["normalDir", "wmLine", "", ""]
         ],
     },
     {
@@ -64,16 +73,7 @@ export const ANIMATION_EVENT_SEQUENCE = [
         minute: 40,
         steps: [
             ["reverseDir", "icLine", "ScheduleIcon", "Sending new schedule"],
-            ["normalDir", "wmLine", "WasmWithOnnxScheduleIcon", "Forwards schedule"],
             ["normalDir", "wmLine", "WasmWithOnnxScheduleIcon", "Forwards schedule"]
-        ],
-    },
-    {
-        id: "dayPlanExecution_1140",
-        hour: 11,
-        minute: 40,
-        steps: [
-            ["normalDir", "freezerLine", "WasmWithOnnxIcon", "Deploying and running module"]
         ],
     },
     {
@@ -93,7 +93,15 @@ export const ANIMATION_EVENT_SEQUENCE = [
         hour: 14,
         minute: 40,
         steps: [
-            ["normalDir", "wmLine", "WasmWithOnnxIcon", "Deploying and running module"]
+            ["normalDir", "wmLine", "", ""]
+        ],
+    },
+    {
+        id: "dayPlanExecution_1700",
+        hour: 17,
+        minute: 0,
+        steps: [
+            ["normalDir", "wmLine", "", ""]
         ],
     },
     {
@@ -108,11 +116,19 @@ export const ANIMATION_EVENT_SEQUENCE = [
         ],
     },
     {
-        id: "dayPlanExecution_1840",
-        hour: 18,
+        id: "dayPlanExecution_1940",
+        hour: 19,
         minute: 40,
         steps: [
-            ["normalDir", "freezerLine", "WasmWithOnnxIcon", "Deploying and running module"]
+            ["normalDir", "freezerLine", "", ""]
+        ],
+    },
+    {
+        id: "dayPlanExecution_2200",
+        hour: 22,
+        minute: 0,
+        steps: [
+            ["normalDir", "freezerLine", "", ""]
         ],
     },
     {
@@ -121,10 +137,7 @@ export const ANIMATION_EVENT_SEQUENCE = [
         minute: 0,
         steps: [
             ["reverseDir", "icLine", "ScheduleIcon", "Sending new schedule"],
-            [
-                ["normalDir", "evLine", "WasmWithOnnxScheduleIcon", "Forwards schedule"],
-                ["normalDir", "freezerLine", "WasmWithOnnxScheduleIcon", "Forwards schedule"]
-            ]
+            ["normalDir", "evLine", "WasmWithOnnxScheduleIcon", "Forwards schedule"]
         ],
     },
     {
@@ -132,8 +145,15 @@ export const ANIMATION_EVENT_SEQUENCE = [
         hour: 21,
         minute: 40,
         steps: [
-            ["normalDir", "freezerLine", "WasmWithOnnxIcon", "Deploying and running module"],
-            ["normalDir", "evLine", "WasmWithOnnxIcon", "Deploying and running module"]
+            ["normalDir", "evLine", "", ""]
         ],
     },
+    {
+        id: "dayPlanExecution_2300",
+        hour: 23,
+        minute: 0,
+        steps: [
+            ["normalDir", "evLine", "", ""]
+        ],
+    }
 ];
