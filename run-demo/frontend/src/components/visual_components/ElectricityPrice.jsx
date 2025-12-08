@@ -77,14 +77,14 @@ const Chart = memo(function Chart({ consumptionData }) {
           color: visibleSeries[0].color,
           position: "left",
           min: 0,
-          max: 20,
+          max: 40,
           tickLabelStyle: { fontSize: 14 },
           labelStyle: { fontSize: 12 }
         },
       ]
       : [{
         min: 0,
-        max: 20
+        max: 40
       }];
 
   return (

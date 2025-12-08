@@ -222,7 +222,7 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
     }
 
     // Demand spike simulation
-    if (currentHour == 4 && currentMinute === 30) {
+    if (currentHour == 5 && currentMinute === 0) {
       const sessionId = uuidv4();
       animationSessionRef.current = sessionId;
       setDemoRunning(false);
@@ -235,27 +235,6 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
             "The Flexibility Service analyzes new price data for significant changes, such as spikes, and informs the Intelligence Control, which recalculates optimal schedules and forwards them to the Orchestrator. The Orchestrator then distributes the updated schedules to target devices for efficient energy use."
         }
       ]);
-      runMoveCodeAnimation(FLEXIBILITY_SERVICE, INTELLIGENT_CONTROL, DemandSpikeIcon, null, sessionId);
-      if (animationSessionRef.current !== sessionId) return;
-      if (voiceEnabled)
-        speak("Sudden spike in electricity prices noticed, rescheduling device operating times");
-      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef, sessionId);
-      runMoveCodeAnimation(INTELLIGENT_CONTROL, ORCHESTRATOR, ScheduleIcon, null, sessionId);
-      if (animationSessionRef.current !== sessionId) return;
-      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef, sessionId);
-      setDayPlans(predefinedDayPlan2);
-      setHistoricalDayPlans(prev => [...prev, predefinedDayPlan1]);
-      runMoveCodeAnimation(ORCHESTRATOR, WASHING_MACHINE, WasmWithOnnxScheduleIcon, null, sessionId);
-      runMoveCodeAnimation(ORCHESTRATOR, FREEZER, WasmWithOnnxScheduleIcon, null, sessionId);
-      runMoveCodeAnimation(ORCHESTRATOR, EV_CHARGER, WasmWithOnnxScheduleIcon, null, sessionId);
-      if (animationSessionRef.current !== sessionId) return;
-      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef, sessionId);
-      setDemoRunning(true);
-      setScheduleProcessing(false);
-      handlePopOverClose();
-    }
-
-    if (currentHour === 5 && currentMinute === 0) {
       setElectricCar1(prev => ({
         ...prev,
         currentEnergy: 56,
@@ -273,6 +252,29 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       updateDeviceModuleStatus("ev-charger", "ev_control:StopCharging()");
       updateDeviceWorkInfo("freezer", "TurnOffFreezer()", "05:00");
       updateDeviceWorkInfo("ev-charger", "StopCharging()", "05:00");
+      runMoveCodeAnimation(FLEXIBILITY_SERVICE, INTELLIGENT_CONTROL, DemandSpikeIcon, null, sessionId);
+      if (animationSessionRef.current !== sessionId) return;
+      if (voiceEnabled)
+        speak("Sudden spike in electricity prices noticed, rescheduling device operating times");
+      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef, sessionId);
+      runMoveCodeAnimation(INTELLIGENT_CONTROL, ORCHESTRATOR, ScheduleIcon, null, sessionId);
+      if (animationSessionRef.current !== sessionId) return;
+      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef, sessionId);
+      setDayPlans(predefinedDayPlan2);
+      const coloredPlan1 = predefinedDayPlan1.map(device =>
+        device.id === WASHING_MACHINE
+          ? { ...device, slots: device.slots.map(slot => ({ ...slot, color: "#f08989da" })) }
+          : device
+      );
+      setHistoricalDayPlans(prev => [...prev, coloredPlan1]);
+      runMoveCodeAnimation(ORCHESTRATOR, WASHING_MACHINE, WasmWithOnnxScheduleIcon, null, sessionId);
+      runMoveCodeAnimation(ORCHESTRATOR, FREEZER, WasmWithOnnxScheduleIcon, null, sessionId);
+      runMoveCodeAnimation(ORCHESTRATOR, EV_CHARGER, WasmWithOnnxScheduleIcon, null, sessionId);
+      if (animationSessionRef.current !== sessionId) return;
+      await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef, sessionId);
+      setDemoRunning(true);
+      setScheduleProcessing(false);
+      handlePopOverClose();
     }
 
     // Blackout simulation at 6:50
@@ -418,9 +420,9 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       if (animationSessionRef.current !== sessionId) return;
       await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef, sessionId);
       setDayPlans(predefinedDayPlan3);
+      setHistoricalDayPlans(prev => [...prev, predefinedDayPlan2]);
       await deployAndExecute("693021fc75d1501dc7da339b", "StartWashing", "washing-machine", {});
       updateDeviceModuleStatus("washing-machine", "wm_module:StartWashing()");
-      setHistoricalDayPlans(prev => [...prev, predefinedDayPlan2]);
       updateDeviceWorkInfo("washing-machine", "StartWashing()", "10:00");
       setDemoRunning(true);
       setScheduleProcessing(false);
@@ -488,11 +490,16 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       if (animationSessionRef.current !== sessionId) return;
       await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef, sessionId);
       setDayPlans(predefinedDayPlan4);
+      const coloredPlan3 = predefinedDayPlan3.map(device =>
+        device.id === FREEZER
+          ? { ...device, slots: device.slots.map(slot => ({ ...slot, color: "#f08989da" })) }
+          : device
+      );
+      setHistoricalDayPlans(prev => [...prev, coloredPlan3]);
       runMoveCodeAnimation(ORCHESTRATOR, FREEZER, WasmWithOnnxScheduleIcon, null, sessionId);
       runMoveCodeAnimation(ORCHESTRATOR, WASHING_MACHINE, WasmWithOnnxScheduleIcon, null, sessionId);
       if (animationSessionRef.current !== sessionId) return;
       await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef, sessionId);
-      setHistoricalDayPlans(prev => [...prev, predefinedDayPlan3]);
       updateDeviceWorkInfo("washing-machine", "StopWashing()", "13:00");
       setDemoRunning(true);
       setScheduleProcessing(false);
@@ -544,10 +551,10 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       if (animationSessionRef.current !== sessionId) return;
       await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef, sessionId);
       setDayPlans(predefinedDayPlan5);
+      setHistoricalDayPlans(prev => [...prev, predefinedDayPlan4]);
       runMoveCodeAnimation(ORCHESTRATOR, EV_CHARGER, WasmWithOnnxScheduleIcon, null, sessionId);
       if (animationSessionRef.current !== sessionId) return;
       await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef, sessionId);
-      setHistoricalDayPlans(prev => [...prev, predefinedDayPlan4]);
       setDemoRunning(true);
       setScheduleProcessing(false);
       handlePopOverClose();
@@ -588,10 +595,15 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       if (animationSessionRef.current !== sessionId) return;
       await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef, sessionId);
       setDayPlans(predefinedDayPlan6);
+      const coloredPlan5 = predefinedDayPlan5.map(device =>
+        device.id === EV_CHARGER
+          ? { ...device, slots: device.slots.map(slot => ({ ...slot, color: "#f08989da" })) }
+          : device
+      );
+      setHistoricalDayPlans(prev => [...prev, coloredPlan5]);
       runMoveCodeAnimation(ORCHESTRATOR, EV_CHARGER, WasmWithOnnxScheduleIcon, null, sessionId);
       if (animationSessionRef.current !== sessionId) return;
       await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef, sessionId);
-      setHistoricalDayPlans(prev => [...prev, predefinedDayPlan5]);
       setDemoRunning(true);
       setScheduleProcessing(false);
       handlePopOverClose();
@@ -757,6 +769,16 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
     setHistoricalDayPlans([initialDayPlan]);
     setRescheduleHistory([]);
     setDischargingSlots([]);
+    // Reset device work info
+    setDeviceWorkInfo({
+      "freezer": [],
+      "washing-machine": [],
+      "ev-charger": [],
+    });
+    // Reset device module status
+    updateDeviceModuleStatus("ev-charger", null);
+    updateDeviceModuleStatus("washing-machine", null);
+    updateDeviceModuleStatus(FREEZER, null);
   }
 
   const handleVoiceFeedback = () => {

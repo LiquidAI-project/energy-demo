@@ -87,6 +87,8 @@ const OperatingTimeChart = () => {
       if (slot.isDischarging) {
         // Orange for discharging (car providing energy)
         backgroundColor = slot.type === "current" ? "#ff9800" : "#ffcc80"; // orange / faded orange
+      } else if ('color' in slot) {
+        backgroundColor = slot.color;
       } else {
         // Blue for normal operation
         backgroundColor = slot.type === "current" ? "#1976d2" : "#b0bec5"; // blue / gray
