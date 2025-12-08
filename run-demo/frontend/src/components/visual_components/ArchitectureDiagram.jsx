@@ -131,20 +131,9 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
     setEventAnimationActive(false);
   };
 
-  const updateDeviceWorkInfo = (device, module, time) => {
-    setDeviceWorkInfo(prev => ({
-      ...prev,
-      [device]: [
-        ...prev[device],
-        { module, time }
-      ]
-    }));
-  };
-
   useEffect(() => {
     changeDemoRunMethod(WITH_LIQUID_AI);
-    if (new Date(demoTime).getHours() == 0)
-      fetchAndSetData();
+    fetchAndSetData();
   }, []);
 
   useEffect(() => {
