@@ -189,7 +189,7 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
     if (currentHour >= 1 && currentHour < 5) {
       const startHour = 1;
       const startingCharge = 10; // kWh
-      const chargingRatePerHour = 11; // kWh per hour
+      const chargingRatePerHour = 7; // kWh per hour
       const hoursElapsed = (currentHour - startHour) + (currentMinute / 60);
 
       // Calculate current energy (starting charge + charged amount)
@@ -198,10 +198,9 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       const currentEnergy = Math.floor(currentEnergyLevel);
 
       // Available energy is current - minimum required (40 kWh)
-      const minRequired = 40;
+      const minRequired = 20;
       const currentAvailableEnergy = Math.max(0, currentEnergy - minRequired);
 
-      // Update both cars
       setElectricCar1(prev => ({
         ...prev,
         currentEnergy: currentEnergy,
@@ -235,7 +234,7 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
             "The Flexibility Service analyzes new price data for significant changes, such as spikes, and informs the Intelligence Control, which recalculates optimal schedules and forwards them to the Orchestrator. The Orchestrator then distributes the updated schedules to target devices for efficient energy use."
         }
       ]);
-      setElectricCar1(prev => ({
+      /* setElectricCar1(prev => ({
         ...prev,
         currentEnergy: 56,
         dischargeableEnergy: 16
@@ -245,7 +244,7 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
         ...prev,
         currentEnergy: 56,
         dischargeableEnergy: 16
-      }));
+      })); */
       await deployAndExecute("693021e575d1501dc7da3369", "TurnOffFreezer", FREEZER, {});
       updateDeviceModuleStatus(FREEZER, "freezer:TurnOffFreezer()");
       await deployAndExecute("6930224675d1501dc7da3403", "StopCharging", "ev-charger", {});
@@ -312,16 +311,16 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       const currentTime = currentHour + (currentMinute / 60);
       const hoursElapsed = currentTime - startHour;
 
-      const dischargeRate = 2.5; // kWh per hour
+      const dischargeRate = 1.5; // kWh per hour
       const dischargedAmount = hoursElapsed * dischargeRate;
 
       // Starting energy at 6:50 is 56 kWh (from previous logic)
-      const startingEnergy = 56;
+      const startingEnergy = 36;
       const currentEnergyLevel = Math.max(startingEnergy - dischargedAmount, 0);
       const currentEnergy = Math.floor(currentEnergyLevel * 10) / 10; // Keep 1 decimal for smoother look
 
       // Available energy is current - minimum required (40 kWh)
-      const minRequired = 40;
+      const minRequired = 20;
       const currentAvailableEnergy = Math.max(0, currentEnergy - minRequired);
 
       setElectricCar2(prev => ({
@@ -357,16 +356,16 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       const currentTime = currentHour + (currentMinute / 60);
       const hoursElapsed = currentTime - startHour;
 
-      const dischargeRate = 2.5; // kWh per hour
+      const dischargeRate = 1.5; // kWh per hour
       const dischargedAmount = hoursElapsed * dischargeRate;
 
       // Starting energy at 7:40 is 56 kWh (assuming it was full/same as start)
-      const startingEnergy = 56;
+      const startingEnergy = 36;
       const currentEnergyLevel = Math.max(startingEnergy - dischargedAmount, 0);
       const currentEnergy = Math.floor(currentEnergyLevel * 10) / 10; // Keep 1 decimal for smoother look
 
       // Available energy is current - minimum required (40 kWh)
-      const minRequired = 40;
+      const minRequired = 20;
       const currentAvailableEnergy = Math.max(0, currentEnergy - minRequired);
 
       setElectricCar1(prev => ({
@@ -446,24 +445,24 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       const hoursElapsed = currentTime - startHour;
 
       // Car 1
-      const startEnergy1 = 53.9;
-      const rate = 5;
+      const startEnergy1 = 34.7;
+      const rate = 2.5;
       const currentEnergy1 = Math.max(0, startEnergy1 - (hoursElapsed * rate));
 
       setElectricCar1(prev => ({
         ...prev,
         currentEnergy: Math.floor(currentEnergy1 * 10) / 10,
-        dischargeableEnergy: Math.max(0, currentEnergy1 - 40) // Not plugged in
+        dischargeableEnergy: Math.max(0, currentEnergy1 - 20) // Not plugged in
       }));
 
       // Car 2
-      const startEnergy2 = 51.4;
+      const startEnergy2 = 33.2;
       const currentEnergy2 = Math.max(0, startEnergy2 - (hoursElapsed * rate));
 
       setElectricCar2(prev => ({
         ...prev,
         currentEnergy: Math.floor(currentEnergy2 * 10) / 10,
-        dischargeableEnergy: Math.max(0, currentEnergy2 - 40) // Not plugged in
+        dischargeableEnergy: Math.max(0, currentEnergy2 - 20) // Not plugged in
       }));
     }
 
@@ -621,11 +620,11 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       updateDeviceWorkInfo("ev-charger", "StopCharging()", "23:00");
     }
     // Charge ElectricCars
-    if (currentHour >= 22 && currentHour < 23) {
-      const startHour = 22;
-      const startingCharge1 = 14.7; // kWh
-      const startingCharge2 = 12.2; // kWh
-      const chargingRatePerHour = 11; // kWh per hour
+    if (currentHour >= 21 && currentHour < 23) {
+      const startHour = 21;
+      const startingCharge1 = 15.1; // kWh
+      const startingCharge2 = 13.6; // kWh
+      const chargingRatePerHour = 7; // kWh per hour
       const hoursElapsed = (currentHour - startHour) + (currentMinute / 60);
 
       // Calculate current energy (starting charge + charged amount)
@@ -636,7 +635,7 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       const currentEnergy2 = Math.floor(currentEnergyLevel2);
 
       // Available energy is current - minimum required (40 kWh)
-      const minRequired = 40;
+      const minRequired = 20;
       const currentAvailableEnergy1 = Math.max(0, currentEnergy1 - minRequired);
       const currentAvailableEnergy2 = Math.max(0, currentEnergy2 - minRequired);
 

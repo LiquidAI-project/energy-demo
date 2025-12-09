@@ -68,9 +68,9 @@ export const liquidBasedPlanFinal = [
     name: 'EV Charger',
     slots: [
       { start: 0, end: 1, value: 0 },
-      { start: 1, end: 5, value: 23 },
+      { start: 1, end: 5, value: 14 },
       { start: 5, end: 21, value: 0 },
-      { start: 21, end: 23, value: 23 },
+      { start: 21, end: 23, value: 14 },
       { start: 23, end: 24, value: 0 }
     ],
   },

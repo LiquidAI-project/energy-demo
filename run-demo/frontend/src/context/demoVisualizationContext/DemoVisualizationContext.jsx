@@ -14,9 +14,9 @@ import { useSyncedLocalStorage } from "../../services/SyncedLocalStorage";
 const createElectricCar = () => ({
   pluggedIn: false,
   provideEnergy: false,
-  totalEnergy: 60,
+  totalEnergy: 50,
   currentEnergy: 10,
-  minReqEnergy: 40,
+  minReqEnergy: 20,
   dischargeableEnergy: 0,
   lineToFreezer: false,
   lineToWashingMachine: false

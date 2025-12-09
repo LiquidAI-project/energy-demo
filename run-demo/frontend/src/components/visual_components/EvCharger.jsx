@@ -252,7 +252,7 @@ const evCharger = React.forwardRef((props, ref) => {
                   - Min Energy (Req): <b>{electricCar1.minReqEnergy} kWh</b>
                 </Typography>
                 <Typography variant="caption" display="block">
-                  - Dischargeable Energy: <b>{electricCar1.dischargeableEnergy} kWh</b>
+                  - Dischargeable Energy: <b>{Math.floor(electricCar1.dischargeableEnergy)} kWh</b>
                 </Typography>
               </Grid>
               <Grid item xs={6}>
@@ -269,7 +269,7 @@ const evCharger = React.forwardRef((props, ref) => {
                   - Min Energy (Req): <b>{electricCar2.minReqEnergy} kWh</b>
                 </Typography>
                 <Typography variant="caption" display="block">
-                  - Dischargeable Energy: <b>{electricCar2.dischargeableEnergy} kWh</b>
+                  - Dischargeable Energy: <b>{Math.floor(electricCar2.dischargeableEnergy)} kWh</b>
                 </Typography>
               </Grid>
             </Grid>
