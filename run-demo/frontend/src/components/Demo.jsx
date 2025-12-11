@@ -1715,7 +1715,7 @@ const Demo = () => {
                   }}
                 >
                   <ArchitectureView socketMsg={latestSocketMsg} isPaused={paused} />
-                  <img
+                  {/* <img
                     src={ArchitectureImage}
                     alt="Architecture View"
                     style={{
@@ -1723,7 +1723,7 @@ const Demo = () => {
                       borderRadius: "4px",
                       boxShadow: "0 2px 4px rgba(0,0,0,0.2)"
                     }}
-                  />
+                  /> */}
                 </div>
               </Box>
             </Grid>

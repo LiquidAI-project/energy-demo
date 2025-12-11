@@ -42,24 +42,24 @@ const DemoControlContext = createContext({
   demoTime: new Date().setHours(0, 0, 0, 0),
   voiceEnabled: false,
   demoStatus: "idle",
-  changeDemoRunMethod: () => {},
-  setDemoRunning: () => {},
-  setDemoTime: () => {},
-  setVoiceEnabled: () => {},
-  setDemoStatus: () => {},
+  changeDemoRunMethod: () => { },
+  setDemoRunning: () => { },
+  setDemoTime: () => { },
+  setVoiceEnabled: () => { },
+  setDemoStatus: () => { },
 
   // These variables are for the architecture view animations
   animateLines: createEmptyAnimateLines(),
-  setAnimateLines: () => {},
+  setAnimateLines: () => { },
   eventAnimationActive: false,
-  setEventAnimationActive: () => {},
-  runGlobalAnimation: async() => {},
+  setEventAnimationActive: () => { },
+  runGlobalAnimation: async () => { },
   eventProgress: ANIMATION_EVENT_SEQUENCE.reduce((acc, event) => {
     acc[event.id] = { step: 1, completed: false };
     return acc;
-  }, {}), 
-  setEventProgress: () => {},
-  resetArchitectutreAnimations:() => {}
+  }, {}),
+  setEventProgress: () => { },
+  resetArchitectutreAnimations: () => { }
 });
 
 export const DemoControlProvider = ({ children }) => {
@@ -70,7 +70,7 @@ export const DemoControlProvider = ({ children }) => {
   const [voiceEnabled, setVoiceEnabled] = useSyncedLocalStorage("voiceEnabled", false);
   const [demoStatus, setDemoStatus] = useSyncedLocalStorage("demoStatus", "idle"); // idle | running | stopped
   const [animateLines, setAnimateLines] = useState(createEmptyAnimateLines());
-  const [eventProgress, setEventProgress] = useState(getInitialEventProgress); 
+  const [eventProgress, setEventProgress] = useState(getInitialEventProgress);
   const [eventAnimationActive, setEventAnimationActive] = useState(false);
 
   // Change the demo run method (With liquid AI or without liquid AI)
@@ -86,8 +86,8 @@ export const DemoControlProvider = ({ children }) => {
 
   const runGlobalAnimation = async (lineDirectionValue, lineName, iconName, msg, pausedRef) => {
     const runId = uuidv4();
-    setAnimateLines(prev => ({ 
-      ...prev, 
+    setAnimateLines(prev => ({
+      ...prev,
       [lineName]: {
         active: true,
         direction: lineDirectionValue,
@@ -111,81 +111,6 @@ export const DemoControlProvider = ({ children }) => {
       },
     }));
   }
-
-    /* const runGlobalAnimation = async (direction, lineName, icon, msg, pausedRef) => {
-      const runId = uuidv4();
-      const line = animateLines[lineName] || { progress: 0, pausedAt: 0 };
-    
-      // Compute startTime only for this run
-      let startTime = Date.now() - (line.progress || 0) * ANIMATION_MOVING_TIME;
-    
-      setAnimateLines(prev => ({
-        ...prev,
-        [lineName]: {
-          active: true,
-          progress: line.progress || 0,
-          startTime,
-          pausedAt: 0,
-          direction,
-          icon,
-          eventMsg: msg,
-          runId
-        }
-      }));
-    
-      return new Promise(resolve => {
-        const step = () => {
-          const now = Date.now();
-    
-          // If paused, just update pausedAt and don't change startTime
-          if (pausedRef.current) {
-            setAnimateLines(prev => ({
-              ...prev,
-              [lineName]: {
-                ...prev[lineName],
-                pausedAt: now - startTime
-              }
-            }));
-            requestAnimationFrame(step);
-            return;
-          }
-    
-          // Adjust elapsed to include paused time
-          const pausedTime = animateLines[lineName]?.pausedAt || 0;
-          const elapsed = now - startTime - pausedTime;
-          const progress = Math.min(elapsed / ANIMATION_MOVING_TIME, 1);
-    
-          setAnimateLines(prev => ({
-            ...prev,
-            [lineName]: {
-              ...prev[lineName],
-              progress,
-              pausedAt: 0
-            }
-          }));
-    
-          if (progress < 1) {
-            requestAnimationFrame(step);
-          } else {
-            // Complete and reset
-            setAnimateLines(prev => ({
-              ...prev,
-              [lineName]: {
-                ...prev[lineName],
-                active: false,
-                progress: 0,
-                pausedAt: 0
-              }
-            }));
-            resolve();
-          }
-        };
-    
-        requestAnimationFrame(step);
-      });
-    }; */
-    
-    
 
   const value = useMemo(
     () => ({ eventProgress, animateLines, eventAnimationActive, demoRunMethod, demoRunning, scheduleProcessing, demoTime, voiceEnabled, demoStatus, changeDemoRunMethod, resetArchitectutreAnimations, runGlobalAnimation, setAnimateLines, setEventProgress, setEventAnimationActive, setDemoRunning, setScheduleProcessing, setDemoTime, setVoiceEnabled, setDemoStatus }),

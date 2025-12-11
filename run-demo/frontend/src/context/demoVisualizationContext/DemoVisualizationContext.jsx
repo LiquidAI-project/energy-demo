@@ -42,7 +42,9 @@ const DemoVisualizationContext = createContext({
   setDeviceStatus: () => { },
   setBlackoutActive: () => { },
   setDischargingSlots: () => { },
-  setDeviceWorkInfo: () => { }
+  setDeviceWorkInfo: () => { },
+  updateDeviceWorkInfo: () => { },
+  updateDeviceModuleStatus: () => { }
 });
 
 export const DemoVisualizationProvider = ({ children }) => {
@@ -96,6 +98,37 @@ export const DemoVisualizationProvider = ({ children }) => {
     );
   }, [dayPlans, demoTime]);
 
+  const updateDeviceWorkInfo = (device, module, time) => {
+    setDeviceWorkInfo(prev => ({
+      ...prev,
+      [device]: [
+        ...prev[device],
+        { module, time }
+      ]
+    }));
+  };
+
+  /**
+   * Helper to update device status and localStorage with active module info.
+  */
+  const updateDeviceModuleStatus = (deviceName, moduleName) => {
+    // Update local state
+    setDeviceStatus(prev => prev.map(device =>
+      device.deviceName === deviceName
+        ? { ...device, existingModuleName: moduleName }
+        : device
+    ));
+
+    // Update localStorage
+    const storedDevices = JSON.parse(localStorage.getItem("devices") || "[]");
+    const updatedDevices = storedDevices.map(device =>
+      device.name === deviceName
+        ? { ...device, existingModuleName: moduleName, isModuleActive: true }
+        : device
+    );
+    localStorage.setItem("devices", JSON.stringify(updatedDevices));
+  };
+
   const value = useMemo(
     () => ({
       hackerVisibility,
@@ -117,7 +150,9 @@ export const DemoVisualizationProvider = ({ children }) => {
       setDeviceStatus,
       setBlackoutActive,
       setDischargingSlots,
-      setDeviceWorkInfo
+      setDeviceWorkInfo,
+      updateDeviceWorkInfo,
+      updateDeviceModuleStatus
     }),
     [
       hackerVisibility,

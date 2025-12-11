@@ -121,16 +121,14 @@ export const speak = (text) => {
  */
 export const deployAndExecute = async (deploymentId, deploymentName, deviceName, params) => {
   try {
-    console.log(`Sending ${deploymentName} manifest deploy request`);
     const manifestRes = await sendPostData(`/file/manifest/${deploymentId}`);
     const status = Object.values(manifestRes.deviceResponses)
       .find(d => d.deploymentId === deploymentId)
       ?.status;
     if (status === "success") {
-      console.log(`Sending ${deploymentName} execution request`);
       const execRes = await sendPostData(`/execute/${deploymentId}`, params);
       if (execRes.result) {
-        return "Success";
+        return execRes.result;
       } else {
         console.warn(`Manifest deployment failed, skipping to start ${deviceName}`);
         return `Manifest deployment failed, skipping to start ${deviceName}`;

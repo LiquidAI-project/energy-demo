@@ -64,7 +64,8 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
     setMovingDeployments,
     setBlackoutActive,
     setDischargingSlots,
-    setDeviceStatus
+    updateDeviceModuleStatus,
+    updateDeviceWorkInfo
   } = useDemoVisualizationContext();
   const { voiceEnabled, demoRunMethod, demoRunning, scheduleProcessing, demoTime, demoStatus, setDemoRunning, resetArchitectutreAnimations, setScheduleProcessing, setDemoTime, setVoiceEnabled, setDemoStatus } = useDemoControlContext();
 
@@ -96,37 +97,6 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
         });
       }
     };
-
-  const updateDeviceWorkInfo = (device, module, time) => {
-    setDeviceWorkInfo(prev => ({
-      ...prev,
-      [device]: [
-        ...prev[device],
-        { module, time }
-      ]
-    }));
-  };
-
-  /**
-   * Helper to update device status and localStorage with active module info.
-  */
-  const updateDeviceModuleStatus = (deviceName, moduleName) => {
-    // Update local state
-    setDeviceStatus(prev => prev.map(device =>
-      device.deviceName === deviceName
-        ? { ...device, existingModuleName: moduleName }
-        : device
-    ));
-
-    // Update localStorage
-    const storedDevices = JSON.parse(localStorage.getItem("devices") || "[]");
-    const updatedDevices = storedDevices.map(device =>
-      device.name === deviceName
-        ? { ...device, existingModuleName: moduleName, isModuleActive: true }
-        : device
-    );
-    localStorage.setItem("devices", JSON.stringify(updatedDevices));
-  };
 
   /**
    * Plan of application and date movement simulation.
@@ -507,7 +477,7 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       updateDeviceModuleStatus("washing-machine", "wm_module:StopWashing()");
     }
 
-    if (currentHour == 14 && currentMinute === 40) {
+    if (currentHour == 15 && currentMinute === 0) {
       await deployAndExecute("693021fc75d1501dc7da339b", "StartWashing", "washing-machine", {});
       updateDeviceModuleStatus("washing-machine", "wm_module:StartWashing()");
       updateDeviceWorkInfo("washing-machine", "StartWashing()", "15:00");
@@ -559,7 +529,7 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       handlePopOverClose();
     }
 
-    if ((currentHour == 19 && currentMinute === 40)) {
+    if ((currentHour == 20 && currentMinute === 0)) {
       await deployAndExecute("693021d475d1501dc7da3346", "TurnOnFreezer", FREEZER, {});
       updateDeviceModuleStatus(FREEZER, "freezer:TurnOnFreezer()");
       updateDeviceWorkInfo("freezer", "TurnOnFreezer()", "20:00");
@@ -606,12 +576,9 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       setDemoRunning(true);
       setScheduleProcessing(false);
       handlePopOverClose();
-    }
-
-    if (currentHour == 21 && currentMinute === 40) {
       await deployAndExecute("6930224675d1501dc7da3403", "StartCharging", "ev-charger", {});
       updateDeviceModuleStatus("ev-charger", "ev_control:StartCharging()");
-      updateDeviceWorkInfo("ev-charger", "StartCharging()", "22:00");
+      updateDeviceWorkInfo("ev-charger", "StartCharging()", "21:00");
     }
 
     if (currentHour == 23 && currentMinute === 0) {

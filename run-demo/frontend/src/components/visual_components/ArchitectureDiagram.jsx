@@ -28,13 +28,19 @@ import NewDeviceInfoIcon from "../../assets/new-device-info.png";
 import SocketMsgIcon from "../../assets/socket-icon.png";
 import WasmWithOnnxScheduleIcon from "../../assets/wasm_with_onnx_schedule.png";
 import ScheduleIcon from "../../assets/schedule.png";
+import QueryIcon from "../../assets/query-info.png";
+import QueryResponseIcon from "../../assets/query-response.png";
+import HourglassFullIcon from '@mui/icons-material/HourglassFull';
+import { deployAndExecute } from "../../utils/deviceUtils";
 
 const iconMap = {
   NewDeviceDiscoveryIcon,
   NewDeviceInfoIcon,
   WasmWithOnnxScheduleIcon,
   SocketMsgIcon,
-  ScheduleIcon
+  ScheduleIcon,
+  QueryIcon,
+  QueryResponseIcon
 };
 
 
@@ -49,11 +55,61 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
   const [isEVActive, setIsEVActive] = useState(devices.find(device => device.name === "ev-charger").isActive);
   const isPausedRef = useRef(isPaused);
   const { demoRunning, demoStatus, demoTime, changeDemoRunMethod, eventProgress, setEventProgress, animateLines, eventAnimationActive, setEventAnimationActive, runGlobalAnimation } = useDemoControlContext();
-  const { deviceWorkInfo } = useDemoVisualizationContext();
+  const eventAnimationActiveRef = useRef(eventAnimationActive);
+  const { deviceWorkInfo, updateDeviceWorkInfo, updateDeviceModuleStatus } = useDemoVisualizationContext();
   const [openOrchestratorDialog, setOpenOrchestratorDialog] = useState(false);
   const [expandedAccordion, setExpandedAccordion] = useState(null);
   const [detailsCache, setDetailsCache] = useState({}); // cache fetched info
 
+  const currentDate = new Date(demoTime);
+  const currentHour = currentDate.getHours();
+  const currentMinute = currentDate.getMinutes();
+  const showHourglass = (currentHour > 0) || (currentHour === 0 && currentMinute >= 40);
+
+  const [activeDeployments, setActiveDeployments] = useState({});
+  const [displayedCounts, setDisplayedCounts] = useState({});
+
+  useEffect(() => {
+    eventAnimationActiveRef.current = eventAnimationActive;
+  }, [eventAnimationActive]);
+
+  // Initialize displayedCounts from deviceWorkInfo
+  useEffect(() => {
+    if (!demoRunning) {
+      const counts = {};
+      Object.keys(deviceWorkInfo).forEach(key => {
+        counts[key] = deviceWorkInfo[key].length;
+      });
+      setDisplayedCounts(counts);
+    }
+  }, [deviceWorkInfo, demoRunning]);
+
+  // Configuration for deployment animations
+  const supervisorDeploymentSchedule = {
+    "freezer": [{ hour: 3, minute: 0 }, { hour: 5, minute: 0 }, { hour: 7, minute: 0 }, { hour: 9, minute: 0 }, { hour: 20, minute: 0 }, { hour: 22, minute: 0 }],
+    "washing-machine": [{ hour: 8, minute: 0 }, { hour: 9, minute: 0 }, { hour: 10, minute: 0 }, { hour: 13, minute: 0 }, { hour: 15, minute: 0 }, { hour: 17, minute: 0 }],
+    "ev-charger": [{ hour: 1, minute: 0 }, { hour: 5, minute: 0 }, { hour: 7, minute: 0 }, { hour: 8, minute: 0 }, { hour: 9, minute: 0 }, { hour: 21, minute: 0 }, { hour: 23, minute: 0 }],
+  };
+
+  useEffect(() => {
+    if (!demoRunning) return;
+
+    Object.keys(supervisorDeploymentSchedule).forEach(device => {
+      const schedules = supervisorDeploymentSchedule[device];
+      schedules.forEach(schedule => {
+        if (currentHour === schedule.hour && currentMinute === schedule.minute) {
+          if (!activeDeployments[device]) {
+            setActiveDeployments(prev => ({ ...prev, [device]: true }));
+            // Sync the count when animation starts
+            setDisplayedCounts(prev => ({ ...prev, [device]: deviceWorkInfo[device].length }));
+            setTimeout(() => {
+              setActiveDeployments(prev => ({ ...prev, [device]: false }));
+            }, 4000);
+          }
+        }
+      });
+    });
+  }, [currentHour, currentMinute, demoRunning, deviceWorkInfo]);
 
   const handleAccordionChange = async (type, id, expanded) => {
     if (!expanded) return; // only fetch when opened
@@ -71,7 +127,6 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
       console.error(`Failed to fetch ${type} details:`, err);
     }
   };
-
 
   const fetchAndSetData = async () => {
     if (eventAnimationActive) return;
@@ -103,19 +158,14 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
   };
 
   const runAnimationEvent = async (event) => {
-    // const storageKey = `dayPlanExecution_${event.id}`;
-
-    // 1️⃣ Load progress from sessionStorage or memory
-    //let storedProgress = JSON.parse(sessionStorage.getItem(event.id) || "{}");
     setEventAnimationActive(true);
-    let storedProgress = eventProgress[event.id];
+    let storedProgress = eventProgress[event.id] || { step: 1, completed: false };
     const currentStep = storedProgress.step || 1;
     const totalSteps = event.steps.length;
     if (storedProgress.completed) return; // already finished
     if (isPausedRef.current) return;
     for (let i = currentStep; i <= totalSteps; i++) {
       const step = event.steps[i - 1];
-      // 2️⃣ Update sessionStorage and state *after each step completes*
       const updatedProgress = { step: i, completed: i >= totalSteps };
       setEventProgress((prev) => ({
         ...prev,
@@ -143,7 +193,6 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
   useEffect(() => {
     const handleSocketMsg = async () => {
       if (!socketMsg) return;
-
       // Skip processing if paused
       if (isPausedRef.current || eventAnimationActive) return;
 
@@ -160,37 +209,32 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
           await runGlobalAnimation("normalDir", "evLine", "SocketMsgIcon", "Health check done", isPausedRef);
           setIsEVActive(devices.find(device => device.name === "ev-charger").isActive);
         }
-
       }
-
-      /*if (socketMsg && socketMsg.funcName.includes("do_wasm_work")) {  // Write in relevant device box the name of module deloyed
-        const timeValue = socketMsg.timestamp?.$date?.$numberLong
-          ? Number(socketMsg.timestamp.$date.$numberLong)
-          : Date.now();
-
-        // Convert it to readable local time
-        const formattedTime = new Date(timeValue).toLocaleTimeString([], {
-          hour: '2-digit',
-          minute: '2-digit'
-        });
-
-        setDeviceWorkInfo(prev => ({
-          ...prev,
-          [socketMsg.deviceName]: [
-            ...prev[socketMsg.deviceName],
-            {
-              module: socketMsg.module_name,
-              time: formattedTime,
-            },
-          ],
-        }));
-        console.log(deviceWorkInfo);
-      }*/
     }
-
     if (demoRunning && demoStatus === "running")
       handleSocketMsg();
   }, [socketMsg, demoRunning, demoStatus]);
+
+  const runQueryAnimations = async () => {
+    if (currentHour == 1 && currentMinute == 30) {
+      updateDeviceModuleStatus("ev-charger", "ev_control:IsCharging()");
+      updateDeviceWorkInfo("ev-charger", "IsCharging()", "01:30");
+      const result = await deployAndExecute("693a9a3e75d1501dc7e3f29e", "IsCharging", "ev-charger", {});
+      if (result) {
+        let event = {
+          id: "query_response_0130",
+          steps: [
+            ["reverseDir", "evLine", "QueryResponseIcon", `Status: ${result == 1 ? "Charging" : "Not Charging"}`]
+          ]
+        };
+        // Wait for any active animation (like the request) to finish
+        while (eventAnimationActiveRef.current) {
+          await new Promise(resolve => setTimeout(resolve, 200));
+        }
+        runAnimationEvent(event);
+      }
+    }
+  }
 
   useEffect(() => {
     if (eventAnimationActive || isPausedRef.current) return;
@@ -204,18 +248,8 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
         runAnimationEvent(event);
       }
     });
+    runQueryAnimations();
   }, [demoTime]);
-
-  /*useEffect(() => {
-    const keys = Object.keys(eventProgress);
-    keys.forEach((key) => {
-      const event = eventProgress[key];
-      if (!event.completed && demoRunning) {
-        const event = ANIMATION_EVENTS.find(e => e.id === key);
-        if (event) runAnimationEvent(event);
-      }
-    });
-  }, [demoRunning]);*/
 
   return (
     <>
@@ -266,6 +300,42 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
             }
             100% {
               transform: translate(40%, 196px);
+            }
+          }
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+          @keyframes followPath {
+            0% {
+              offset-distance: 0%;
+              opacity: 0;
+            }
+            10% {
+              opacity: 1;
+            }
+            90% {
+              opacity: 1;
+            }
+            100% {
+              offset-distance: 100%;
+              opacity: 0;
+            }
+          }
+          @keyframes drawPath {
+            0% {
+              stroke-dashoffset: 100;
+              opacity: 0;
+            }
+            10% {
+              opacity: 1;
+            }
+            90% {
+              opacity: 1;
+            }
+            100% {
+              stroke-dashoffset: 0;
+              opacity: 0;
             }
           }
         `}
@@ -845,15 +915,15 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
         </Grid>
 
         {/* Supervisors Section */}
-        <Box mt={20} px={8} sx={{ border: 2, borderColor: '#c7c7c7', p: 2, bgcolor: '#f7f7f7' }}>
-          <Typography>Supervisors</Typography>
-          <Grid container spacing={4} justifyContent="center">
+        <Box mt={16} px={8} sx={{ border: 2, borderColor: '#c7c7c7', pt: 2, pb: 6, pl: 2, bgcolor: '#f7f7f7' }}>
+          <Typography sx={{ mb: 4 }}>Supervisors</Typography>
+          <Grid pl={4} container spacing={4} justifyContent="center">
             <Grid item>
               <Tooltip
                 title={
                   deviceWorkInfo["freezer"].length > 0 ? (
                     <Box sx={{ p: 1 }}>
-                      <Typography variant="subtitle2" sx={{ mb: 1, textDecoration: 'underline' }}>Deployed Modules:</Typography>
+                      <Typography variant="subtitle2" sx={{ mb: 1, textDecoration: 'underline' }}>Executed Deployments:</Typography>
                       {deviceWorkInfo["freezer"].map((info, index) => (
                         <Typography key={index} variant="caption" display="block">
                           {info.module} — <span style={{ color: "#ddd" }}>{info.time}</span>
@@ -865,7 +935,48 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
                 arrow
                 placement="right"
               >
-                <Box sx={{ p: 2, bgcolor: "#ad8a29", color: "#fff", borderRadius: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative', cursor: 'pointer' }}>
+                <Box sx={{ p: 2, bgcolor: "#ad8a29", color: "#fff", borderRadius: 4, display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative', cursor: 'pointer' }}>
+                  {showHourglass && (
+                    <HourglassFullIcon
+                      sx={{
+                        position: 'absolute',
+                        top: 8,
+                        left: 8,
+                        fontSize: 20,
+                        animation: demoRunning ? 'spin 2s linear infinite' : 'none',
+                        opacity: 0.8
+                      }}
+                    />
+                  )}
+                  {/* Animated Arrow Loop */}
+                  {activeDeployments["freezer"] && (
+                    <svg width="60" height="30" style={{ position: 'absolute', bottom: '-30px', left: '50%', transform: 'translateX(-50%)', overflow: 'visible' }}>
+                      <path
+                        d="M 10 0 Q 30 40 50 0"
+                        fill="none"
+                        stroke="#1b7f9dff"
+                        strokeWidth="3"
+                        pathLength="100"
+                        strokeDasharray="100"
+                        strokeDashoffset="100"
+                        style={{
+                          animation: "drawPath 1s linear infinite"
+                        }}
+                      />
+                      <polygon
+                        points="-5,-5 5,0 -5,5"
+                        fill="#1b7f9dff"
+                        style={{
+                          offsetPath: "path('M 10 0 Q 30 40 50 0')",
+                          offsetRotate: "auto",
+                          animation: "followPath 1s linear infinite"
+                        }}
+                      />
+                      <text x="30" y="32" textAnchor="middle" fontSize="12" fill="#1b7f9dff">
+                        Executes deployment
+                      </text>
+                    </svg>
+                  )}
                   <Typography align="center" sx={{ mb: 1 }}>freezer</Typography>
                   <img src={FreezerImg} alt="Freezer" style={{ width: 60, height: 60 }} />
                   <img
@@ -879,9 +990,9 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
                       zIndex: 2
                     }}
                   />
-                  {deviceWorkInfo["freezer"].length > 0 && (
+                  {displayedCounts["freezer"] > 0 && (
                     <Typography variant="caption" sx={{ mt: 1, bgcolor: 'rgba(0,0,0,0.2)', px: 1, borderRadius: 1 }}>
-                      {deviceWorkInfo["freezer"].length} Deployment(s)
+                      {displayedCounts["freezer"]} Deployment(s)
                     </Typography>
                   )}
                 </Box>
@@ -892,7 +1003,7 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
                 title={
                   deviceWorkInfo["washing-machine"].length > 0 ? (
                     <Box sx={{ p: 1 }}>
-                      <Typography variant="subtitle2" sx={{ mb: 1, textDecoration: 'underline' }}>Deployed Modules:</Typography>
+                      <Typography variant="subtitle2" sx={{ mb: 1, textDecoration: 'underline' }}>Executed Deployments:</Typography>
                       {deviceWorkInfo["washing-machine"].map((info, index) => (
                         <Typography key={index} variant="caption" display="block">
                           {info.module} — <span style={{ color: "#ddd" }}>{info.time}</span>
@@ -905,6 +1016,47 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
                 placement="right"
               >
                 <Box sx={{ p: 2, bgcolor: "#ad8a29", color: "#fff", borderRadius: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative', cursor: 'pointer' }}>
+                  {showHourglass && (
+                    <HourglassFullIcon
+                      sx={{
+                        position: 'absolute',
+                        top: 8,
+                        left: 8,
+                        fontSize: 20,
+                        animation: demoRunning ? 'spin 2s linear infinite' : 'none',
+                        opacity: 0.8
+                      }}
+                    />
+                  )}
+                  {/* Animated Arrow Loop */}
+                  {activeDeployments["washing-machine"] && (
+                    <svg width="60" height="45" style={{ position: 'absolute', bottom: '-45px', left: '50%', transform: 'translateX(-50%)', overflow: 'visible' }}>
+                      <path
+                        d="M 10 0 Q 30 40 50 0"
+                        fill="none"
+                        stroke="#1b7f9dff"
+                        strokeWidth="3"
+                        pathLength="100"
+                        strokeDasharray="100"
+                        strokeDashoffset="100"
+                        style={{
+                          animation: "drawPath 2s linear infinite"
+                        }}
+                      />
+                      <polygon
+                        points="-5,-5 5,0 -5,5"
+                        fill="#1b7f9dff"
+                        style={{
+                          offsetPath: "path('M 10 0 Q 30 40 50 0')",
+                          offsetRotate: "auto",
+                          animation: "followPath 2s linear infinite"
+                        }}
+                      />
+                      <text x="30" y="25" textAnchor="middle" fontSize="12" fill="#1b7f9dff">
+                        Executes deployment
+                      </text>
+                    </svg>
+                  )}
                   <Typography align="center" sx={{ mb: 1 }}>washing-machine</Typography>
                   <img src={WashingMachineImg} alt="Washing Machine" style={{ width: 60, height: 60 }} />
                   <img
@@ -918,9 +1070,9 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
                       zIndex: 2
                     }}
                   />
-                  {deviceWorkInfo["washing-machine"].length > 0 && (
+                  {displayedCounts["washing-machine"] > 0 && (
                     <Typography variant="caption" sx={{ mt: 1, bgcolor: 'rgba(0,0,0,0.2)', px: 1, borderRadius: 1 }}>
-                      {deviceWorkInfo["washing-machine"].length} Deployment(s)
+                      {displayedCounts["washing-machine"]} Deployment(s)
                     </Typography>
                   )}
                 </Box>
@@ -931,7 +1083,7 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
                 title={
                   deviceWorkInfo["ev-charger"].length > 0 ? (
                     <Box sx={{ p: 1 }}>
-                      <Typography variant="subtitle2" sx={{ mb: 1, textDecoration: 'underline' }}>Deployed Modules:</Typography>
+                      <Typography variant="subtitle2" sx={{ mb: 1, textDecoration: 'underline' }}>Executed Deployments:</Typography>
                       {deviceWorkInfo["ev-charger"].map((info, index) => (
                         <Typography key={index} variant="caption" display="block">
                           {info.module} — <span style={{ color: "#ddd" }}>{info.time}</span>
@@ -944,6 +1096,47 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
                 placement="right"
               >
                 <Box sx={{ p: 2, bgcolor: "#ad8a29", color: "#fff", borderRadius: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative', cursor: 'pointer' }}>
+                  {showHourglass && (
+                    <HourglassFullIcon
+                      sx={{
+                        position: 'absolute',
+                        top: 8,
+                        left: 8,
+                        fontSize: 20,
+                        animation: demoRunning ? 'spin 2s linear infinite' : 'none',
+                        opacity: 0.8
+                      }}
+                    />
+                  )}
+                  {/* Animated Arrow Loop */}
+                  {activeDeployments["ev-charger"] && (
+                    <svg width="60" height="45" style={{ position: 'absolute', bottom: '-45px', left: '50%', transform: 'translateX(-50%)', overflow: 'visible' }}>
+                      <path
+                        d="M 10 0 Q 30 40 50 0"
+                        fill="none"
+                        stroke="#1b7f9dff"
+                        strokeWidth="3"
+                        pathLength="100"
+                        strokeDasharray="100"
+                        strokeDashoffset="100"
+                        style={{
+                          animation: "drawPath 2s linear infinite"
+                        }}
+                      />
+                      <polygon
+                        points="-5,-5 5,0 -5,5"
+                        fill="#1b7f9dff"
+                        style={{
+                          offsetPath: "path('M 10 0 Q 30 40 50 0')",
+                          offsetRotate: "auto",
+                          animation: "followPath 2s linear infinite"
+                        }}
+                      />
+                      <text x="30" y="25" textAnchor="middle" fontSize="12" fill="#1b7f9dff">
+                        Executes deployment
+                      </text>
+                    </svg>
+                  )}
                   <Typography align="center" sx={{ mb: 1 }}>ev-charger</Typography>
                   <img src={EVChargerImg} alt="EV Charger" style={{ width: 60, height: 60 }} />
                   <img
@@ -958,9 +1151,9 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
                     }}
                   />
                   {/* Small indicator that modules are present */}
-                  {deviceWorkInfo["ev-charger"].length > 0 && (
+                  {displayedCounts["ev-charger"] > 0 && (
                     <Typography variant="caption" sx={{ mt: 1, bgcolor: 'rgba(0,0,0,0.2)', px: 1, borderRadius: 1 }}>
-                      {deviceWorkInfo["ev-charger"].length} Deployment(s)
+                      {displayedCounts["ev-charger"]} Deployment(s)
                     </Typography>
                   )}
                 </Box>
