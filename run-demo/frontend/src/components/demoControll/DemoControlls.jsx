@@ -44,8 +44,7 @@ import {
   predefinedDayPlan5,
   predefinedDayPlan6,
 } from "../../assets/mockData/dailyPlan";
-import { speak, deployAndExecute } from "../../utils/deviceUtils";
-import { sendPostData } from "../../services/apiService";
+import { speak, deploy, execute } from "../../utils/deviceUtils";
 import { v4 as uuidv4 } from 'uuid';
 
 // eslint-disable-next-line no-undef
@@ -151,9 +150,11 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
     }
 
     if (currentHour == 0 && currentMinute === 50) {
-      await deployAndExecute("6930224675d1501dc7da3403", "StartCharging", "ev-charger", {});
-      updateDeviceModuleStatus("ev-charger", "ev_control:StartCharging()");
-      updateDeviceWorkInfo("ev-charger", "StartCharging()", "01:00");
+      await deploy("693e9ac275d1501dc7e7ba74", "ev-charger");
+      const res = await execute("693e9ac275d1501dc7e7ba74", "ev-charger", { "param0": 1 });
+      console.log(res);
+      updateDeviceModuleStatus("ev-charger", "ev_control:ExecuteEvent(1) -> StartCharging");
+      updateDeviceWorkInfo("ev-charger", "ExecuteEvent(1) -> StartCharging", "01:00");
     }
 
     if (currentHour >= 1 && currentHour < 5) {
@@ -217,10 +218,10 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       })); */
       await deployAndExecute("693021e575d1501dc7da3369", "TurnOffFreezer", FREEZER, {});
       updateDeviceModuleStatus(FREEZER, "freezer:TurnOffFreezer()");
-      await deployAndExecute("6930224675d1501dc7da3403", "StopCharging", "ev-charger", {});
-      updateDeviceModuleStatus("ev-charger", "ev_control:StopCharging()");
+      await execute("693e9ac275d1501dc7e7ba74", "ev-charger", { "param0": 2 });
+      updateDeviceModuleStatus("ev-charger", "ev_control:ExecuteEvent(2) -> StopCharging");
       updateDeviceWorkInfo("freezer", "TurnOffFreezer()", "05:00");
-      updateDeviceWorkInfo("ev-charger", "StopCharging()", "05:00");
+      updateDeviceWorkInfo("ev-charger", "ExecuteEvent(2) -> StopCharging", "05:00");
       runMoveCodeAnimation(FLEXIBILITY_SERVICE, INTELLIGENT_CONTROL, DemandSpikeIcon, null, sessionId);
       if (animationSessionRef.current !== sessionId) return;
       if (voiceEnabled)
@@ -576,15 +577,15 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       setDemoRunning(true);
       setScheduleProcessing(false);
       handlePopOverClose();
-      await deployAndExecute("6930224675d1501dc7da3403", "StartCharging", "ev-charger", {});
-      updateDeviceModuleStatus("ev-charger", "ev_control:StartCharging()");
-      updateDeviceWorkInfo("ev-charger", "StartCharging()", "21:00");
+      await execute("693e9ac275d1501dc7e7ba74", "ev-charger", { "param0": 1 });
+      updateDeviceModuleStatus("ev-charger", "ev_control:ExecuteEvent(1) -> StartCharging");
+      updateDeviceWorkInfo("ev-charger", "ExecuteEvent(1) -> StartCharging", "21:00");
     }
 
     if (currentHour == 23 && currentMinute === 0) {
-      await deployAndExecute("6930225a75d1501dc7da3437", "StopCharging", "ev-charger", {});
-      updateDeviceModuleStatus("ev-charger", "ev_control:StopCharging()");
-      updateDeviceWorkInfo("ev-charger", "StopCharging()", "23:00");
+      await execute("693e9ac275d1501dc7e7ba74", "ev-charger", { "param0": 2 });
+      updateDeviceModuleStatus("ev-charger", "ev_control:ExecuteEvent(2) -> StopCharging");
+      updateDeviceWorkInfo("ev-charger", "ExecuteEvent(2) -> StopCharging", "23:00");
     }
     // Charge ElectricCars
     if (currentHour >= 21 && currentHour < 23) {
@@ -735,6 +736,7 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
     setHistoricalDayPlans([initialDayPlan]);
     setRescheduleHistory([]);
     setDischargingSlots([]);
+    setBlackoutActive(false);
     // Reset device work info
     setDeviceWorkInfo({
       "freezer": [],

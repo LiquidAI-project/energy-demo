@@ -31,7 +31,7 @@ import ScheduleIcon from "../../assets/schedule.png";
 import QueryIcon from "../../assets/query-info.png";
 import QueryResponseIcon from "../../assets/query-response.png";
 import HourglassFullIcon from '@mui/icons-material/HourglassFull';
-import { deployAndExecute } from "../../utils/deviceUtils";
+import { execute } from "../../utils/deviceUtils";
 
 const iconMap = {
   NewDeviceDiscoveryIcon,
@@ -217,9 +217,10 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
 
   const runQueryAnimations = async () => {
     if (currentHour == 1 && currentMinute == 30) {
-      updateDeviceModuleStatus("ev-charger", "ev_control:IsCharging()");
-      updateDeviceWorkInfo("ev-charger", "IsCharging()", "01:30");
-      const result = await deployAndExecute("693a9a3e75d1501dc7e3f29e", "IsCharging", "ev-charger", {});
+      updateDeviceModuleStatus("ev-charger", "ev_control:ExecuteEvent(3) -> IsCharging()");
+      updateDeviceWorkInfo("ev-charger", "ExecuteEvent(3) -> IsCharging()", "01:30");
+      const result = await execute("693e9ac275d1501dc7e7ba74", "ev-charger", { "param0": 3 });
+      console.log(result);
       if (result) {
         let event = {
           id: "query_response_0130",
@@ -940,8 +941,8 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
                     <HourglassFullIcon
                       sx={{
                         position: 'absolute',
-                        top: 8,
-                        left: 8,
+                        top: 4,
+                        left: 4,
                         fontSize: 20,
                         animation: demoRunning ? 'spin 2s linear infinite' : 'none',
                         opacity: 0.8

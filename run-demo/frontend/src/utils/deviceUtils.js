@@ -110,32 +110,48 @@ export const speak = (text) => {
 };
 
 /**
- * Calls deploy and execute APIs
+ * Calls Deploy API
  * This function is called when a IoT device has to start operating.
  *
  * @param {string} deploymentId - The deployment to be deployed and executed.
- * @param {string} deploymentName - The deployment name to be displayed.
  * @param {string} deviceName - The device name on which the deployment is executed.
- * @param {string} params - The data to be sent to execute API.
- * @param {string} sessionId - The id value to handle animations.
  */
-export const deployAndExecute = async (deploymentId, deploymentName, deviceName, params) => {
+export const deploy = async (deploymentId, deviceName) => {
   try {
     const manifestRes = await sendPostData(`/file/manifest/${deploymentId}`);
     const status = Object.values(manifestRes.deviceResponses)
       .find(d => d.deploymentId === deploymentId)
       ?.status;
     if (status === "success") {
-      const execRes = await sendPostData(`/execute/${deploymentId}`, params);
-      if (execRes.result) {
-        return execRes.result;
-      } else {
-        console.warn(`Manifest deployment failed, skipping to start ${deviceName}`);
-        return `Manifest deployment failed, skipping to start ${deviceName}`;
-      }
+      return true;
+    } else {
+      console.warn(`Manifest deployment failed, skipping to start ${deviceName}`);
+      return false;
+      //return `Manifest deployment failed, skipping to start ${deviceName}`;
+    }
+  } catch (err) {
+    console.error("Request error:", err);
+    return `Error: ${err.message || err}`;
+  }
+};
+
+/**
+ * Calls execute API
+ * This function is called when a IoT device has to start operating.
+ *
+ * @param {string} deploymentId - The deployment to be deployed and executed.
+ * @param {string} deviceName - The device name on which the deployment is executed.
+ * @param {string} params - The data to be sent to execute API.
+ */
+export const execute = async (deploymentId, deviceName, params) => {
+  try {
+    console.log(params);
+    const execRes = await sendPostData(`/execute/${deploymentId}`, params);
+    if (execRes.result) {
+      return execRes.result;
     } else {
       console.warn(`Module execution failed, ${deviceName} can not be started`);
-      return `Module execution failed, ${deviceName} can not be started`;
+      return false;
     }
   } catch (err) {
     console.error("Request error:", err);
