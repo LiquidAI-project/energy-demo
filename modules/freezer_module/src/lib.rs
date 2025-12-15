@@ -1,100 +1,81 @@
 // ===========================================
-// Freezer IoT Device WASM Module (Rust)
-// Minimal, no wasm-bindgen, C-ABI compatible
+// Freezer WASM Module (Rust)
 // ===========================================
-
-use core::sync::atomic::{AtomicI32, AtomicI64, Ordering};
 
 // --------------------------
 // Internal state variables
 // --------------------------
 
-static TARGET_TEMPERATURE: AtomicI32 = AtomicI32::new(-18);
-static CURRENT_MODE: AtomicI32 = AtomicI32::new(0); // 0=normal,1=eco,2=rapid freeze
-static RUNNING: AtomicI32 = AtomicI32::new(1);      // 1=on,0=off
-
-static INTERNAL_TEMP: AtomicI32 = AtomicI32::new(-17);
-static EXTERNAL_TEMP: AtomicI32 = AtomicI32::new(22);
-static HUMIDITY: AtomicI32 = AtomicI32::new(40);
-static DOOR_STATUS: AtomicI32 = AtomicI32::new(0); // 0=closed,1=open
-static POWER_USAGE: AtomicI32 = AtomicI32::new(120); // watts
-static COMPRESSOR_CYCLES: AtomicI32 = AtomicI32::new(0);
-static RUNTIME_HOURS: AtomicI64 = AtomicI64::new(150); // example
+static mut IS_POWER_ON: i32 = 0; // 0=off, 1=on
+static INTERNAL_TEMP: i32 = -17;
+static EXTERNAL_TEMP: i32 = 12;
+static mut ENERGY_CONSUMPTION: i32 = 0;
 
 // ===============================
-// 1. BASIC CONTROL FUNCTIONS
+// 1. ON/OFF FUNCTIONS
 // ===============================
-
-#[unsafe(no_mangle)]
-pub extern "C" fn set_temperature(temp: i32) {
-    TARGET_TEMPERATURE.store(temp, Ordering::SeqCst);
-}
-
-#[unsafe(no_mangle)]
-pub extern "C" fn get_temperature() -> i32 {
-    TARGET_TEMPERATURE.load(Ordering::SeqCst)
-}
-
-#[unsafe(no_mangle)]
-pub extern "C" fn set_mode(mode: i32) {
-    CURRENT_MODE.store(mode, Ordering::SeqCst);
-}
-
-#[unsafe(no_mangle)]
-pub extern "C" fn get_mode() -> i32 {
-    CURRENT_MODE.load(Ordering::SeqCst)
-}
-
 #[unsafe(no_mangle)]
 pub extern "C" fn turn_on() {
-    RUNNING.store(1, Ordering::SeqCst);
+    unsafe { IS_POWER_ON = 1; }
 }
 
 #[unsafe(no_mangle)]
 pub extern "C" fn turn_off() {
-    RUNNING.store(0, Ordering::SeqCst);
+    unsafe { IS_POWER_ON = 0; }
 }
 
 #[unsafe(no_mangle)]
-pub extern "C" fn is_running() -> i32 {
-    RUNNING.load(Ordering::SeqCst)
+pub extern "C" fn is_power_on() -> i32 {
+    unsafe { IS_POWER_ON }
 }
 
 // ===============================
-// 2. SENSOR & TELEMETRY FUNCTIONS
+// 2. BASIC TEMPERATURE FUNCTIONS
 // ===============================
-
 #[unsafe(no_mangle)]
 pub extern "C" fn get_internal_temp() -> i32 {
-    INTERNAL_TEMP.load(Ordering::SeqCst)
+    INTERNAL_TEMP
 }
 
 #[unsafe(no_mangle)]
 pub extern "C" fn get_external_temp() -> i32 {
-    EXTERNAL_TEMP.load(Ordering::SeqCst)
+    EXTERNAL_TEMP
+}
+
+// ===============================
+// 3. ENERGY CONSUMPTION FUNCTIONS
+// ===============================
+
+#[unsafe(no_mangle)]
+pub extern "C" fn set_energy_consumption(energy_consumption: i32) -> i32 {
+    unsafe { ENERGY_CONSUMPTION += energy_consumption; }
+    get_consumed_energy()
 }
 
 #[unsafe(no_mangle)]
-pub extern "C" fn get_humidity() -> i32 {
-    HUMIDITY.load(Ordering::SeqCst)
+pub extern "C" fn get_consumed_energy() -> i32 {
+    unsafe { ENERGY_CONSUMPTION }
 }
 
+// ===============================
+// MAIN FUNCTION FOR EXECUTION
+// ===============================
 #[unsafe(no_mangle)]
-pub extern "C" fn get_door_status() -> i32 {
-    DOOR_STATUS.load(Ordering::SeqCst)
-}
-
-#[unsafe(no_mangle)]
-pub extern "C" fn get_power_usage() -> i32 {
-    POWER_USAGE.load(Ordering::SeqCst)
-}
-
-#[unsafe(no_mangle)]
-pub extern "C" fn get_compressor_cycles() -> i32 {
-    COMPRESSOR_CYCLES.load(Ordering::SeqCst)
-}
-
-#[unsafe(no_mangle)]
-pub extern "C" fn get_runtime_hours() -> i64 {
-    RUNTIME_HOURS.load(Ordering::SeqCst)
+pub extern "C" fn execute_event(event_id: i32, energy_consumption: i32) -> i32 {
+    match event_id {
+        1 => {
+            turn_on();
+            is_power_on()
+        }
+        2 => {
+            turn_off();
+            is_power_on()
+        }
+        3 => is_power_on(),
+        4 => get_internal_temp(),
+        5 => get_external_temp(),
+        6 => get_consumed_energy(),
+        7 => set_energy_consumption(energy_consumption),
+        _ => -1,
+    }
 }

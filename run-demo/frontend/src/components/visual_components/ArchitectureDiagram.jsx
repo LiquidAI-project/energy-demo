@@ -32,6 +32,7 @@ import QueryIcon from "../../assets/query-info.png";
 import QueryResponseIcon from "../../assets/query-response.png";
 import HourglassFullIcon from '@mui/icons-material/HourglassFull';
 import { execute } from "../../utils/deviceUtils";
+import { FREEZER } from "../../../constants";
 
 const iconMap = {
   NewDeviceDiscoveryIcon,
@@ -75,14 +76,10 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
 
   // Initialize displayedCounts from deviceWorkInfo
   useEffect(() => {
-    if (!demoRunning) {
-      const counts = {};
-      Object.keys(deviceWorkInfo).forEach(key => {
-        counts[key] = deviceWorkInfo[key].length;
-      });
-      setDisplayedCounts(counts);
-    }
-  }, [deviceWorkInfo, demoRunning]);
+    const currentDate = new Date(demoTime);
+    const currentHour = currentDate.getHours();
+    const currentMinute = currentDate.getMinutes();
+  }, [demoTime]);
 
   // Configuration for deployment animations
   const supervisorDeploymentSchedule = {
@@ -100,8 +97,6 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
         if (currentHour === schedule.hour && currentMinute === schedule.minute) {
           if (!activeDeployments[device]) {
             setActiveDeployments(prev => ({ ...prev, [device]: true }));
-            // Sync the count when animation starts
-            setDisplayedCounts(prev => ({ ...prev, [device]: deviceWorkInfo[device].length }));
             setTimeout(() => {
               setActiveDeployments(prev => ({ ...prev, [device]: false }));
             }, 4000);
@@ -219,13 +214,67 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
     if (currentHour == 1 && currentMinute == 30) {
       updateDeviceModuleStatus("ev-charger", "ev_control:ExecuteEvent(3) -> IsCharging()");
       updateDeviceWorkInfo("ev-charger", "ExecuteEvent(3) -> IsCharging()", "01:30");
-      const result = await execute("693e9ac275d1501dc7e7ba74", "ev-charger", { "param0": 3 });
-      console.log(result);
+      const result = await execute("693ff67e75d1501dc7e8fb4f", "ev-charger", { "param0": 3, "param1": 0, "param2": 0, "param3": 0 });
       if (result) {
         let event = {
           id: "query_response_0130",
           steps: [
-            ["reverseDir", "evLine", "QueryResponseIcon", `Status: ${result == 1 ? "Charging" : "Not Charging"}`]
+            ["reverseDir", "evLine", "QueryResponseIcon", `Status: ${result == 1.0 ? "Charging" : "Not Charging"}`]
+          ]
+        };
+        // Wait for any active animation (like the request) to finish
+        while (eventAnimationActiveRef.current) {
+          await new Promise(resolve => setTimeout(resolve, 200));
+        }
+        runAnimationEvent(event);
+      }
+    }
+    if ((currentHour == 2 && currentMinute == 30) || (currentHour == 9 && currentMinute == 10) || (currentHour == 17 && currentMinute == 10)) {
+      updateDeviceModuleStatus("ev-charger", "ev_control:ExecuteEvent(4) -> GetBatteryStatus()");
+      updateDeviceWorkInfo("ev-charger", "ExecuteEvent(4) -> GetBatteryStatus()", `${currentHour}:${currentMinute}`);
+      const result = await execute("693ff67e75d1501dc7e8fb4f", "ev-charger", { "param0": 4, "param1": currentHour, "param2": currentMinute, "param3": 1 });
+      if (result) {
+        let event = {
+          id: `query_response_${currentHour}${currentMinute}`,
+          steps: [
+            ["reverseDir", "evLine", "QueryResponseIcon", `Battery: ${result} kWh`]
+          ]
+        };
+        // Wait for any active animation (like the request) to finish
+        while (eventAnimationActiveRef.current) {
+          await new Promise(resolve => setTimeout(resolve, 200));
+        }
+        runAnimationEvent(event);
+      }
+    }
+    if ((currentHour == 5 && currentMinute == 10) || (currentHour == 22 && currentMinute == 10)) {
+      updateDeviceModuleStatus(FREEZER, "freezer_module:ExecuteEvent(6) -> get_consumed_energy()");
+      updateDeviceWorkInfo(FREEZER, "ExecuteEvent(6) -> get_consumed_energy()", `${currentHour}:${currentMinute}`);
+      const result = await execute("694000ff75d1501dc7e90594", FREEZER, { "param0": 6, "param1": currentHour, "param2": currentMinute });
+      if (result) {
+        let event = {
+          id: `query_response_${currentHour}${currentMinute}`,
+          steps: [
+            ["reverseDir", "freezerLine", "QueryResponseIcon", `Total Consumed Energy: ${result} kWh`]
+          ]
+        };
+        // Wait for any active animation (like the request) to finish
+        while (eventAnimationActiveRef.current) {
+          await new Promise(resolve => setTimeout(resolve, 200));
+        }
+        runAnimationEvent(event);
+      }
+    }
+
+    if ((currentHour == 13 && currentMinute == 10) || (currentHour == 22 && currentMinute == 10)) {
+      updateDeviceModuleStatus("washing-machine", "wm_module:ExecuteEvent(4) -> get_consumed_energy()");
+      updateDeviceWorkInfo("washing-machine", "ExecuteEvent(4) -> get_consumed_energy()", `${currentHour}:${currentMinute}`);
+      const result = await execute("69407c4e75d1501dc7e97f59", "washing-machine", { "param0": 4, "param1": currentHour, "param2": currentMinute });
+      if (result) {
+        let event = {
+          id: `query_response_${currentHour}${currentMinute}`,
+          steps: [
+            ["reverseDir", "wmLine", "QueryResponseIcon", `Total Consumed Energy: ${result} kWh`]
           ]
         };
         // Wait for any active animation (like the request) to finish
@@ -991,9 +1040,10 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
                       zIndex: 2
                     }}
                   />
-                  {displayedCounts["freezer"] > 0 && (
+                  {/* Small indicator that modules are present */}
+                  {deviceWorkInfo["freezer"]?.length > 0 && (
                     <Typography variant="caption" sx={{ mt: 1, bgcolor: 'rgba(0,0,0,0.2)', px: 1, borderRadius: 1 }}>
-                      {displayedCounts["freezer"]} Deployment(s)
+                      {deviceWorkInfo["freezer"].length} Deployment(s)
                     </Typography>
                   )}
                 </Box>
@@ -1021,8 +1071,8 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
                     <HourglassFullIcon
                       sx={{
                         position: 'absolute',
-                        top: 8,
-                        left: 8,
+                        top: 4,
+                        left: 4,
                         fontSize: 20,
                         animation: demoRunning ? 'spin 2s linear infinite' : 'none',
                         opacity: 0.8
@@ -1053,7 +1103,7 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
                           animation: "followPath 2s linear infinite"
                         }}
                       />
-                      <text x="30" y="25" textAnchor="middle" fontSize="12" fill="#1b7f9dff">
+                      <text x="30" y="32" textAnchor="middle" fontSize="12" fill="#1b7f9dff">
                         Executes deployment
                       </text>
                     </svg>
@@ -1071,9 +1121,10 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
                       zIndex: 2
                     }}
                   />
-                  {displayedCounts["washing-machine"] > 0 && (
+                  {/* Small indicator that modules are present */}
+                  {deviceWorkInfo["washing-machine"]?.length > 0 && (
                     <Typography variant="caption" sx={{ mt: 1, bgcolor: 'rgba(0,0,0,0.2)', px: 1, borderRadius: 1 }}>
-                      {displayedCounts["washing-machine"]} Deployment(s)
+                      {deviceWorkInfo["washing-machine"].length} Deployment(s)
                     </Typography>
                   )}
                 </Box>
@@ -1101,8 +1152,8 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
                     <HourglassFullIcon
                       sx={{
                         position: 'absolute',
-                        top: 8,
-                        left: 8,
+                        top: 4,
+                        left: 4,
                         fontSize: 20,
                         animation: demoRunning ? 'spin 2s linear infinite' : 'none',
                         opacity: 0.8
@@ -1133,7 +1184,7 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
                           animation: "followPath 2s linear infinite"
                         }}
                       />
-                      <text x="30" y="25" textAnchor="middle" fontSize="12" fill="#1b7f9dff">
+                      <text x="30" y="32" textAnchor="middle" fontSize="12" fill="#1b7f9dff">
                         Executes deployment
                       </text>
                     </svg>
@@ -1152,9 +1203,9 @@ export default function ArchitectureDiagram({ socketMsg, isPaused }) {
                     }}
                   />
                   {/* Small indicator that modules are present */}
-                  {displayedCounts["ev-charger"] > 0 && (
+                  {deviceWorkInfo["ev-charger"]?.length > 0 && (
                     <Typography variant="caption" sx={{ mt: 1, bgcolor: 'rgba(0,0,0,0.2)', px: 1, borderRadius: 1 }}>
-                      {displayedCounts["ev-charger"]} Deployment(s)
+                      {deviceWorkInfo["ev-charger"].length} Deployment(s)
                     </Typography>
                   )}
                 </Box>

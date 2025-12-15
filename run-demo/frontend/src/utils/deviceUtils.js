@@ -145,7 +145,6 @@ export const deploy = async (deploymentId, deviceName) => {
  */
 export const execute = async (deploymentId, deviceName, params) => {
   try {
-    console.log(params);
     const execRes = await sendPostData(`/execute/${deploymentId}`, params);
     if (execRes.result) {
       return execRes.result;

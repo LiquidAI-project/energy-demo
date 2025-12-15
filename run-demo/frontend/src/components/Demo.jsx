@@ -71,7 +71,7 @@ import { useDemoControlContext } from "../context/demoControlContext/useDemoCont
 import OperatingTimeChart from "./visual_components/OperatingTimeChart";
 import SpotPriceChart from "./visual_components/SpotPriceChart";
 import ElectricityPrice from "./visual_components/ElectricityPrice";
-import { cloudBasedPlan, liquidBasedPlanFinal } from "../assets/mockData/dailyPlan"
+import { cloudBasedPlan, liquidBasedPlanFinal } from "../assets/mockData/dailyPlan";
 import { List, ListItemButton, ListItemText, Collapse } from "@mui/material";
 import { ExpandLess, ExpandMore, ArrowBackIos, ArrowForwardIos } from "@mui/icons-material";
 import HourglassFullIcon from "@mui/icons-material/HourglassFull";

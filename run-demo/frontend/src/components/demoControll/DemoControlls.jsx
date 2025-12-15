@@ -3,7 +3,7 @@
 // This source code is licensed under the MIT license. See LICENSE in the repository root directory.
 // Author(s): Lakshan Rathnayaka <lakshan.rathnayaka@tuni.fi>, Ville Heikkilä <ville.heikkila@tuni.fi>, Asma Jamil <asma.jamil@tuni.fi>.
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Button, Box, FormControlLabel, Switch } from "@mui/material";
 import { useDemoVisualizationContext } from "../../context/demoVisualizationContext/useDemoVisualizationContext";
 import DemoClock from "../DemoClock";
@@ -43,6 +43,7 @@ import {
   predefinedDayPlan4,
   predefinedDayPlan5,
   predefinedDayPlan6,
+  liquidBasedPlanFinal
 } from "../../assets/mockData/dailyPlan";
 import { speak, deploy, execute } from "../../utils/deviceUtils";
 import { v4 as uuidv4 } from 'uuid';
@@ -67,7 +68,41 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
     updateDeviceWorkInfo
   } = useDemoVisualizationContext();
   const { voiceEnabled, demoRunMethod, demoRunning, scheduleProcessing, demoTime, demoStatus, setDemoRunning, resetArchitectutreAnimations, setScheduleProcessing, setDemoTime, setVoiceEnabled, setDemoStatus } = useDemoControlContext();
+  const { freezerConsumptionLiquidBased, wmConsumptionLiquidBased } = useMemo(() => {
+    const freezerConsumption = [];
+    const wmConsumption = [];
+    // Initialize array with 0s for 24 hours
+    for (let i = 0; i < 24; i++) {
+      freezerConsumption.push({ hour: i, value: 0 });
+      wmConsumption.push({ hour: i, value: 0 });
+    }
 
+    liquidBasedPlanFinal.forEach((c) => {
+      if (c.id === FREEZER) {
+        const data = c.slots;
+        data.forEach((d) => {
+          for (let hour = d.start; hour < d.end; hour++) {
+            const consumptionHour = freezerConsumption.find((obj) => obj.hour === hour);
+            if (consumptionHour) {
+              consumptionHour.value += d.value;
+            }
+          }
+        });
+      }
+      if (c.id === WASHING_MACHINE) {
+        const data = c.slots;
+        data.forEach((d) => {
+          for (let hour = d.start; hour < d.end; hour++) {
+            const consumptionHour = wmConsumption.find((obj) => obj.hour === hour);
+            if (consumptionHour) {
+              consumptionHour.value += d.value;
+            }
+          }
+        });
+      }
+    });
+    return { freezerConsumptionLiquidBased: freezerConsumption, wmConsumptionLiquidBased: wmConsumption };
+  }, []);
 
   /**
    * ML model retraining simulation.
@@ -150,10 +185,9 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
     }
 
     if (currentHour == 0 && currentMinute === 50) {
-      await deploy("693e9ac275d1501dc7e7ba74", "ev-charger");
-      const res = await execute("693e9ac275d1501dc7e7ba74", "ev-charger", { "param0": 1 });
-      console.log(res);
-      updateDeviceModuleStatus("ev-charger", "ev_control:ExecuteEvent(1) -> StartCharging");
+      await deploy("693ff67e75d1501dc7e8fb4f", "ev-charger");
+      await execute("693ff67e75d1501dc7e8fb4f", "ev-charger", { "param0": 1, "param1": 0, "param2": 0, "param3": 0 });
+      updateDeviceModuleStatus("ev-charger", "ev_control:ExecuteEvent(1) -> start_charging()");
       updateDeviceWorkInfo("ev-charger", "ExecuteEvent(1) -> StartCharging", "01:00");
     }
 
@@ -186,13 +220,24 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
     }
 
     if (currentHour == 2 && currentMinute === 50) {
-      await deployAndExecute("693021d475d1501dc7da3346", "TurnOnFreezer", FREEZER, {});
-      updateDeviceModuleStatus(FREEZER, "freezer:TurnOnFreezer()");
-      updateDeviceWorkInfo("freezer", "TurnOnFreezer()", "03:00");
+      await deploy("694000ff75d1501dc7e90594", FREEZER);
+      await execute("694000ff75d1501dc7e90594", FREEZER, { "param0": 1, "param1": 0 });
+      updateDeviceModuleStatus(FREEZER, "freezer_module:ExecuteEvent(1)->turn_on()");
+      updateDeviceWorkInfo("freezer", "ExecuteEvent(1)->turn_on()", "03:00");
     }
 
     // Demand spike simulation
     if (currentHour == 5 && currentMinute === 0) {
+      execute("694000ff75d1501dc7e90594", FREEZER, { "param0": 2, "param1": 0 });
+      updateDeviceModuleStatus(FREEZER, "freezer_module:ExecuteEvent(2)->turn_off()");
+      updateDeviceWorkInfo("freezer", "ExecuteEvent(2)->turn_off()", "05:00");
+      const consumedEnergy = freezerConsumptionLiquidBased
+        .filter(item => item.hour >= 3 && item.hour < 5)
+        .reduce((sum, item) => sum + item.value, 0);
+      execute("694000ff75d1501dc7e90594", FREEZER, { "param0": 7, "param1": Math.round(consumedEnergy) });
+      execute("693ff67e75d1501dc7e8fb4f", "ev-charger", { "param0": 2, "param1": 0, "param2": 0, "param3": 0 });
+      updateDeviceModuleStatus("ev-charger", "ev_control:ExecuteEvent(2) -> stop_charging()");
+      updateDeviceWorkInfo("ev-charger", "ExecuteEvent(2) -> stop_charging()", "05:00");
       const sessionId = uuidv4();
       animationSessionRef.current = sessionId;
       setDemoRunning(false);
@@ -200,28 +245,11 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       setRescheduleHistory((prev) => [
         ...prev,
         {
-          title: "04:00",
+          title: "05:00",
           content:
             "The Flexibility Service analyzes new price data for significant changes, such as spikes, and informs the Intelligence Control, which recalculates optimal schedules and forwards them to the Orchestrator. The Orchestrator then distributes the updated schedules to target devices for efficient energy use."
         }
       ]);
-      /* setElectricCar1(prev => ({
-        ...prev,
-        currentEnergy: 56,
-        dischargeableEnergy: 16
-      }));
-
-      setElectricCar2(prev => ({
-        ...prev,
-        currentEnergy: 56,
-        dischargeableEnergy: 16
-      })); */
-      await deployAndExecute("693021e575d1501dc7da3369", "TurnOffFreezer", FREEZER, {});
-      updateDeviceModuleStatus(FREEZER, "freezer:TurnOffFreezer()");
-      await execute("693e9ac275d1501dc7e7ba74", "ev-charger", { "param0": 2 });
-      updateDeviceModuleStatus("ev-charger", "ev_control:ExecuteEvent(2) -> StopCharging");
-      updateDeviceWorkInfo("freezer", "TurnOffFreezer()", "05:00");
-      updateDeviceWorkInfo("ev-charger", "ExecuteEvent(2) -> StopCharging", "05:00");
       runMoveCodeAnimation(FLEXIBILITY_SERVICE, INTELLIGENT_CONTROL, DemandSpikeIcon, null, sessionId);
       if (animationSessionRef.current !== sessionId) return;
       if (voiceEnabled)
@@ -259,12 +287,13 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       animationSessionRef.current = sessionId;
       if (voiceEnabled)
         speak("Electric car 2 is used to provide energy to the Freezer");
-      await deployAndExecute("6930227575d1501dc7da345a", "ProvideEnergyToDevices", "ev-charger", {});
-      updateDeviceModuleStatus("ev-charger", "ev_control:enable_cars_to_devices()");
-      await deployAndExecute("693021d475d1501dc7da3346", "TurnOnFreezer", FREEZER, {});
-      updateDeviceModuleStatus(FREEZER, "freezer:TurnOnFreezer()");
-      updateDeviceWorkInfo("ev-charger", "enable_cars_to_devices()", "07:00");
-      updateDeviceWorkInfo("freezer", "TurnOnFreezer()", "07:00");
+      // await deploy("6930227575d1501dc7da345a", "ev-charger");
+      // await execute("6930227575d1501dc7da345a", "ev-charger", {});
+      updateDeviceModuleStatus("ev-charger", "ev_control:StartProvidingEnergy()");
+      updateDeviceWorkInfo("ev-charger", "StartProvidingEnergy()", "07:00");
+      await execute("694000ff75d1501dc7e90594", FREEZER, { "param0": 1, "param1": 0 });
+      updateDeviceModuleStatus(FREEZER, "freezer_module:ExecuteEvent(1)->turn_on()");
+      updateDeviceWorkInfo("freezer", "ExecuteEvent(1)->turn_on()", "07:00");
       if (blackoutActive) {
         setElectricCar2(prev => ({
           ...prev,
@@ -306,12 +335,14 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       animationSessionRef.current = sessionId;
       if (voiceEnabled)
         speak("Electric car 1 is used to provide energy to the Washing machine");
-      await deployAndExecute("6930227575d1501dc7da345a", "ProvideEnergyToDevices", "ev-charger", {});
-      updateDeviceModuleStatus("ev-charger", "ev_control:enable_cars_to_devices()");
-      await deployAndExecute("693021fc75d1501dc7da339b", "StartWashing", "washing-machine", {});
-      updateDeviceModuleStatus("washing-machine", "wm_module:StartWashing()");
-      updateDeviceWorkInfo("ev-charger", "enable_cars_to_devices()", "08:00");
-      updateDeviceWorkInfo("washing-machine", "StartWashing()", "08:00");
+      //await deploy("6930227575d1501dc7da345a", "ev-charger");
+      //await execute("6930227575d1501dc7da345a", "ev-charger", {});
+      updateDeviceModuleStatus("ev-charger", "ev_control:StartProvidingEnergy()");
+      updateDeviceWorkInfo("ev-charger", "StartProvidingEnergy()", "08:00");
+      await deploy("69407c4e75d1501dc7e97f59", "washing-machine");
+      await execute("69407c4e75d1501dc7e97f59", "washing-machine", { "param0": 1, "param1": 0 });
+      updateDeviceModuleStatus("washing-machine", "wm_module:ExecuteEvent(1)->start_washing()");
+      updateDeviceWorkInfo("washing-machine", "ExecuteEvent(1)->start_washing()", "08:00");
       if (blackoutActive) {
         setElectricCar1(prev => ({
           ...prev,
@@ -353,14 +384,17 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       setElectricCar1(prev => ({ ...prev, provideEnergy: false, lineToWashingMachine: false }));
       if (voiceEnabled)
         speak("Power restored");
-      updateDeviceWorkInfo("freezer", "TurnOffFreezer()", "09:00");
-      updateDeviceWorkInfo("washing-machine", "StopWashing()", "09:00");
+      await execute("694000ff75d1501dc7e90594", FREEZER, { "param0": 2, "param1": 0 });
+      updateDeviceModuleStatus(FREEZER, "freezer_module:ExecuteEvent(2)->turn_off()");
+      updateDeviceWorkInfo(FREEZER, "ExecuteEvent(2)->turn_off()", "09:00");
+
+      await execute("69407c4e75d1501dc7e97f59", "washing-machine", { "param0": 2, "param1": 0 });
+      updateDeviceModuleStatus("washing-machine", "wm_module:ExecuteEvent(2)->stop_washing()");
+      updateDeviceWorkInfo("washing-machine", "ExecuteEvent(2)->stop_washing()", "09:00");
+
       updateDeviceWorkInfo("ev-charger", "StopProvidingEnergy()", "09:00");
-      await deployAndExecute("693021e575d1501dc7da3369", "TurnOffFreezer", FREEZER, {});
-      updateDeviceModuleStatus(FREEZER, "freezer:TurnOffFreezer()");
-      await deployAndExecute("6930221875d1501dc7da33c5", "StopWashing", "washing-machine", {});
-      updateDeviceModuleStatus("washing-machine", "wm_module:StopWashing()");
-      await deployAndExecute("693022a575d1501dc7da34a8", "StopProvidingEnergy", "ev-charger", {});
+      //await deploy("693022a575d1501dc7da34a8", "ev-charger");
+      //await execute("693022a575d1501dc7da34a8", "ev-charger", {});
       updateDeviceModuleStatus("ev-charger", "ev_control:StopProvidingEnergy()");
     }
 
@@ -391,9 +425,9 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef, sessionId);
       setDayPlans(predefinedDayPlan3);
       setHistoricalDayPlans(prev => [...prev, predefinedDayPlan2]);
-      await deployAndExecute("693021fc75d1501dc7da339b", "StartWashing", "washing-machine", {});
-      updateDeviceModuleStatus("washing-machine", "wm_module:StartWashing()");
-      updateDeviceWorkInfo("washing-machine", "StartWashing()", "10:00");
+      await execute("69407c4e75d1501dc7e97f59", "washing-machine", { "param0": 1, "param1": 0 });
+      updateDeviceModuleStatus("washing-machine", "wm_module:ExecuteEvent(1)->start_washing()");
+      updateDeviceWorkInfo("washing-machine", "ExecuteEvent(1)->start_washing()", "10:00");
       setDemoRunning(true);
       setScheduleProcessing(false);
       handlePopOverClose();
@@ -470,24 +504,32 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       runMoveCodeAnimation(ORCHESTRATOR, WASHING_MACHINE, WasmWithOnnxScheduleIcon, null, sessionId);
       if (animationSessionRef.current !== sessionId) return;
       await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef, sessionId);
-      updateDeviceWorkInfo("washing-machine", "StopWashing()", "13:00");
+      const consumedEnergy = wmConsumptionLiquidBased
+        .filter(item => item.hour >= 10 && item.hour < 13)
+        .reduce((sum, item) => sum + item.value, 0);
+      await execute("69407c4e75d1501dc7e97f59", "washing-machine", { "param0": 5, "param1": Math.round(consumedEnergy) });
+      await execute("69407c4e75d1501dc7e97f59", "washing-machine", { "param0": 2, "param1": 0 });
+      updateDeviceModuleStatus("washing-machine", "wm_module:ExecuteEvent(2)->stop_washing()");
+      updateDeviceWorkInfo("washing-machine", "ExecuteEvent(2)->stop_washing()", "13:00");
       setDemoRunning(true);
       setScheduleProcessing(false);
       handlePopOverClose();
-      await deployAndExecute("6930221875d1501dc7da33c5", "StopWashing", "washing-machine", {});
-      updateDeviceModuleStatus("washing-machine", "wm_module:StopWashing()");
     }
 
     if (currentHour == 15 && currentMinute === 0) {
-      await deployAndExecute("693021fc75d1501dc7da339b", "StartWashing", "washing-machine", {});
-      updateDeviceModuleStatus("washing-machine", "wm_module:StartWashing()");
-      updateDeviceWorkInfo("washing-machine", "StartWashing()", "15:00");
+      await execute("69407c4e75d1501dc7e97f59", "washing-machine", { "param0": 1, "param1": 0 });
+      updateDeviceModuleStatus("washing-machine", "wm_module:ExecuteEvent(1)->start_washing()");
+      updateDeviceWorkInfo("washing-machine", "ExecuteEvent(1)->start_washing()", "15:00");
     }
 
     if (currentHour == 17 && currentMinute === 0) {
-      await deployAndExecute("6930221875d1501dc7da33c5", "StopWashing", "washing-machine", {});
-      updateDeviceModuleStatus("washing-machine", "wm_module:StopWashing()");
-      updateDeviceWorkInfo("washing-machine", "StopWashing()", "17:00");
+      const consumedEnergy = wmConsumptionLiquidBased
+        .filter(item => item.hour >= 15 && item.hour < 17)
+        .reduce((sum, item) => sum + item.value, 0);
+      await execute("69407c4e75d1501dc7e97f59", "washing-machine", { "param0": 5, "param1": Math.round(consumedEnergy) });
+      await execute("69407c4e75d1501dc7e97f59", "washing-machine", { "param0": 2, "param1": 0 });
+      updateDeviceModuleStatus("washing-machine", "wm_module:ExecuteEvent(2)->stop_washing()");
+      updateDeviceWorkInfo("washing-machine", "ExecuteEvent(2)->stop_washing()", "17:00");
     }
 
     // EV plug back in simulation
@@ -531,15 +573,19 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
     }
 
     if ((currentHour == 20 && currentMinute === 0)) {
-      await deployAndExecute("693021d475d1501dc7da3346", "TurnOnFreezer", FREEZER, {});
-      updateDeviceModuleStatus(FREEZER, "freezer:TurnOnFreezer()");
-      updateDeviceWorkInfo("freezer", "TurnOnFreezer()", "20:00");
+      await execute("694000ff75d1501dc7e90594", FREEZER, { "param0": 1, "param1": 0 });
+      updateDeviceModuleStatus(FREEZER, "freezer_module:ExecuteEvent(1)->turn_on()");
+      updateDeviceWorkInfo("freezer", "ExecuteEvent(1)->turn_on()", "20:00");
     }
 
     if (currentHour == 22 && currentMinute === 0) {
-      await deployAndExecute("693021e575d1501dc7da3369", "TurnOffFreezer", FREEZER, {});
-      updateDeviceModuleStatus(FREEZER, "freezer:TurnOffFreezer()");
-      updateDeviceWorkInfo("freezer", "TurnOffFreezer()", "22:00");
+      const consumedEnergy = freezerConsumptionLiquidBased
+        .filter(item => item.hour >= 20 && item.hour < 22)
+        .reduce((sum, item) => sum + item.value, 0);
+      await execute("694000ff75d1501dc7e90594", FREEZER, { "param0": 5, "param1": Math.round(consumedEnergy) });
+      await execute("694000ff75d1501dc7e90594", FREEZER, { "param0": 2, "param1": 0 });
+      updateDeviceModuleStatus(FREEZER, "freezer_module:ExecuteEvent(2)->turn_off()");
+      updateDeviceWorkInfo(FREEZER, "ExecuteEvent(2)->turn_off()", "22:00");
     }
 
     // Demand spike simulation
@@ -577,16 +623,17 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       setDemoRunning(true);
       setScheduleProcessing(false);
       handlePopOverClose();
-      await execute("693e9ac275d1501dc7e7ba74", "ev-charger", { "param0": 1 });
-      updateDeviceModuleStatus("ev-charger", "ev_control:ExecuteEvent(1) -> StartCharging");
+      await execute("693ff67e75d1501dc7e8fb4f", "ev-charger", { "param0": 1, "param1": 0, "param2": 0, "param3": 0 });
+      updateDeviceModuleStatus("ev-charger", "ev_control:ExecuteEvent(1) -> start_charging()");
       updateDeviceWorkInfo("ev-charger", "ExecuteEvent(1) -> StartCharging", "21:00");
     }
 
     if (currentHour == 23 && currentMinute === 0) {
-      await execute("693e9ac275d1501dc7e7ba74", "ev-charger", { "param0": 2 });
-      updateDeviceModuleStatus("ev-charger", "ev_control:ExecuteEvent(2) -> StopCharging");
-      updateDeviceWorkInfo("ev-charger", "ExecuteEvent(2) -> StopCharging", "23:00");
+      await execute("693ff67e75d1501dc7e8fb4f", "ev-charger", { "param0": 2, "param1": 0, "param2": 0, "param3": 0 });
+      updateDeviceModuleStatus("ev-charger", "ev_control:ExecuteEvent(2) -> stop_charging()");
+      updateDeviceWorkInfo("ev-charger", "ExecuteEvent(2) -> stop_charging()", "23:00");
     }
+
     // Charge ElectricCars
     if (currentHour >= 21 && currentHour < 23) {
       const startHour = 21;
