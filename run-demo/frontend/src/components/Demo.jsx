@@ -13,7 +13,6 @@ import backgroundImage from "./../assets/yard.png";
 import controlHub from "./../assets/controlHub.png";
 import Service_Provider1 from "./../assets/service_provider1.png";
 import Service_Provider2 from "./../assets/service_provider2.png";
-import carChargerImage from "./../assets/car_charger.png";
 import houseImage from "./../assets/house.png";
 import House_Warning_Border from "./../assets/house_warning_border.png";
 import Freezer from "./visual_components/Freezer";
@@ -34,7 +33,6 @@ import IntelligentControlIcon from "./../assets/intelligent_control.jpg";
 import Energy_Company_Icon from "../assets/spot_price.png";
 import ArchitectureImage from "../assets/architecture.png";
 import FlexibilityServiceIcon from "../assets/flexibility_service.jpg";
-import SpotPriceDataIcon from "../assets/spotPriceDataIcon.png";
 import TemperatureDataIcon from "../assets/temperature_data_icon.png";
 import DangerIcon from "../assets/danger_icon.png";
 import userPreferenceIcon from "../assets/user_preference_icon.png";
@@ -307,22 +305,6 @@ const Demo = () => {
             elapsedTime: 0,
             //endTime: Date.now() + animationDuration, // Calculate the end time
           };
-
-          /* setMovingDeployments((prevDeployments) => {
-            // Add the new deployment to the state
-            const updatedDeployments = [...prevDeployments, newMovingDeployments];
-
-            // Set timeout to remove the animation from state after its duration
-            setTimeout(() => {
-              // Remove the animation once the movement duration ends
-              setMovingDeployments((currentDeployments) =>
-                currentDeployments.filter(dep => dep.id !== uniqueId)
-              );
-              resolve(); // Resolve once the animation is complete
-            }, animationDuration);
-
-            return updatedDeployments;
-          }); */
 
           setMovingDeployments((prev) => [...prev, newMovingDeployments]);
 
@@ -1504,7 +1486,7 @@ const Demo = () => {
                             }}
                           >
                             <Typography variant="body1" sx={{ marginBottom: 2, textAlign: "justify" }}>
-                              When energy price changes occur, the system dynamically adjusts device
+                              During this demo (from 00:00 to 23:59), the system dynamically adjusts device
                               schedules to optimize consumption. The recalculation process happens on
                               the following times:
                             </Typography>

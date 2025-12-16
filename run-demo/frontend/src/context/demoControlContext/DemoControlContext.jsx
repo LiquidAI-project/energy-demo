@@ -13,20 +13,14 @@ import { v4 as uuidv4 } from 'uuid';
 const ANIMATION_MOVING_TIME = import.meta.env.VITE_ANIMATION_MOVING_TIME;
 
 const getInitialEventProgress = () => {
-  //const saved = sessionStorage.getItem("eventProgress");
-  //if (saved) return JSON.parse(saved);
-
   // Map all animation events to step:0, completed:false
   const initial = ANIMATION_EVENT_SEQUENCE.reduce((acc, event) => {
     acc[event.id] = { step: 1, completed: false };
     return acc;
   }, {});
-
-  // Write it immediately to sessionStorage
-  //sessionStorage.setItem("eventProgress", JSON.stringify(initial));
   return initial;
 };
-//progress: 0, startTime: null, pausedAt: 0,
+
 const createEmptyAnimateLines = () => ({
   dbLine: { active: false, direction: "normalDir", icon: null, eventMsg: null, runId: 0 },
   icLine: { active: false, direction: "normalDir", icon: null, eventMsg: null, runId: 0 },

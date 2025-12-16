@@ -29,10 +29,8 @@ import NewDeviceDiscoveryIcon from "../../assets/new-device.png";
 import NewDeviceInfoIcon from "../../assets/new-device-info.png";
 import DemandSpikeIcon from "../../assets/demand_spike.png";
 import UserInputIcon from "../../assets/user_input.png";
-import WasmWithOnnxIcon from "../../assets/wasm_with_onnx.png";
 import ScheduleIcon from "../../assets/schedule.png";
 import WasmWithOnnxScheduleIcon from "../../assets/wasm_with_onnx_schedule.png";
-import OnnxFileIcon from "../../assets/onnx_file.png";
 import DropdownMenu from "./DropdownMenu";
 import { useDemoControlContext } from "../../context/demoControlContext/useDemoControlContext";
 import {
@@ -53,7 +51,6 @@ const ANIMATION_MOVING_TIME = import.meta.env.VITE_ANIMATION_MOVING_TIME;
 
 const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused, pausedRef, pauseAwareDelay, referenceLineEnabled, setReferenceLineEnabled, handlePopOverClose, setRescheduleHistory, animationSessionRef }) => {
   const {
-    deviceStatus,
     blackoutActive,
     setDeviceWorkInfo,
     changeHackerVisibility,
@@ -71,12 +68,10 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
   const { freezerConsumptionLiquidBased, wmConsumptionLiquidBased } = useMemo(() => {
     const freezerConsumption = [];
     const wmConsumption = [];
-    // Initialize array with 0s for 24 hours
     for (let i = 0; i < 24; i++) {
       freezerConsumption.push({ hour: i, value: 0 });
       wmConsumption.push({ hour: i, value: 0 });
     }
-
     liquidBasedPlanFinal.forEach((c) => {
       if (c.id === FREEZER) {
         const data = c.slots;
@@ -105,34 +100,6 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
   }, []);
 
   /**
-   * ML model retraining simulation.
-   */
-  const mlModelRetrainSimulation =
-    async (currentMinute) => {
-      // Simulation of sending ML model to retrain near to data source
-      if (currentMinute === 10) {
-        deviceStatus.forEach((device) => {
-          if (device.isEnergyIntensive) {
-            runMoveCodeAnimation(
-              ORCHESTRATOR,
-              device.deviceName,
-              WasmWithOnnxIcon
-            );
-          }
-        });
-      }
-
-      // Simulation of sending back the trained ML model to orchestrator
-      if (currentMinute === 50) {
-        deviceStatus.forEach((device) => {
-          if (device.isEnergyIntensive) {
-            runMoveCodeAnimation(device.deviceName, ORCHESTRATOR, OnnxFileIcon);
-          }
-        });
-      }
-    };
-
-  /**
    * Plan of application and date movement simulation.
    */
   const dayPlanExecution = async () => {
@@ -140,9 +107,7 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
     const currentHour = currentDate.getHours();
     const currentMinute = currentDate.getMinutes();
 
-    //mlModelRetrainSimulation(currentMinute);
-
-    // Spot price fetch simulation
+    // Cars arrive at the charging station
     if (currentHour == 0 && currentMinute === 30) {
       const sessionId = uuidv4();
       animationSessionRef.current = sessionId;
@@ -151,7 +116,7 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
         {
           title: "00:30",
           content:
-            "The energy provider transmits electricity price information for the current hour to the Intelligence Control. The Intelligence Control then sends the optimal schedules to the Orchestrator, which forwards them to target devices for efficient energy use."
+            "When cars arrive at home, the EV Control Supervisor notifies the Orchestrator about the new device connection. This information is then forwarded to the Intelligent Control component. The Intelligent Control receives electricity price information from the energy provider, computes optimal charging schedules, and sends these schedules back to the Orchestrator. The Orchestrator subsequently forwards the schedules to the target devices to ensure efficient energy usage."
         }
       ]);
       setDemoRunning(false);
@@ -199,10 +164,10 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
 
       // Calculate current energy (starting charge + charged amount)
       const chargedAmount = hoursElapsed * chargingRatePerHour;
-      const currentEnergyLevel = Math.min(startingCharge + chargedAmount, 60); // Cap at total capacity
+      const currentEnergyLevel = Math.min(startingCharge + chargedAmount, 60);
       const currentEnergy = Math.floor(currentEnergyLevel);
 
-      // Available energy is current - minimum required (40 kWh)
+      // Available energy is current - minimum required (20 kWh)
       const minRequired = 20;
       const currentAvailableEnergy = Math.max(0, currentEnergy - minRequired);
 
@@ -287,8 +252,6 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       animationSessionRef.current = sessionId;
       if (voiceEnabled)
         speak("Electric car 2 is used to provide energy to the Freezer");
-      // await deploy("6930227575d1501dc7da345a", "ev-charger");
-      // await execute("6930227575d1501dc7da345a", "ev-charger", {});
       updateDeviceModuleStatus("ev-charger", "ev_control:StartProvidingEnergy()");
       updateDeviceWorkInfo("ev-charger", "StartProvidingEnergy()", "07:00");
       await execute("694000ff75d1501dc7e90594", FREEZER, { "param0": 1, "param1": 0 });
@@ -314,12 +277,12 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       const dischargeRate = 1.5; // kWh per hour
       const dischargedAmount = hoursElapsed * dischargeRate;
 
-      // Starting energy at 6:50 is 56 kWh (from previous logic)
+      // Starting energy at 6:50 is 36 kWh
       const startingEnergy = 36;
       const currentEnergyLevel = Math.max(startingEnergy - dischargedAmount, 0);
-      const currentEnergy = Math.floor(currentEnergyLevel * 10) / 10; // Keep 1 decimal for smoother look
+      const currentEnergy = Math.floor(currentEnergyLevel * 10) / 10;
 
-      // Available energy is current - minimum required (40 kWh)
+      // Available energy is current - minimum required (20 kWh)
       const minRequired = 20;
       const currentAvailableEnergy = Math.max(0, currentEnergy - minRequired);
 
@@ -335,8 +298,6 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       animationSessionRef.current = sessionId;
       if (voiceEnabled)
         speak("Electric car 1 is used to provide energy to the Washing machine");
-      //await deploy("6930227575d1501dc7da345a", "ev-charger");
-      //await execute("6930227575d1501dc7da345a", "ev-charger", {});
       updateDeviceModuleStatus("ev-charger", "ev_control:StartProvidingEnergy()");
       updateDeviceWorkInfo("ev-charger", "StartProvidingEnergy()", "08:00");
       await deploy("69407c4e75d1501dc7e97f59", "washing-machine");
@@ -361,12 +322,12 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       const dischargeRate = 1.5; // kWh per hour
       const dischargedAmount = hoursElapsed * dischargeRate;
 
-      // Starting energy at 7:40 is 56 kWh (assuming it was full/same as start)
+      // Starting energy at 7:40 is 36 kWh 
       const startingEnergy = 36;
       const currentEnergyLevel = Math.max(startingEnergy - dischargedAmount, 0);
-      const currentEnergy = Math.floor(currentEnergyLevel * 10) / 10; // Keep 1 decimal for smoother look
+      const currentEnergy = Math.floor(currentEnergyLevel * 10) / 10;
 
-      // Available energy is current - minimum required (40 kWh)
+      // Available energy is current - minimum required (20 kWh)
       const minRequired = 20;
       const currentAvailableEnergy = Math.max(0, currentEnergy - minRequired);
 
@@ -393,12 +354,10 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
       updateDeviceWorkInfo("washing-machine", "ExecuteEvent(2)->stop_washing()", "09:00");
 
       updateDeviceWorkInfo("ev-charger", "StopProvidingEnergy()", "09:00");
-      //await deploy("693022a575d1501dc7da34a8", "ev-charger");
-      //await execute("693022a575d1501dc7da34a8", "ev-charger", {});
       updateDeviceModuleStatus("ev-charger", "ev_control:StopProvidingEnergy()");
     }
 
-    // Washing machine set to simulation and EV unplug simulation
+    // Washing machine set to turn on and EV unplug simulation
     if (currentHour == 9 && currentMinute === 40) {
       const sessionId = uuidv4();
       animationSessionRef.current = sessionId;
@@ -409,7 +368,7 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
         {
           title: "10:00",
           content:
-            "The user requests optimal schedules from the Intelligence Control, which recalculates them and forwards them to the Orchestrator. The Orchestrator then distributes the updated schedules to target devices for efficient energy use."
+            "When a user requests to activate the washing machine, the Intelligent Control component recalculates the device operating schedules accordingly. The updated schedules are then forwarded to the Orchestrator, which distributes them to the target devices to ensure efficient energy utilization."
         }
       ]);
       runMoveCodeAnimation(USER_CONTROL, INTELLIGENT_CONTROL, UserInputIcon, null, sessionId);
@@ -549,7 +508,7 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
         {
           title: "18:00",
           content:
-            "The Intelligence control receives the updated electricity price information for the current hour from the enerygy company. It then recalculates and sends the optimal schedules to the Orchestrator, which forwards them to target devices for efficient energy use."
+            "When the cars arrive back at home, the EV Control Supervisor again notifies the Orchestrator about the new device connection. This information is then forwarded to the Intelligent Control component. The Intelligent Control receives electricity price information from the energy provider, computes optimal charging schedules, and sends these schedules back to the Orchestrator. The Orchestrator subsequently forwards the schedules to the target devices to ensure efficient energy usage."
         }
       ]);
       await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef, sessionId);
@@ -644,12 +603,12 @@ const DemoControlls = ({ continousAnimationRun, runMoveCodeAnimation, setPaused,
 
       // Calculate current energy (starting charge + charged amount)
       const chargedAmount = hoursElapsed * chargingRatePerHour;
-      const currentEnergyLevel1 = Math.min(startingCharge1 + chargedAmount, 60); // Cap at total capacity
-      const currentEnergyLevel2 = Math.min(startingCharge2 + chargedAmount, 60); // Cap at total capacity
+      const currentEnergyLevel1 = Math.min(startingCharge1 + chargedAmount, 60);
+      const currentEnergyLevel2 = Math.min(startingCharge2 + chargedAmount, 60);
       const currentEnergy1 = Math.floor(currentEnergyLevel1);
       const currentEnergy2 = Math.floor(currentEnergyLevel2);
 
-      // Available energy is current - minimum required (40 kWh)
+      // Available energy is current - minimum required (20 kWh)
       const minRequired = 20;
       const currentAvailableEnergy1 = Math.max(0, currentEnergy1 - minRequired);
       const currentAvailableEnergy2 = Math.max(0, currentEnergy2 - minRequired);
