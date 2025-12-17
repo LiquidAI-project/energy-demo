@@ -1,0 +1,104 @@
+name: Deploy the main version of the energy demo
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - "main"
+
+env:
+  IMAGE_CONTEXT: run-demo/frontend
+  IMAGE_FILENAME: Dockerfile
+  IMAGE_NAME: frontend
+  IMAGE_TAG: main
+  PLATFORMS: linux/amd64
+  REGISTRY: ghcr.io
+
+jobs:
+  build_image:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Store full image name
+        id: repo_lowercase
+        run: |
+          export REPO_NAME=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')
+          echo "FULL_IMAGE_NAME=${{ env.REGISTRY }}/${REPO_NAME}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}" >> $GITHUB_ENV
+
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Docker buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Log into container registry
+        uses: docker/login-action@v2
+        with:
+            registry: ${{ env.REGISTRY }}
+            username: ${{ github.actor }}
+            password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Get container meta information
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+            images: ${{ env.REGISTRY }}/${{ github.repository }}/${{ env.IMAGE_NAME }}
+
+      - name: Build and push Docker image for energy demo frontend
+        uses: docker/build-push-action@v4
+        with:
+            context: ${{ env.IMAGE_CONTEXT }}
+            file: ${{ env.IMAGE_CONTEXT }}/${{ env.IMAGE_FILENAME }}
+            tags: ${{ env.FULL_IMAGE_NAME }}
+            platforms: ${{ env.PLATFORMS }}
+            push: ${{ github.event_name != 'pull_request' }}
+            labels: ${{ steps.meta.labels }}
+
+  deploy_demo:
+    needs: build_image
+    runs-on: ubuntu-latest
+    permissions:
+      packages: read
+
+    steps:
+      - name: Store full image name
+        id: repo_lowercase
+        run: |
+          export REPO_NAME=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')
+          echo "FULL_IMAGE_NAME=${{ env.REGISTRY }}/${REPO_NAME}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}" >> $GITHUB_ENV
+
+      - name: SSH to the server and deploy the new image
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USERNAME }}
+          port: ${{ secrets.SERVER_SSH_PORT }}
+          key: ${{ secrets.SERVER_SSH_PRIVATE_KEY }}
+          passphrase: ${{ secrets.SERVER_SSH_PASSPHRASE }}
+          script: |
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login --username ${{ github.actor }} --password-stdin ${{ env.REGISTRY }}
+            docker pull ${{ env.FULL_IMAGE_NAME }}
+            docker stop ${{ secrets.SERVER_MAIN_CONTAINER_NAME }} || true
+            docker rm ${{ secrets.SERVER_MAIN_CONTAINER_NAME }} || true
+            docker run --detach --name ${{ secrets.SERVER_MAIN_CONTAINER_NAME }} --env ANIMATION_MOVING_TIME=${{ secrets.ANIMATION_MOVING_TIME }} --env VITE_ALLOWED_HOSTS=${{ secrets.SERVER_ALLOWED_HOSTS }} --env VITE_PUBLIC_HOST=${{ secrets.VITE_PUBLIC_HOST_DRAFT }} --env VITE_PUBLIC_PORT=${{ secrets.VITE_PUBLIC_PORT }} --env VITE_ORCHESTRATOR_HOST=${{ secrets.VITE_ORCHESTRATOR_HOST }} --env VITE_ORCHESTRATOR_PORT=${{ secrets.VITE_ORCHESTRATOR_PORT }} --env VITE_DEVICE_CHECK_INTERVAL=${{ secrets.VITE_DEVICE_CHECK_INTERVAL }} --env VITE_DEV_VERSION=false --publish ${{ secrets.SERVER_MAIN_FRONTEND_PORT }}:${{ secrets.SERVER_FRONTEND_INTERNAL_PORT }} ${{ env.FULL_IMAGE_NAME }}
+
+            sleep 10  # Wait for the container to start
+
+            # Verify the container is running
+            if docker ps | grep --quiet ${{ secrets.SERVER_MAIN_CONTAINER_NAME }}; then
+              echo "Container is running."
+            else
+              echo "Container failed to start."
+              exit 1
+            fi
+
+            # Check if the application is responsive (HTTP check)
+            if curl -f http://localhost:${{ secrets.SERVER_MAIN_FRONTEND_PORT }}; then
+              echo "Application is up and running."
+            else
+              echo "Application is not responding."
+              exit 1
+            fi
