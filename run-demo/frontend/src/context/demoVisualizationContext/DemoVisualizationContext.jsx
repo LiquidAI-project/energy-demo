@@ -9,44 +9,78 @@ import { initialDayPlan } from "../../assets/mockData/dailyPlan";
 import { EV_CHARGER, WASHING_MACHINE, FREEZER } from "../../../constants";
 import { isDeviceOperating } from "../../utils/deviceUtils";
 import { useDemoControlContext } from "../demoControlContext/useDemoControlContext";
+import { useSyncedLocalStorage } from "../../services/SyncedLocalStorage";
+
+const createElectricCar = () => ({
+  pluggedIn: false,
+  provideEnergy: false,
+  totalEnergy: 50,
+  currentEnergy: 10,
+  minReqEnergy: 20,
+  dischargeableEnergy: 0,
+  lineToFreezer: false,
+  lineToWashingMachine: false
+});
 
 const DemoVisualizationContext = createContext({
   hackerVisibility: false,
   movingDeployments: [],
   dayPlans: initialDayPlan,
   historicalDayPlans: [initialDayPlan],
-  ev1PluggedIn: true,
-  ev2PluggedIn: true,
+  electricCar1: createElectricCar(),
+  electricCar2: createElectricCar(),
   deviceStatus: [],
-  changeHackerVisibility: () => {},
-  setMovingDeployments: () => {},
-  setDayPlans: () => {},
-  setHistoricalDayPlans: () => {},
-  setEv1PluggedIn: () => {},
-  setEv2PluggedIn: () => {},
-  setDeviceStatus: () => {},
+  blackoutActive: false,
+  dischargingSlots: [],
+  deviceWorkInfo: {},
+  changeHackerVisibility: () => { },
+  setMovingDeployments: () => { },
+  setDayPlans: () => { },
+  setHistoricalDayPlans: () => { },
+  setElectricCar1: () => { },
+  setElectricCar2: () => { },
+  setDeviceStatus: () => { },
+  setBlackoutActive: () => { },
+  setDischargingSlots: () => { },
+  setDeviceWorkInfo: () => { },
+  updateDeviceWorkInfo: () => { },
+  updateDeviceModuleStatus: () => { }
 });
 
 export const DemoVisualizationProvider = ({ children }) => {
   const { demoTime } = useDemoControlContext();
   const [hackerVisibility, setHackerVisibility] = useState(false);
   const [movingDeployments, setMovingDeployments] = useState([]);
-  const [dayPlans, setDayPlans] = useState(initialDayPlan);
-  const [historicalDayPlans, setHistoricalDayPlans] = useState([initialDayPlan]);
-  const [ev1PluggedIn, setEv1PluggedIn] = useState(true);
-  const [ev2PluggedIn, setEv2PluggedIn] = useState(true);
+  const [dayPlans, setDayPlans] = useSyncedLocalStorage("dayPlans", initialDayPlan);
+  const [historicalDayPlans, setHistoricalDayPlans] = useSyncedLocalStorage("historicalDayPlans", [initialDayPlan]);
+  const [electricCar1, setElectricCar1] = useState(createElectricCar());
+  const [electricCar2, setElectricCar2] = useState(createElectricCar());
+  const [blackoutActive, setBlackoutActive] = useState(false);
+  const [dischargingSlots, setDischargingSlots] = useSyncedLocalStorage("dischargingSlots", []);
+  const [deviceWorkInfo, setDeviceWorkInfo] = useSyncedLocalStorage("deviceWorkInfo", {
+    "freezer": [],
+    "washing-machine": [],
+    "ev-charger": [],
+  });
   const [deviceStatus, setDeviceStatus] = useState([
     {
+      supervisorName: 'ev-charger',
       deviceName: EV_CHARGER,
       isEnergyIntensive: false,
+      existingModuleName: null
+
     },
     {
+      supervisorName: 'washing-machine',
       deviceName: WASHING_MACHINE,
       isEnergyIntensive: false,
+      existingModuleName: null
     },
     {
+      supervisorName: 'freezer',
       deviceName: FREEZER,
       isEnergyIntensive: false,
+      existingModuleName: null
     },
   ]);
 
@@ -56,25 +90,44 @@ export const DemoVisualizationProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    setDeviceStatus([
-      {
-        deviceName: EV_CHARGER,
-        isEnergyIntensive: isDeviceOperating(EV_CHARGER, dayPlans, demoTime),
-      },
-      {
-        deviceName: WASHING_MACHINE,
-        isEnergyIntensive: isDeviceOperating(
-          WASHING_MACHINE,
-          dayPlans,
-          demoTime
-        ),
-      },
-      {
-        deviceName: FREEZER,
-        isEnergyIntensive: isDeviceOperating(FREEZER, dayPlans, demoTime),
-      },
-    ]);
+    setDeviceStatus((prevStatus) =>
+      prevStatus.map((device) => ({
+        ...device,
+        isEnergyIntensive: isDeviceOperating(device.deviceName, dayPlans, demoTime),
+      }))
+    );
   }, [dayPlans, demoTime]);
+
+  const updateDeviceWorkInfo = (device, module, time) => {
+    setDeviceWorkInfo(prev => ({
+      ...prev,
+      [device]: [
+        ...prev[device],
+        { module, time }
+      ]
+    }));
+  };
+
+  /**
+   * Helper to update device status and localStorage with active module info.
+  */
+  const updateDeviceModuleStatus = (deviceName, moduleName) => {
+    // Update local state
+    setDeviceStatus(prev => prev.map(device =>
+      device.deviceName === deviceName
+        ? { ...device, existingModuleName: moduleName }
+        : device
+    ));
+
+    // Update localStorage
+    const storedDevices = JSON.parse(localStorage.getItem("devices") || "[]");
+    const updatedDevices = storedDevices.map(device =>
+      device.name === deviceName
+        ? { ...device, existingModuleName: moduleName, isModuleActive: true }
+        : device
+    );
+    localStorage.setItem("devices", JSON.stringify(updatedDevices));
+  };
 
   const value = useMemo(
     () => ({
@@ -82,24 +135,36 @@ export const DemoVisualizationProvider = ({ children }) => {
       movingDeployments,
       dayPlans,
       historicalDayPlans,
-      ev1PluggedIn,
-      ev2PluggedIn,
+      electricCar1,
+      electricCar2,
       deviceStatus,
+      blackoutActive,
+      dischargingSlots,
+      deviceWorkInfo,
       changeHackerVisibility,
       setMovingDeployments,
       setDayPlans,
       setHistoricalDayPlans,
-      setEv1PluggedIn,
-      setEv2PluggedIn,
+      setElectricCar1,
+      setElectricCar2,
+      setDeviceStatus,
+      setBlackoutActive,
+      setDischargingSlots,
+      setDeviceWorkInfo,
+      updateDeviceWorkInfo,
+      updateDeviceModuleStatus
     }),
     [
       hackerVisibility,
       movingDeployments,
       dayPlans,
       historicalDayPlans,
-      ev1PluggedIn,
-      ev2PluggedIn,
+      electricCar1,
+      electricCar2,
       deviceStatus,
+      blackoutActive,
+      dischargingSlots,
+      deviceWorkInfo
     ]
   );
 

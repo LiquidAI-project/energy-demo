@@ -3,6 +3,8 @@
 // This source code is licensed under the MIT license. See LICENSE in the repository root directory.
 // Author(s): Lakshan Rathnayaka <lakshan.rathnayaka@tuni.fi>, Ville Heikkilä <ville.heikkila@tuni.fi>.
 
+import { sendPostData } from "../services/apiService";
+
 /**
  * Retrieves the device ID map from local storage.
  * The map is stored as a JSON string in the local storage under the key "deviceIdMap".
@@ -68,4 +70,90 @@ export const isDeviceOperating = (deviceId, currentPlan, currentDemoTime) => {
   return deviceOperationPlan.some((slot) => {
     return currentHour >= slot.start && currentHour < slot.end;
   });
+};
+
+/**
+ * Triggers a voiceover announcement using the Web Speech API.
+ * This function is called whenever an action is performed or an event occurs,
+ * providing auditory feedback to the user.
+ *
+ * @param {string} text - The message to be spoken aloud.
+ */
+export const speak = (text) => {
+  if ("speechSynthesis" in window) {
+    // Cancel any ongoing speech to ensure the new message is spoken immediately
+    window.speechSynthesis.cancel();
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "en-US";
+    utterance.rate = 1.3;
+    utterance.pitch = 1.3;
+
+    // Ensure voices are loaded before selecting one
+    const voices = window.speechSynthesis.getVoices();
+    if (voices.length > 0) {
+      utterance.voice = voices[0];
+    } else {
+      // If voices aren't loaded yet, try to set it when they change
+      window.speechSynthesis.onvoiceschanged = () => {
+        const updatedVoices = window.speechSynthesis.getVoices();
+        if (updatedVoices.length > 0) {
+          utterance.voice = updatedVoices[0];
+        }
+      };
+    }
+
+    window.speechSynthesis.speak(utterance);
+  } else {
+    console.error("Speech Synthesis not supported in this browser.");
+  }
+};
+
+/**
+ * Calls Deploy API
+ * This function is called when a IoT device has to start operating.
+ *
+ * @param {string} deploymentId - The deployment to be deployed and executed.
+ * @param {string} deviceName - The device name on which the deployment is executed.
+ */
+export const deploy = async (deploymentId, deviceName) => {
+  try {
+    const manifestRes = await sendPostData(`/file/manifest/${deploymentId}`);
+    const status = Object.values(manifestRes.deviceResponses)
+      .find(d => d.deploymentId === deploymentId)
+      ?.status;
+    if (status === "success") {
+      return true;
+    } else {
+      console.warn(`Manifest deployment failed, skipping to start ${deviceName}`);
+      return false;
+      //return `Manifest deployment failed, skipping to start ${deviceName}`;
+    }
+  } catch (err) {
+    console.error("Request error:", err);
+    return `Error: ${err.message || err}`;
+  }
+};
+
+/**
+ * Calls execute API
+ * This function is called when a IoT device has to start operating.
+ *
+ * @param {string} deploymentId - The deployment to be deployed and executed.
+ * @param {string} deviceName - The device name on which the deployment is executed.
+ * @param {string} params - The data to be sent to execute API.
+ */
+export const execute = async (deploymentId, deviceName, params) => {
+  try {
+    const execRes = await sendPostData(`/execute/${deploymentId}`, params);
+    if (execRes.result) {
+      return execRes.result;
+    } else {
+      console.warn(`Module execution failed, ${deviceName} can not be started`);
+      return false;
+    }
+  } catch (err) {
+    console.error("Request error:", err);
+    return `Error: ${err.message || err}`;
+  }
 };

@@ -7,9 +7,12 @@ function MovingIcon({ deployment, paused }) {
   // Use the initial icon from the deployment
   const [icon, setIcon] = useState(deployment.iconSource);
 
+  const isSmallIcon = icon.includes("energy_moving");
+  const iconSize = isSmallIcon ? 28 : 60;
+
   const [currentPos, setCurrentPos] = useState({
-    x: deployment.startPos.x - 30,
-    y: deployment.startPos.y - 30,
+    x: deployment.startPos.x - iconSize / 2,
+    y: deployment.startPos.y - iconSize / 2,
   });
 
   const startTimeRef = useRef(null);
@@ -34,15 +37,16 @@ function MovingIcon({ deployment, paused }) {
       startTimeRef.current = start;
 
       controls.start({
-        x: deployment.endPos.x - 30,
-        y: deployment.endPos.y - 30,
+        x: deployment.endPos.x - iconSize / 2,
+        y: deployment.endPos.y - iconSize / 2,
         transition: { type: "spring", duration: 5, ease: "linear" },
       });
     } else {
       controls.stop();
       controls.set(currentPos);
     }
-  }, [paused]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paused, iconSize, deployment.endPos]);
 
   return (
     <motion.div
@@ -59,10 +63,11 @@ function MovingIcon({ deployment, paused }) {
       <img
         src={icon}
         alt="Moving object"
-        style={{
-          width: "60px",
-          height: "60px",
-        }}
+        style={
+          isSmallIcon
+            ? { width: "28px", height: "28px" }
+            : { width: "60px", height: "60px" }
+        }
       />
     </motion.div>
   );

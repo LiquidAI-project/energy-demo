@@ -1,4 +1,5 @@
 import { Card, CardContent, Typography } from "@mui/material";
+import ComputerIcon from '@mui/icons-material/Computer';
 import PropTypes from 'prop-types';
 
 const EnergyComponent = (props) => {
@@ -9,6 +10,8 @@ const EnergyComponent = (props) => {
     description,
     isActive,
     deviceInfo,
+    supervisorName,
+    children
   } = props;
 
   return (
@@ -34,12 +37,22 @@ const EnergyComponent = (props) => {
           </>
         )}
         <Typography variant="body2" sx={{ marginBottom: 1 }}>
+          <strong>
+            <ComputerIcon
+              fontSize="small"
+              style={{ verticalAlign: "middle", marginRight: "4px" }}
+            />
+            Supervisor: </strong>{supervisorName}
+          <br />
+        </Typography>
+        <Typography variant="body2" sx={{ marginBottom: 1 }}>
           <strong>{isActive ? "✅ Active" : "⛔ Inactive"}</strong>
           <br />
         </Typography>
         <Typography variant="body2">
-          <strong>🔵 Module deployed - </strong> {deviceInfo !== undefined && deviceInfo.isModuleActive ? deviceInfo.existingModuleName : "None"}
+          <strong>🔵 Module deployed: </strong> {deviceInfo !== undefined && deviceInfo.isActive && deviceInfo.existingModuleName ? deviceInfo.existingModuleName : "None"}
         </Typography>
+        {children}
       </CardContent>
     </Card>
   );
@@ -50,11 +63,12 @@ EnergyComponent.propTypes = {
   name: PropTypes.string.isRequired,
   type: PropTypes.oneOf(['consumer', 'producer']),
   description: PropTypes.string,
-  isActive: PropTypes.bool.isRequired,
+  isActive: PropTypes.bool,
   deviceInfo: PropTypes.shape({
     isModuleActive: PropTypes.bool,
     existingModuleName: PropTypes.string,
   }).isRequired,
+  supervisorName: PropTypes.string.isRequired
 };
 
 export default EnergyComponent;

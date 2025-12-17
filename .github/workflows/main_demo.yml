@@ -83,7 +83,7 @@ jobs:
             docker pull ${{ env.FULL_IMAGE_NAME }}
             docker stop ${{ secrets.SERVER_MAIN_CONTAINER_NAME }} || true
             docker rm ${{ secrets.SERVER_MAIN_CONTAINER_NAME }} || true
-            docker run --detach --name ${{ secrets.SERVER_MAIN_CONTAINER_NAME }} --env ANIMATION_MOVING_TIME=${{ secrets.ANIMATION_MOVING_TIME }} --env VITE_ALLOWED_HOSTS=${{ secrets.SERVER_ALLOWED_HOSTS }} --env VITE_PUBLIC_HOST=${{ secrets.VITE_PUBLIC_HOST_DRAFT }} --env VITE_PUBLIC_PORT=${{ secrets.VITE_PUBLIC_PORT }} --env VITE_ORCHESTRATOR_HOST=${{ secrets.VITE_ORCHESTRATOR_HOST }} --env VITE_ORCHESTRATOR_PORT=${{ secrets.VITE_ORCHESTRATOR_PORT }} --env VITE_DEVICE_CHECK_INTERVAL=${{ secrets.VITE_DEVICE_CHECK_INTERVAL }} --env VITE_DEV_VERSION=false --publish ${{ secrets.SERVER_MAIN_FRONTEND_PORT }}:${{ secrets.SERVER_FRONTEND_INTERNAL_PORT }} ${{ env.FULL_IMAGE_NAME }}
+            docker run --detach --name ${{ secrets.SERVER_MAIN_CONTAINER_NAME }} --env VITE_ANIMATION_MOVING_TIME=${{ secrets.ANIMATION_MOVING_TIME }} --env VITE_ALLOWED_HOSTS=${{ secrets.SERVER_ALLOWED_HOSTS }} --env VITE_PUBLIC_HOST=${{ secrets.VITE_PUBLIC_HOST_DRAFT }} --env VITE_PUBLIC_PORT=${{ secrets.VITE_PUBLIC_PORT }} --env VITE_ORCHESTRATOR_HOST=${{ secrets.VITE_ORCHESTRATOR_HOST }} --env VITE_ORCHESTRATOR_PORT=${{ secrets.VITE_ORCHESTRATOR_PORT }} --env VITE_DEVICE_CHECK_INTERVAL=${{ secrets.VITE_DEVICE_CHECK_INTERVAL }} --env VITE_DEV_VERSION=false --publish ${{ secrets.SERVER_MAIN_FRONTEND_PORT }}:${{ secrets.SERVER_FRONTEND_INTERNAL_PORT }} ${{ env.FULL_IMAGE_NAME }}
 
             sleep 10  # Wait for the container to start
 

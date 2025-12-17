@@ -7,8 +7,8 @@ import { WITHOUT_LIQUID_AI, WITH_LIQUID_AI } from '../../../constants';
 import { useDemoControlContext } from '../../context/demoControlContext/useDemoControlContext';
 import { FormControl, InputLabel, Select, MenuItem, Box } from "@mui/material";
 
-const DropdownMenu = ({ resetDemoTimer, setDemoStatus }) => {
-  const { demoRunMethod, demoRunning, changeDemoRunMethod } = useDemoControlContext();
+const DropdownMenu = ({ resetDemoTimer }) => {
+  const { demoRunMethod, demoRunning, changeDemoRunMethod, setDemoStatus } = useDemoControlContext();
   
 
   const handleChange = (e) => {

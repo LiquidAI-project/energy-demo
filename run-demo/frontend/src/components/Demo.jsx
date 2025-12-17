@@ -1,12 +1,11 @@
 // Copyright 2024 Tampere University
 // This software was developed as a part of the LiquidAI project
 // This source code is licensed under the MIT license. See LICENSE in the repository root directory.
-// Author(s): Lakshan Rathnayaka <lakshan.rathnayaka@tuni.fi>, Ville Heikkilä <ville.heikkila@tuni.fi>.
+// Author(s): Lakshan Rathnayaka <lakshan.rathnayaka@tuni.fi>, Ville Heikkilä <ville.heikkila@tuni.fi>, Asma Jamil <asma.jamil@tuni.fi>.
 
 import {
-  Box,
-  Grid,
-  Typography,
+  Accordion, AccordionSummary,
+  AccordionDetails, Box, Grid, Typography, Popover, IconButton, Tooltip
 } from "@mui/material";
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -19,10 +18,12 @@ import House_Warning_Border from "./../assets/house_warning_border.png";
 import Freezer from "./visual_components/Freezer";
 import WashingMachine from "./visual_components/WashingMachine";
 import MovingIcon from "./visual_components/MovingIcon";
+import ArchitectureView from "./visual_components/ArchitectureDiagram";
 import ElectricCar1 from "./visual_components/ElectricCar1";
 import ElectricCar2 from "./visual_components/ElectricCar2";
 import Jacuzzi from "./visual_components/Jacuzzi";
 import EvCharger from "./visual_components/EvCharger";
+import GradientArrowLine from "./visual_components/GradientArrowLine";
 import Orchestrator from "./../assets/orchestrator.png";
 import Storage from "./../assets/storage.png";
 import WebAssembly_Icon from "./../assets/WebAssembly_Logo.png";
@@ -30,16 +31,20 @@ import EnergyUsageIcon from "./../assets/energy_usage_icon.png";
 import roadImage from "./../assets/road.png";
 import IntelligentControlIcon from "./../assets/intelligent_control.jpg";
 import Energy_Company_Icon from "../assets/spot_price.png";
+import ArchitectureImage from "../assets/architecture.png";
 import FlexibilityServiceIcon from "../assets/flexibility_service.jpg";
-import SpotPriceDataIcon from "../assets/spotPriceDataIcon.png";
 import TemperatureDataIcon from "../assets/temperature_data_icon.png";
 import DangerIcon from "../assets/danger_icon.png";
 import userPreferenceIcon from "../assets/user_preference_icon.png";
 import HackerIcon from "../assets/hacker_icon.png";
+import ScheduleIcon from "../assets/schedule.png";
 import CloudIcon from "../assets/cloud_icon.png";
+import EnergyMovingIcon from "../assets/energy_moving.png";
 import OptimizedSettingsIcon from "../assets/optimized_settings_icon.png";
 import UserControlUI from "./userControl/UserControlUI";
 import DemoControlls from "./demoControll/DemoControlls";
+import { speak } from "../utils/deviceUtils";
+import { fetchData } from '../services/apiService';
 import {
   ORCHESTRATOR,
   STORAGE,
@@ -55,6 +60,8 @@ import {
   HACKER,
   WITHOUT_LIQUID_AI,
   WITH_LIQUID_AI,
+  ELECTRIC_CAR_1,
+  ELECTRIC_CAR_2,
 } from "../../constants";
 import { v4 as uuidv4 } from 'uuid';
 import { useDemoVisualizationContext } from "../context/demoVisualizationContext/useDemoVisualizationContext";
@@ -62,20 +69,32 @@ import { useDemoControlContext } from "../context/demoControlContext/useDemoCont
 import OperatingTimeChart from "./visual_components/OperatingTimeChart";
 import SpotPriceChart from "./visual_components/SpotPriceChart";
 import ElectricityPrice from "./visual_components/ElectricityPrice";
-import { cloudBasedPlan, liquidBasedPlanFinal } from "../assets/mockData/dailyPlan"
+import { cloudBasedPlan, liquidBasedPlanFinal } from "../assets/mockData/dailyPlan";
 import { List, ListItemButton, ListItemText, Collapse } from "@mui/material";
-import { ExpandLess, ExpandMore } from "@mui/icons-material";
+import { ExpandLess, ExpandMore, ArrowBackIos, ArrowForwardIos } from "@mui/icons-material";
+import HourglassFullIcon from "@mui/icons-material/HourglassFull";
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import { keyframes } from "@mui/system";
+import socket from "./WebSocket";
+import AccountTreeIcon from '@mui/icons-material/AccountTree';
+import HomeIcon from '@mui/icons-material/Home';
 
 // eslint-disable-next-line no-undef
-const ANIMATION_MOVING_TIME = process.env.ANIMATION_MOVING_TIME;
+const DEVICE_CHECK_INTERVAL = import.meta.env.VITE_DEVICE_CHECK_INTERVAL;
+// eslint-disable-next-line no-undef
+const ANIMATION_MOVING_TIME = import.meta.env.VITE_ANIMATION_MOVING_TIME;
 
 const DATA_ICONS_MOVING_FROM_WM = [EnergyUsageIcon, userPreferenceIcon];
 const DATA_ICONS_MOVING_FROM_FREEZER = [EnergyUsageIcon, userPreferenceIcon, TemperatureDataIcon];
 const DATA_ICONS_MOVING_FROM_EV = [EnergyUsageIcon, userPreferenceIcon];
+const spin = keyframes`
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+`;
 
 const Demo = () => {
   const orchestratorRef = useRef(null);
-  const storageRef = useRef(null);
+  //const storageRef = useRef(null);
   const serviceProviderRef1 = useRef(null);
   const serviceProviderRef2 = useRef(null);
   const freezerRef = useRef(null);
@@ -89,19 +108,28 @@ const Demo = () => {
   const flexibilityServiceRef = useRef(null);
   const evChargerRef = useRef(null);
   const hackerRef = useRef(null);
-  
-
+  const containerRef = useRef(null);
+  const hourglassRef = useRef(null);
+  const logsQueueRef = useRef([]);
+  const animationSessionRef = useRef(null);
+  const hasRun = useRef(false);
   const [activeDeployments, setActiveDeployments] = useState([]);
   const [warningBorderVisible, setWarningBorderVisible] = useState(false);
   const [open, setOpen] = useState(false);
   const [shouldBlink, setShouldBlink] = useState(false);
-  const { hackerVisibility, movingDeployments, setMovingDeployments } = useDemoVisualizationContext();
-  const { demoRunMethod, demoTime } = useDemoControlContext();
+  const { deviceStatus, hackerVisibility, movingDeployments, setMovingDeployments, electricCar1, electricCar2, blackoutActive } = useDemoVisualizationContext();
+  const { demoRunMethod, demoTime, scheduleProcessing, voiceEnabled } = useDemoControlContext();
   const [paused, setPaused] = useState(false);
-  const pausedRef = useRef(paused); 
+  const pausedRef = useRef(paused);
   const [referenceLineEnabled, setReferenceLineEnabled] = useState(false);
   const [referenceLinePosition, setReferenceLinePosition] = useState(50); // start middle
-  const containerRef = useRef(null);
+  const [activePopover, setActivePopover] = useState(null);
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [index, setIndex] = useState(0);
+  const [rescheduleHistory, setRescheduleHistory] = useState([]);
+  const voiceEnabledRef = useRef(voiceEnabled);
+  const [isMainViewActive, setisMainViewActive] = useState(true);
+  const [latestSocketMsg, setLatestSocketMsg] = useState(null);
 
   let totalConsumptionCloudBased = [];
   let totalConsumptionLiquidBased = [];
@@ -145,11 +173,17 @@ const Demo = () => {
     }
   };
 
-  const pauseAwareDelay = (ms, isPausedRef) => {
+  const pauseAwareDelay = (ms, isPausedRef, sessionId) => {
     return new Promise((resolve) => {
       let elapsed = 0;
       const interval = 50; // check every 50ms
       const timer = setInterval(() => {
+        if (sessionId && animationSessionRef.current !== sessionId) {
+          clearInterval(timer);
+          resolve();
+          return;
+        }
+
         if (!isPausedRef.current) {
           elapsed += interval;
         }
@@ -163,6 +197,16 @@ const Demo = () => {
 
   const handleClick = () => {
     setOpen(!open);
+  };
+
+  const handlePopOverClick = (event, id) => {
+    setAnchorEl(event.currentTarget);
+    setActivePopover(id);
+  };
+
+  const handlePopOverClose = () => {
+    setAnchorEl(null);
+    setActivePopover(null);
   };
 
   // This function will make the house border blink in order to indicate the warning state when data is going outside
@@ -190,7 +234,7 @@ const Demo = () => {
       [FREEZER]: freezerRef,
       [WASHING_MACHINE]: washingMachineRef,
       [ORCHESTRATOR]: orchestratorRef,
-      [STORAGE]: storageRef,
+      //[STORAGE]: storageRef,
       [SERVICE_PROVIDER1]: serviceProviderRef1,
       [SERVICE_PROVIDER2]: serviceProviderRef2,
       [INTELLIGENT_CONTROL]: intelligentControlRef,
@@ -199,6 +243,8 @@ const Demo = () => {
       [ENERGY_COMPANY]: energyCompanyRef,
       [FLEXIBILITY_SERVICE]: flexibilityServiceRef,
       [HACKER]: hackerRef,
+      [ELECTRIC_CAR_1]: electricCar1Ref,
+      [ELECTRIC_CAR_2]: electricCar2Ref,
       // Add more device names and their references here
     }),
     []
@@ -220,30 +266,35 @@ const Demo = () => {
 
   // Object moving one place to another place animation
   const moveCodeAnimation = useCallback(
-    (startDeviceName, endDeviceName, iconSource, changingIconSource = null) => {
+    (startDeviceName, endDeviceName, iconSource, changingIconSource = null, sessionId = null) => {
       return new Promise((resolve) => {
         const startDeviceRef = getDeviceReference(startDeviceName);
         const endDeviceRef = getDeviceReference(endDeviceName);
-  
+
+        if (sessionId && animationSessionRef.current !== sessionId) {
+          resolve(); // Abort early if session is stale
+          return;
+        }
+
         if (endDeviceRef.current && startDeviceRef.current) {
           const startDevice = startDeviceRef.current.getBoundingClientRect();
           const endDevice = endDeviceRef.current.getBoundingClientRect();
-  
+
           const startPosition = {
             x: startDevice.left + startDevice.width / 2,
             y: startDevice.top + startDevice.height / 2,
           };
-  
+
           const endPosition = {
             x: endDevice.left + endDevice.width / 2,
             y: endDevice.top + endDevice.height / 2,
           };
-  
+
           // Generate a unique ID using UUID v4
           const uniqueId = uuidv4();
-  
+
           const animationDuration = ANIMATION_MOVING_TIME; // duration of the movement in milliseconds
-  
+
           const newMovingDeployments = {
             id: uniqueId, // Use the UUID as a unique identifier
             startPos: startPosition,
@@ -251,25 +302,9 @@ const Demo = () => {
             iconSource: iconSource,
             changingIconSource: changingIconSource,
             startTime: Date.now(), // Track start time for the animation
-            elapsedTime: 0
+            elapsedTime: 0,
             //endTime: Date.now() + animationDuration, // Calculate the end time
           };
-  
-          /* setMovingDeployments((prevDeployments) => {
-            // Add the new deployment to the state
-            const updatedDeployments = [...prevDeployments, newMovingDeployments];
-  
-            // Set timeout to remove the animation from state after its duration
-            setTimeout(() => {
-              // Remove the animation once the movement duration ends
-              setMovingDeployments((currentDeployments) => 
-                currentDeployments.filter(dep => dep.id !== uniqueId)
-              );
-              resolve(); // Resolve once the animation is complete
-            }, animationDuration);
-  
-            return updatedDeployments;
-          }); */
 
           setMovingDeployments((prev) => [...prev, newMovingDeployments]);
 
@@ -278,6 +313,14 @@ const Demo = () => {
           const interval = 50; // check every 50ms
 
           const timer = setInterval(() => {
+            if (sessionId && animationSessionRef.current !== sessionId) {
+              clearInterval(timer);
+              setMovingDeployments((current) =>
+                current.filter((dep) => dep.id !== uniqueId)
+              );
+              resolve();
+              return;
+            }
             if (!pausedRef.current) {
               elapsed += interval;
             }
@@ -294,21 +337,18 @@ const Demo = () => {
         }
       });
     },
-    [getDeviceReference]
+    [getDeviceReference, movingDeployments]
   );
 
   // Handle animation of icon movements
   const continousAnimationRun = async () => {
     const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-    if (demoRunMethod === WITH_LIQUID_AI) {
-      moveCodeAnimation(ENERGY_COMPANY, INTELLIGENT_CONTROL, SpotPriceDataIcon);
-    } else {
-
-        // Randomly pick an icon from each set
-        const randomIconsFromWM = DATA_ICONS_MOVING_FROM_WM[Math.floor(Math.random() * DATA_ICONS_MOVING_FROM_WM.length)];
-        const randomIconsFromFreezer = DATA_ICONS_MOVING_FROM_FREEZER[Math.floor(Math.random() * DATA_ICONS_MOVING_FROM_FREEZER.length)];
-        const randomIconsFromEV = DATA_ICONS_MOVING_FROM_EV[Math.floor(Math.random() * DATA_ICONS_MOVING_FROM_EV.length)];
+    if (demoRunMethod === WITHOUT_LIQUID_AI) {
+      // Randomly pick an icon from each set
+      const randomIconsFromWM = DATA_ICONS_MOVING_FROM_WM[Math.floor(Math.random() * DATA_ICONS_MOVING_FROM_WM.length)];
+      const randomIconsFromFreezer = DATA_ICONS_MOVING_FROM_FREEZER[Math.floor(Math.random() * DATA_ICONS_MOVING_FROM_FREEZER.length)];
+      const randomIconsFromEV = DATA_ICONS_MOVING_FROM_EV[Math.floor(Math.random() * DATA_ICONS_MOVING_FROM_EV.length)];
 
       // Animation for the whole process while querying the energy data from the devices to external service providers
       moveCodeAnimation(
@@ -344,6 +384,189 @@ const Demo = () => {
     }
   };
 
+  // Fetch the device data from the API
+  const fetchDeviceData = async () => {
+    try {
+      const devicesFromAPI = await fetchData("/file/device");
+      const deviceIdMap = new Map(
+        devicesFromAPI.map((device) => [device.name, device._id])
+      );
+      localStorage.setItem(
+        "deviceIdMap",
+        JSON.stringify(Array.from(deviceIdMap.entries()))
+      );
+      const devicesMap = new Map();
+      for (const [deviceName, deviceId] of deviceIdMap.entries()) {
+        devicesMap.set(deviceName, {
+          name: deviceName,
+          deviceId: deviceId,
+          lastUpdateTime: null,
+          deploymentId: null,
+          existingModuleId: null,
+          existingModuleName: null,
+          isModuleActive: false,
+          isActive: false,
+        });
+      }
+      localStorage.setItem("devices", JSON.stringify(Array.from(devicesMap.values())));
+      if (voiceEnabled)
+        speak("Available supervisors have been detected and attached to devices.");
+    } catch (error) {
+      console.error("Error fetching device data:", error);
+    }
+  };
+
+  // Update the deployment details for the device
+  const updateDeployment = useCallback(async (device, deviceName) => {
+    const deployments = JSON.parse(localStorage.getItem("deployments") || "[]");
+    const deviceSpecificDeployment = deployments.find((item) =>
+      item.sequence.some((seq) => seq.device === device.deviceId)
+    );
+    if (deviceSpecificDeployment) {
+      // Accessing the modules inside fullManifest using the deviceId
+      const deviceManifest = deviceSpecificDeployment.fullManifest[device.deviceId];
+      device.deploymentId = deviceSpecificDeployment._id;
+      device.existingModuleId = deviceManifest.modules[0].id;
+      device.existingModuleName = deviceManifest.modules[0].name;
+      device.isModuleActive = true;
+
+      const demoDevice = deviceStatus.find((item) =>
+        item.supervisorName == deviceName
+      );
+      const deviceRef = getDeviceReference(demoDevice.deviceName);
+      if (deviceRef.current && device.isModuleActive) {
+        moveCodeAnimation(ORCHESTRATOR, demoDevice.deviceName, WebAssembly_Icon);
+        await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
+        if (voiceEnabledRef.current)
+          speak(`${device.existingModuleName} module has been deployed on ${demoDevice.deviceName} device`);
+      }
+    } else {
+      device.deploymentId = null;
+      device.existingModuleId = null;
+      device.existingModuleName = null;
+      device.isModuleActive = false;
+    }
+  },
+    [getDeviceReference]
+  );
+
+  // Collect logs in a queue and process them in batch
+  const processLogsQueue = useCallback(async () => {
+    const logs = logsQueueRef.current;
+    if (logs.length === 0) return;
+
+    // Get existing devices from localStorage
+    let existingDevices = JSON.parse(localStorage.getItem("devices")) || [];
+    const deviceMap = new Map(existingDevices.map((d) => [d.name, d]));
+
+    // Get deviceIdMap from localStorage (or API)
+    const deviceIdMap = JSON.parse(localStorage.getItem("deviceIdMap")) || [];
+
+    const now = Date.now();
+    const expiryTime = parseInt(DEVICE_CHECK_INTERVAL) + 2000; // ms
+
+    // Process logs and update devices accordingly
+    for (const log of logs) {
+      const logReceivedTime = new Date(parseInt(log.dateReceived.$date.$numberLong)).getTime();
+      if (log.funcName.includes("thingi_health") && log.loglevel === "INFO") {
+        // Update lastUpdateTime and mark as active
+        const existing = deviceMap.get(log.deviceName);
+        deviceMap.set(log.deviceName, {
+          ...existing,
+          lastUpdateTime: logReceivedTime,
+          isActive: true,
+        });
+      } /*else if (log.funcName === "deployment_create") {
+        updateDeployment(
+          deviceMap.get(log.deviceName),
+          log.deviceName
+        );
+      } else if (log.funcName === "do_wasm_work") {
+        if (log.message && log.message.startsWith("Execution result:")) {
+          const demoDevice = deviceStatus.find((item) =>
+            item.supervisorName == log.deviceName
+          );
+          moveCodeAnimation(ORCHESTRATOR, demoDevice.deviceName, ScheduleIcon);
+          await pauseAwareDelay(ANIMATION_MOVING_TIME, pausedRef);
+          if (voiceEnabledRef.current)
+            speak(`${log.module_name} module is successfully executed on device ${demoDevice.deviceName}`);
+        }
+      }*/
+    }
+
+    // Optional: filter out stale devices based on expiryTime
+    const updatedDevices = Array.from(deviceMap.values()).map((device) => {
+      const isStillActive = now - device.lastUpdateTime < expiryTime;
+      return {
+        ...device,
+        isActive: device.isActive && isStillActive,
+      };
+    });
+
+    // Save updated list back to localStorage
+    localStorage.setItem("devices", JSON.stringify(updatedDevices));
+
+    // Clear the queue
+    logsQueueRef.current = [];
+  }, [voiceEnabled]);
+
+  const getInitialDeviceHealth = useCallback(async () => {
+    try {
+      const currentDate = new Date();
+      // Subtract 3 minutes from the current date and time because health check is done every 3 minutes from the orchestrator
+      currentDate.setTime(
+        currentDate.getTime() - parseInt(DEVICE_CHECK_INTERVAL)
+      );
+      // Convert to ISO 8601 format (e.g., "2024-07-24T13:21:35.776Z")
+      const formattedDate = currentDate.toISOString();
+      const logs = await fetchData("/device/logs?after=" + formattedDate);
+      logs.forEach((log) => logsQueueRef.current.push(log));
+      setTimeout(processLogsQueue, 500);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
+  }, [processLogsQueue]);
+
+  useEffect(() => {
+    // Function to fetch and save deployments
+    const fetchDeployments = async () => {
+      try {
+        const deployments = await fetchData("/file/manifest");
+        localStorage.setItem("deployments", JSON.stringify(deployments));
+      } catch (error) {
+        console.error("Error fetching deployments:", error);
+      }
+    };
+
+    const intervalId = setInterval(fetchDeployments, 5 * 60 * 1000); // change 5 to 10 for 10 minutes
+
+    if (!hasRun.current) {
+      fetchDeviceData();
+      getInitialDeviceHealth();
+      socket.addEventListener("message", (event) => {
+        try {
+          //console.log("📩 Message:", JSON.parse(event.data));
+          logsQueueRef.current.push(JSON.parse(event.data));
+          setLatestSocketMsg(JSON.parse(event.data));
+          setTimeout(processLogsQueue, 500);
+        } catch {
+          console.log("📩 Message from Rust server:", event.data);
+        }
+      });
+      hasRun.current = true;
+      fetchDeployments();
+    }
+
+    return () => {
+      clearInterval(intervalId);
+      //socket.removeEventListener("message", handleMessage);
+    }
+  }, []);
+
+  useEffect(() => {
+    voiceEnabledRef.current = voiceEnabled;
+  }, [voiceEnabled]);
+
   useEffect(() => {
     pausedRef.current = paused;
     // This logic will draw a line between the orchestrator and the equipment
@@ -352,16 +575,41 @@ const Demo = () => {
       point_A_name,
       point_B_ref,
       point_B_name,
-      lineColor = "green"
+      lineColor = "green",
+      zIndexParam = 1
     ) => {
       if (point_A_ref.current && point_B_ref.current) {
+        const lineElement = document.getElementById(
+          `${point_A_name}-${point_B_name}-line`
+        );
+
+        if (!lineElement) return;
+
         const point_A_bounds = point_A_ref.current.getBoundingClientRect();
         const point_B_bounds = point_B_ref.current.getBoundingClientRect();
 
-        const x1 = point_A_bounds.left + point_A_bounds.width / 2;
-        const y1 = point_A_bounds.top + point_A_bounds.height / 2;
-        const x2 = point_B_bounds.left + point_B_bounds.width / 2;
-        const y2 = point_B_bounds.top + point_B_bounds.height / 2;
+
+        let offsetX = 0;
+        let offsetY = 0;
+        if (lineElement.offsetParent) {
+          const parentRect = lineElement.offsetParent.getBoundingClientRect();
+          offsetX = parentRect.left;
+          offsetY = parentRect.top;
+        }
+
+        // For electric cars, use top-center as starting point so all lines share the same origin
+        let x1, y1;
+        if (point_A_name === "electricCar1" || point_A_name === "electricCar2") {
+          x1 = point_A_bounds.left + point_A_bounds.width / 2 - offsetX; // center horizontally
+          y1 = point_A_bounds.top - offsetY; // top edge
+        } else {
+          x1 = point_A_bounds.left + point_A_bounds.width / 2 - offsetX;
+          y1 = point_A_bounds.top + point_A_bounds.height / 2 - offsetY;
+        }
+
+        const x2 = point_B_bounds.left + point_B_bounds.width / 2 - offsetX;
+        const y2 = point_B_bounds.top + point_B_bounds.height / 2 - offsetY;
+
 
         const length = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
         const angle = Math.atan2(y2 - y1, x2 - x1) * (180 / Math.PI);
@@ -374,17 +622,32 @@ const Demo = () => {
           transform: `rotate(${angle}deg)`,
           transformOrigin: "0 0",
           borderTop: `2px dashed ${lineColor}`,
-          zIndex: 1,
+          zIndex: zIndexParam,
         };
 
-        const lineElement = document.getElementById(
-          `${point_A_name}-${point_B_name}-line`
-        );
         Object.assign(lineElement.style, lineStyle);
       }
     };
 
     if (demoRunMethod === WITH_LIQUID_AI) {
+      // Draw lines immediately when car animations complete
+      if (electricCar1.provideEnergy) {
+        if (electricCar1.lineToFreezer) {
+          drawLines(electricCar1Ref, "electricCar1", freezerRef, FREEZER, "transparent", 5);
+        }
+        if (electricCar1.lineToWashingMachine) {
+          drawLines(electricCar1Ref, "electricCar1", washingMachineRef, WASHING_MACHINE, "transparent", 5);
+        }
+      }
+      if (electricCar2.provideEnergy) {
+        if (electricCar2.lineToFreezer) {
+          drawLines(electricCar2Ref, "electricCar2", freezerRef, FREEZER, "transparent", 5);
+        }
+        if (electricCar2.lineToWashingMachine) {
+          drawLines(electricCar2Ref, "electricCar2", washingMachineRef, WASHING_MACHINE, "transparent", 5);
+        }
+      }
+
       drawLines(
         orchestratorRef,
         ORCHESTRATOR,
@@ -404,12 +667,6 @@ const Demo = () => {
         washingMachineRef,
         WASHING_MACHINE
       );
-      drawLines(
-        orchestratorRef,
-        ORCHESTRATOR,
-        serviceProviderRef1,
-        SERVICE_PROVIDER1
-      );
       drawLines(orchestratorRef, ORCHESTRATOR, evChargerRef, EV_CHARGER);
       drawLines(
         energyCompanyRef,
@@ -423,7 +680,7 @@ const Demo = () => {
         intelligentControlRef,
         INTELLIGENT_CONTROL
       );
-      drawLines(orchestratorRef, ORCHESTRATOR, storageRef, STORAGE);
+      //drawLines(orchestratorRef, ORCHESTRATOR, storageRef, STORAGE);
 
       window.addEventListener("resize", () =>
         drawLines(
@@ -479,9 +736,9 @@ const Demo = () => {
           INTELLIGENT_CONTROL
         )
       );
-      window.addEventListener("resize", () =>
-        drawLines(orchestratorRef, ORCHESTRATOR, storageRef, STORAGE)
-      );
+      /*  window.addEventListener("resize", () =>
+         drawLines(orchestratorRef, ORCHESTRATOR, storageRef, STORAGE)
+       ); */
     } else {
       drawLines(serviceProviderRef1, SERVICE_PROVIDER1, freezerRef, FREEZER);
       drawLines(
@@ -496,7 +753,7 @@ const Demo = () => {
         evChargerRef,
         EV_CHARGER
       );
-      if(hackerVisibility) {
+      if (hackerVisibility) {
         drawLines(serviceProviderRef1, SERVICE_PROVIDER1, hackerRef, HACKER, "red");
         drawLines(serviceProviderRef2, SERVICE_PROVIDER2, hackerRef, HACKER, "red");
       }
@@ -519,7 +776,7 @@ const Demo = () => {
           EV_CHARGER
         )
       );
-      if(hackerVisibility) {
+      if (hackerVisibility) {
         window.addEventListener("resize", () =>
           drawLines(serviceProviderRef1, SERVICE_PROVIDER1, hackerRef, HACKER, "red")
         );
@@ -585,9 +842,23 @@ const Demo = () => {
             INTELLIGENT_CONTROL
           )
         );
-        window.removeEventListener("resize", () =>
+        window.removeEventListener("resize", () => {
+          if (electricCar1.provideEnergy) {
+            setTimeout(() => {
+              drawLines(electricCar1Ref, "electricCar1", freezerRef, FREEZER, "transparent", 5);
+              drawLines(electricCar1Ref, "electricCar1", washingMachineRef, WASHING_MACHINE, "transparent", 5);
+            }, 3000);
+          }
+          if (electricCar2.provideEnergy) {
+            setTimeout(() => {
+              drawLines(electricCar2Ref, "electricCar2", freezerRef, FREEZER, "transparent", 5);
+              drawLines(electricCar2Ref, "electricCar2", washingMachineRef, WASHING_MACHINE, "transparent", 5);
+            }, 3000);
+          }
+        });
+        /* window.removeEventListener("resize", () =>
           drawLines(orchestratorRef, ORCHESTRATOR, storageRef, STORAGE)
-        );
+        ); */
       } else {
         window.removeEventListener("resize", () =>
           drawLines(
@@ -608,7 +879,7 @@ const Demo = () => {
             EV_CHARGER
           )
         );
-        if(hackerVisibility) {
+        if (hackerVisibility) {
           window.removeEventListener("resize", () =>
             drawLines(serviceProviderRef1, SERVICE_PROVIDER1, hackerRef, HACKER, "red")
           );
@@ -618,7 +889,31 @@ const Demo = () => {
         }
       }
     };
-  }, [demoRunMethod, hackerVisibility, paused]);
+  }, [demoRunMethod, hackerVisibility, paused, isMainViewActive, electricCar1.provideEnergy, electricCar2.provideEnergy]);
+
+  // Track when EV1 animation completes (3 seconds after plugging in)
+  /* useEffect(() => {
+    if (ev1PluggedIn) {
+      const timer = setTimeout(() => {
+        setEv1Animation(true);
+      }, 3000); // Match car animation duration
+      return () => clearTimeout(timer);
+    } else {
+      setEv1Animation(false);
+    }
+  }, [ev1PluggedIn]); */
+
+  // Track when EV2 animation completes (3 seconds after plugging in)
+  /*  useEffect(() => {
+     if (ev2PluggedIn) {
+       const timer = setTimeout(() => {
+         setev2Animation(true);
+       }, 3000); // Match car animation duration
+       return () => clearTimeout(timer);
+     } else {
+       setev2Animation(false);
+     }
+   }, [ev2PluggedIn]); */
 
   return (
     <div>
@@ -640,176 +935,292 @@ const Demo = () => {
         >
           Energy Demo
         </Typography>
+        <Tooltip title={isMainViewActive ? "Switch to Architecture View" : "Switch to UI View"}>
+          <IconButton
+            onClick={() => setisMainViewActive((prev) => !prev)}
+            sx={{
+              position: "absolute",
+              top: 20,
+              right: 20,
+              zIndex: 1000,
+              backgroundColor: "#f5f5f5",
+              boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
+              "&:hover": { backgroundColor: "#e0e0e0" },
+            }}
+          >
+            {isMainViewActive ? <AccountTreeIcon /> : <HomeIcon />}
+          </IconButton>
+        </Tooltip>
         <Grid
           container
           spacing={4}
           columns={5}
           style={{ paddingRight: "3vh", paddingLeft: "3vh" }}
         >
-          {demoRunMethod === WITH_LIQUID_AI && (
+          {isMainViewActive ? (
             <>
-              <div id="orchestrator-freezer-line" />
-              <div id="orchestrator-washingMachine-line" />
-              <div id="orchestrator-intelligentControl-line" />
-              <div id="energyCompany-intelligentControl-line" />
-              <div id="flexibilityService-intelligentControl-line" />
-              <div id="userControl-intelligentControl-line" />
-              <div id="orchestrator-evCharger-line" />
-              <div id="orchestrator-storage-line" />
-            </>
-          )}
-          {demoRunMethod === WITHOUT_LIQUID_AI && (
-            <>
-              <div id="serviceProvider1-freezer-line" />
-              <div id="serviceProvider1-washingMachine-line" />
-              <div id="serviceProvider2-evCharger-line" />
-              <AnimatePresence initial={false}>
-                {hackerVisibility ? (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{
-                      opacity: { duration: 1, ease: "easeInOut" },
+              {demoRunMethod === WITH_LIQUID_AI && (
+                <>
+                  <div id="orchestrator-freezer-line" />
+                  <div id="orchestrator-washingMachine-line" />
+                  <div id="orchestrator-intelligentControl-line" />
+                  <div id="energyCompany-intelligentControl-line" />
+                  <div id="flexibilityService-intelligentControl-line" />
+                  <div id="userControl-intelligentControl-line" />
+                  <div id="orchestrator-evCharger-line" />
+                  {/* Add line from ElectricCar2 to devices - appears after car animation */}
+                  {electricCar2.provideEnergy && electricCar2.lineToFreezer &&
+                    <>
+                      <div
+                        id="electricCar2-freezer-line"
+                        style={{
+                          position: "absolute",
+                          top: "50%",
+                          left: "10%",
+                          width: "40%",
+                          height: "40px",
+                          overflow: "visible",
+                          zIndex: 1,
+                        }}
+                      >
+                        <GradientArrowLine evPluggedIn={electricCar2.provideEnergy} />
+                      </div>
+                    </>
+                  }
+                  {electricCar2.provideEnergy && electricCar2.lineToWashingMachine &&
+                    <>
+                      <div
+                        id="electricCar2-washingMachine-line"
+                        style={{
+                          position: "absolute",
+                          top: "50%",
+                          left: "10%",
+                          width: "40%",
+                          height: "40px",
+                          overflow: "visible",
+                          zIndex: 1,
+                        }}
+                      >
+                        <GradientArrowLine evPluggedIn={electricCar2.provideEnergy} />
+                      </div>
+                    </>
+                  }
+                  {/* Add line from ElectricCar1 to devices - appears after car animation */}
+                  {electricCar1.provideEnergy && electricCar1.lineToWashingMachine &&
+                    <>
+                      <div
+                        id="electricCar1-washingMachine-line"
+                        style={{
+                          position: "absolute",
+                          top: "30%",
+                          left: "10%",
+                          width: "80%",
+                          height: "120px",
+                          overflow: "visible",
+                          zIndex: 1,
+                        }}
+                      >
+                        <GradientArrowLine evPluggedIn={electricCar1.provideEnergy} />
+                      </div>
+                    </>
+                  }
+                  {electricCar1.provideEnergy && electricCar1.lineToFreezer &&
+                    <>
+                      <div
+                        id="electricCar1-freezer-line"
+                        style={{
+                          position: "absolute",
+                          top: "30%",
+                          left: "10%",
+                          width: "80%",
+                          height: "120px",
+                          overflow: "visible",
+                          zIndex: 1,
+                        }}
+                      >
+                        <GradientArrowLine evPluggedIn={electricCar1.provideEnergy} />
+                      </div>
+                    </>
+                  }
+                </>
+              )}
+              {demoRunMethod === WITHOUT_LIQUID_AI && (
+                <>
+                  <div id="serviceProvider1-freezer-line" />
+                  <div id="serviceProvider1-washingMachine-line" />
+                  <div id="serviceProvider2-evCharger-line" />
+                  <AnimatePresence initial={false}>
+                    {hackerVisibility ? (
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{
+                          opacity: { duration: 1, ease: "easeInOut" },
+                        }}
+                      >
+                        <div id="serviceProvider1-hacker-line" />
+                        <div id="serviceProvider2-hacker-line" />
+                      </motion.div>
+                    ) : null}
+                  </AnimatePresence>
+                </>
+              )}
+              {movingDeployments
+                .map((deployment) => (
+                  <MovingIcon key={deployment.id} deployment={deployment} paused={paused} />
+                ))}
+              <Grid item xs={12} sm={3} minWidth={"77vh"}>
+                <Box>
+                  <div
+                    style={{
+                      position: "relative",
+                      marginTop: "15px",
+                      paddingBottom: "83%",
+                      width: "100%",
+                      height: 0,
                     }}
                   >
-                    <div id="serviceProvider1-hacker-line" />
-                    <div id="serviceProvider2-hacker-line" />
-                  </motion.div>
-                ) : null}
-              </AnimatePresence>
-            </>
-          )}
-          {movingDeployments.map((deployment) => (
-            <MovingIcon key={deployment.id} deployment={deployment} paused={paused} />
-          ))}
-          {demoRunMethod === WITH_LIQUID_AI &&
-            activeDeployments.map((deployment, index) => (
-              <motion.div
-                key={index}
-                initial={{
-                  x: deployment.wasmModuleIconPosition.x - 25,
-                  y: deployment.wasmModuleIconPosition.y - 25,
-                  width: "50px", // Set initial width
-                  height: "50px", // Set initial height
-                }}
-                animate={{
-                  x: deployment.wasmModuleIconPosition.x - 25,
-                  y: deployment.wasmModuleIconPosition.y - 25,
-                  width: "20px", // Animate to smaller width
-                  height: "20px", // Animate to smaller height
-                }}
-                transition={{ type: "spring", duration: 5 }}
-                style={{
-                  position: "absolute",
-                  zIndex: 3,
-                }}
-              >
-                <img
-                  src={WebAssembly_Icon}
-                  alt="Moving object"
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                  }}
-                />
-              </motion.div>
-            ))}
-          <Grid item xs={12} sm={3} minWidth={"77vh"}>
-            <Box>
-              <div
-                style={{
-                  position: "relative",
-                  marginTop: "15px",
-                  paddingBottom: "83%",
-                  width: "100%",
-                  height: 0,
-                }}
-              >
-                <img
-                  id="house_warning_border"
-                  src={House_Warning_Border}
-                  alt="warning"
-                  className="house_warning_border"
-                  style={{
-                    position: "absolute",
-                    left: "-1%",
-                    top: "-1%",
-                    width: "102%",
-                    height: "85.5%",
-                    opacity: warningBorderVisible ? 1 : 0,
-                    transition: "opacity 0.25s",
-                  }}
-                />
-                <img
-                  src={backgroundImage}
-                  alt="Home yard"
-                  className="background-image"
-                  style={{
-                    position: "absolute",
-                    top: 0,
-                    left: 0,
-                    width: "100%",
-                    height: "83%",
-                    objectFit: "cover",
-                    border: "1px solid #DCDCDC",
-                    borderRadius: "5px",
-                    boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.2)",
-                  }}
-                />
-                <div
-                  className="overlay-content"
-                  style={{
-                    position: "absolute",
-                    top: 0,
-                    left: 0,
-                    width: "100%",
-                    height: "100%",
-                    display: "flex",
-                    flexDirection: "column",
-                    justifyContent: "space-between",
-                  }}
-                >
-                  <img
-                    src={controlHub}
-                    alt="controlHub"
-                    className="controlHub-image"
-                    style={{
-                      position: "absolute",
-                      top: "54%",
-                      left: "17%",
-                      width: "77%",
-                      height: "10.655%",
-                    }}
-                  />
-                  <img
-                    src={roadImage}
-                    alt="Road"
-                    className="road-image"
-                    style={{
-                      position: "absolute",
-                      top: "54%",
-                      left: "47%",
-                      width: "47.5%",
-                      height: "29.2%",
-                    }}
-                  />
-                  {demoRunMethod === WITH_LIQUID_AI && (
                     <img
-                      src={Orchestrator}
-                      alt="Orchestrator"
-                      ref={orchestratorRef}
+                      id="house_warning_border"
+                      src={House_Warning_Border}
+                      alt="warning"
+                      className="house_warning_border"
                       style={{
                         position: "absolute",
-                        top: "57%",
-                        left: "45%",
-                        width: "7%",
-                        height: "7%",
-                        zIndex: 2,
+                        left: "-1%",
+                        top: "-1%",
+                        width: "102%",
+                        height: "85.5%",
+                        opacity: warningBorderVisible ? 1 : 0,
+                        transition: "opacity 0.25s",
                       }}
                     />
-                  )}
-                  {demoRunMethod === WITH_LIQUID_AI && (
+                    <img
+                      src={backgroundImage}
+                      alt="Home yard"
+                      className="background-image"
+                      style={{
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                        width: "100%",
+                        height: "83%",
+                        objectFit: "cover",
+                        border: "1px solid #DCDCDC",
+                        borderRadius: "5px",
+                        boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.2)",
+                      }}
+                    />
+                    <div
+                      className="overlay-content"
+                      style={{
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                        width: "100%",
+                        height: "100%",
+                        display: "flex",
+                        flexDirection: "column",
+                        justifyContent: "space-between",
+                      }}
+                    >
+                      <img
+                        src={controlHub}
+                        alt="controlHub"
+                        className="controlHub-image"
+                        style={{
+                          position: "absolute",
+                          top: "54%",
+                          left: "17%",
+                          width: "77%",
+                          height: "10.655%",
+                        }}
+                      />
+                      <img
+                        src={roadImage}
+                        alt="Road"
+                        className="road-image"
+                        style={{
+                          position: "absolute",
+                          top: "54%",
+                          left: "47%",
+                          width: "47.5%",
+                          height: "29.2%",
+                        }}
+                      />
+                      {demoRunMethod === WITH_LIQUID_AI && (
+                        <div
+                          style={{
+                            position: "absolute",
+                            top: "57%",
+                            left: "45%",
+                            width: "7%",
+                            height: "7%",
+                            zIndex: 2,
+                          }}
+                          ref={orchestratorRef}
+                        >
+                          <img
+                            src={Orchestrator}
+                            alt="Orchestrator"
+                            style={{
+                              width: "100%",
+                              height: "100%",
+                            }}
+                          />
+                          {scheduleProcessing && (
+                            <>
+                              <motion.div
+                                ref={hourglassRef}
+                                initial={{ rotate: 0 }}
+                                animate={{ rotate: 360 }}
+                                transition={{ repeat: Infinity, duration: 4, ease: "linear" }}
+                                style={{
+                                  position: "absolute",
+                                  padding: "10px",
+                                  bottom: "-18%",
+                                  right: "-20%",
+                                  width: "34%",
+                                  height: "34%",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  background: "rgba(166, 221, 175, 0.85)",
+                                  borderRadius: "50%",
+                                  boxShadow: "0 2px 6px rgba(0,0,0,0.3)",
+                                  cursor: "pointer"
+                                }}
+                                onClick={(e) => handlePopOverClick(e, "orchestrator")}
+                              >
+                                <HourglassFullIcon style={{ fontSize: "1.0rem", color: "#167356" }} />
+                              </motion.div>
+                              <Popover
+                                open={activePopover === "orchestrator"}
+                                anchorEl={anchorEl}
+                                onClose={handlePopOverClose}
+                                anchorOrigin={{
+                                  vertical: "bottom",
+                                  horizontal: "center",
+                                }}
+                                transformOrigin={{
+                                  vertical: "top",
+                                  horizontal: "center",
+                                }}
+                              >
+                                <Box p={2} sx={{ maxWidth: 250 }}>
+                                  <strong>Orchestrator</strong>
+                                  <p>
+                                    Orchestrator gets schedule information from intelligence control.<br />
+                                    Then, it forwards the schedule times to the concerned devices.
+                                  </p>
+                                </Box>
+                              </Popover>
+                            </>
+                          )}
+                        </div>
+                      )}
+                      {/*  {demoRunMethod === WITH_LIQUID_AI && (
                     <img
                       src={Storage}
                       alt="Storage"
@@ -823,149 +1234,485 @@ const Demo = () => {
                         zIndex: 2,
                       }}
                     />
-                  )}
-                  {demoRunMethod === WITH_LIQUID_AI && (
-                    <img
-                      src={IntelligentControlIcon}
-                      alt="IntelligentControl"
-                      ref={intelligentControlRef}
-                      style={{
-                        position: "absolute",
-                        top: "57%",
-                        left: "25%",
-                        width: "6%",
-                        height: "7%",
-                        zIndex: 2,
-                      }}
-                    />
-                  )}
-                  {demoRunMethod === WITH_LIQUID_AI && (
-                    <UserControlUI ref={userControlRef} />
-                  )}
-                  {demoRunMethod === WITH_LIQUID_AI && (
-                    <img
-                      src={Energy_Company_Icon}
-                      alt="energyCompany"
-                      ref={energyCompanyRef}
-                      style={{
-                        position: "absolute",
-                        top: "90%",
-                        left: "10.2%",
-                        width: "15%",
-                        height: "10%",
-                        zIndex: 2,
-                      }}
-                    />
-                  )}
-                  {demoRunMethod === WITH_LIQUID_AI && (
-                    <img
-                      src={FlexibilityServiceIcon}
-                      alt="FlexibilityServiceIcon"
-                      ref={flexibilityServiceRef}
-                      style={{
-                        position: "absolute",
-                        top: "90%",
-                        left: "40.2%",
-                        width: "10%",
-                        height: "10%",
-                        zIndex: 2,
-                      }}
-                    />
-                  )}
-                  {demoRunMethod === WITHOUT_LIQUID_AI && (
-                    <>
-                      <img
-                        src={Service_Provider1}
-                        alt="Service_Provider1"
-                        ref={serviceProviderRef1}
-                        style={{
-                          position: "absolute",
-                          top: "90%",
-                          left: "21.2%",
-                          width: "10%",
-                          zIndex: 2,
-                        }}
-                      />
-                      <img
-                        src={Service_Provider2}
-                        alt="Service_Provider2"
-                        ref={serviceProviderRef2}
-                        style={{
-                          position: "absolute",
-                          top: "90%",
-                          left: "51.2%",
-                          width: "10%",
-                          zIndex: 2,
-                        }}
-                      />
-                      <AnimatePresence initial={false}>
-                        {hackerVisibility ? (
-                          <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            transition={{
-                              opacity: { duration: 1, ease: "easeInOut" },
+                  )} */}
+                      {demoRunMethod === WITH_LIQUID_AI && (
+                        <div
+                          style={{
+                            position: "absolute",
+                            top: "57%",
+                            left: "25%",
+                            width: "6%",
+                            height: "7%",
+                            zIndex: 2,
+                          }}
+                          ref={intelligentControlRef}
+                        >
+                          <img
+                            src={IntelligentControlIcon}
+                            alt="IntelligentControl"
+                            style={{
+                              width: "100%",
+                              height: "100%"
+                            }}
+                          />
+                          {scheduleProcessing && (
+                            <>
+                              <motion.div
+                                initial={{ rotate: 0 }}
+                                animate={{ rotate: 360 }}
+                                transition={{ repeat: Infinity, duration: 4, ease: "linear" }}
+                                style={{
+                                  position: "absolute",
+                                  padding: "10px",
+                                  top: "-10%",
+                                  right: "-22%",
+                                  width: "34%",
+                                  height: "34%",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  background: "rgba(166, 221, 175, 0.85)",
+                                  borderRadius: "50%",
+                                  boxShadow: "0 2px 6px rgba(0,0,0,0.3)",
+                                  cursor: "pointer"
+                                }}
+                                onClick={(e) => handlePopOverClick(e, "intelligence")}
+                              >
+                                <HourglassFullIcon style={{ fontSize: "1.0rem", color: "#167356" }} />
+                              </motion.div>
+                              <Popover
+                                open={activePopover === "intelligence"}
+                                anchorEl={anchorEl}
+                                onClose={handlePopOverClose}
+                                anchorOrigin={{
+                                  vertical: "bottom",
+                                  horizontal: "center",
+                                }}
+                                transformOrigin={{
+                                  vertical: "top",
+                                  horizontal: "center",
+                                }}
+                              >
+                                <Box p={2} sx={{ maxWidth: 250 }}>
+                                  <strong>Intelligence Control</strong>
+                                  <p>
+                                    Intelligence Control gets spot price information from spot price controller.<br />
+                                    It then sends the optimal electricity consumption times to the Orchestrator.
+                                  </p>
+                                </Box>
+                              </Popover>
+                            </>
+                          )}
+                        </div>
+                      )}
+                      {demoRunMethod === WITH_LIQUID_AI && (
+                        <UserControlUI ref={userControlRef} anchorPopOverEl={anchorEl} activePopover={activePopover} handlePopOverClick={handlePopOverClick} handlePopOverClose={handlePopOverClose} />
+                      )}
+                      {demoRunMethod === WITH_LIQUID_AI && (
+                        <div
+                          style={{
+                            position: "absolute",
+                            top: "90%",
+                            left: "10.2%",
+                            width: "15%",
+                            height: "10%",
+                            zIndex: 2,
+                          }}
+                          ref={energyCompanyRef}
+                        >
+                          <img
+                            src={Energy_Company_Icon}
+                            alt="energyCompany"
+                            style={{
+                              width: "100%",
+                              height: "100%"
+                            }}
+                          />
+                          {scheduleProcessing && ((new Date(demoTime).getHours() === 0 && new Date(demoTime).getMinutes() === 30)) && (
+                            <>
+                              <motion.div
+                                initial={{ rotate: 0 }}
+                                animate={{ rotate: 360 }}
+                                transition={{ repeat: Infinity, duration: 4, ease: "linear" }}
+                                style={{
+                                  position: "absolute",
+                                  padding: "10px",
+                                  bottom: "-4%",
+                                  right: "-4%",
+                                  width: "18%",
+                                  height: "30%",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  background: "rgba(166, 221, 175, 0.85)",
+                                  borderRadius: "50%",
+                                  boxShadow: "0 2px 6px rgba(0,0,0,0.3)",
+                                  cursor: "pointer"
+                                }}
+                                onClick={(e) => handlePopOverClick(e, "energy")}
+                              >
+                                <HourglassFullIcon style={{ fontSize: "1.0rem", color: "#167356" }} />
+                              </motion.div>
+                              <Popover
+                                open={activePopover === "energy"}
+                                anchorEl={anchorEl}
+                                onClose={handlePopOverClose}
+                                anchorOrigin={{
+                                  vertical: "bottom",
+                                  horizontal: "center",
+                                }}
+                                transformOrigin={{
+                                  vertical: "top",
+                                  horizontal: "center",
+                                }}
+                              >
+                                <Box p={2} sx={{ maxWidth: 250 }}>
+                                  <strong>Energy Provider</strong>
+                                  <p>
+                                    Energy provider sends the new price information (for the current hour) to Intelligence control.
+                                  </p>
+                                </Box>
+                              </Popover>
+                            </>
+                          )}
+                        </div>
+                      )}
+                      {demoRunMethod === WITH_LIQUID_AI && (
+                        <div
+                          style={{
+                            position: "absolute",
+                            top: "90%",
+                            left: "40.2%",
+                            width: "10%",
+                            height: "10%",
+                            zIndex: 2,
+                          }}
+                          ref={flexibilityServiceRef}
+                        >
+                          <img
+                            src={FlexibilityServiceIcon}
+                            alt="FlexibilityServiceIcon"
+                            style={{
+                              width: "100%",
+                              height: "100%"
+                            }}
+                          />
+                          {scheduleProcessing && (((new Date(demoTime).getHours() === 4 || new Date(demoTime).getHours() === 13 || new Date(demoTime).getHours() === 21) && new Date(demoTime).getMinutes() === 0)) && (
+                            <>
+                              <motion.div
+                                initial={{ rotate: 0 }}
+                                animate={{ rotate: 360 }}
+                                transition={{ repeat: Infinity, duration: 4, ease: "linear" }}
+                                style={{
+                                  position: "absolute",
+                                  padding: "10px",
+                                  top: "-8%",
+                                  right: "-10%",
+                                  width: "28%",
+                                  height: "30%",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  background: "rgba(166, 221, 175, 0.85)",
+                                  borderRadius: "50%",
+                                  boxShadow: "0 2px 6px rgba(0,0,0,0.3)",
+                                  cursor: "pointer"
+                                }}
+                                onClick={(e) => handlePopOverClick(e, "flexibility")}
+                              >
+                                <HourglassFullIcon style={{ fontSize: "1.0rem", color: "#167356" }} />
+                              </motion.div>
+                              <Popover
+                                open={activePopover === "flexibility"}
+                                anchorEl={anchorEl}
+                                onClose={handlePopOverClose}
+                                anchorOrigin={{
+                                  vertical: "bottom",
+                                  horizontal: "center",
+                                }}
+                                transformOrigin={{
+                                  vertical: "top",
+                                  horizontal: "center",
+                                }}
+                              >
+                                <Box p={2} sx={{ maxWidth: 250 }}>
+                                  <strong>Flexibility Service</strong>
+                                  <p>
+                                    The Flexibility Service compares the new price data with previous values and identifies any significant changes, such as price spikes. <br />
+                                    This information is then communicated to the Intelligence Control.
+                                  </p>
+                                </Box>
+                              </Popover>
+                            </>
+                          )}
+                        </div>
+                      )}
+                      {demoRunMethod === WITH_LIQUID_AI && rescheduleHistory.length > 0 && (
+                        <Accordion
+                          sx={{
+                            position: "absolute",
+                            top: "84%",
+                            left: "60.2%",
+                            width: "40%",
+                            zIndex: 2,
+                            backgroundColor: "#7bc7d1",
+                            border: "1px solid #ccc",
+                            borderRadius: "8px",
+                            boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
+                          }}
+                        >
+                          <AccordionSummary
+                            expandIcon={<ExpandMore sx={{ color: "white" }} />}
+                            sx={{
+                              backgroundColor: "#2b717a",
+                              color: "white",
+                              borderRadius: "8px 8px 0px 0px",
+
+
                             }}
                           >
-                            <img
-                              src={HackerIcon}
-                              alt="HackerIcon"
-                              ref={hackerRef}
-                              style={{
-                                position: "absolute",
-                                top: "85%",
-                                left: "90.2%",
-                                width: "10%",
-                                height: "15%",
-                                zIndex: 2,
+                            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                              <InfoOutlinedIcon fontSize="small" />
+                              <Typography variant="h6" sx={{ fontWeight: "bold", lineHeight: 1 }}>
+                                Device Schedule Info
+                              </Typography>
+                            </Box>
+                          </AccordionSummary>
+                          <AccordionDetails
+                            sx={{
+                              display: "flex",
+                              flexDirection: "column",
+                              padding: "10px",
+                            }}
+                          >
+                            <Typography variant="body1" sx={{ marginBottom: 2, textAlign: "justify" }}>
+                              During this demo (from 00:00 to 23:59), the system dynamically adjusts device
+                              schedules to optimize consumption. The recalculation process happens on
+                              the following times:
+                            </Typography>
+                            <Box
+                              sx={{
+                                flexGrow: 1,
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                position: "relative",
+                                padding: "8px",
                               }}
-                            />
-                          </motion.div>
-                        ) : null}
-                      </AnimatePresence>
+                            >
+                              {/* Left Arrow */}
+                              <IconButton
+                                onClick={() => setIndex((prev) => Math.max(prev - 1, 0))}
+                                disabled={index === 0}
+                                sx={{
+                                  position: "absolute",
+                                  left: "4px",
+                                  top: "20%",
+                                  height: "30px",
+                                  width: "30px",
+                                  zIndex: 3,
+                                  backgroundColor: "rgba(255,255,255,0.7)",
+                                }}
+                              >
+                                <ArrowBackIos sx={{ paddingLeft: "4px", fontSize: "18px", cursor: "pointer" }} />
+                              </IconButton>
+
+                              {/* Step Text */}
+                              <Box
+                                sx={{
+                                  position: "relative",
+                                  top: "-30px",
+                                  width: "100%",
+                                  height: "100%",
+                                  padding: "20px",
+                                  overflow: "hidden",
+                                }}
+                              >
+                                <Typography
+                                  variant="h6"
+                                  sx={{
+                                    fontWeight: "bold",
+                                    marginBottom: 2,
+                                    backgroundColor: "lightgrey",
+                                    textAlign: "center",
+                                  }}
+                                >
+                                  {rescheduleHistory[index] && rescheduleHistory[index].title}
+                                </Typography>
+                                <Typography variant="body1" sx={{ padding: "10px", textAlign: "center" }}>
+                                  {rescheduleHistory[index] && rescheduleHistory[index].content}
+                                </Typography>
+                              </Box>
+
+                              {/* Right Arrow */}
+                              <IconButton
+                                onClick={() => setIndex((prev) => Math.min(prev + 1, rescheduleHistory.length - 1))}
+                                disabled={index === rescheduleHistory.length - 1}
+                                sx={{
+                                  position: "absolute",
+                                  right: "4px",
+                                  top: "20%",
+                                  height: "30px",
+                                  width: "30px",
+                                  backgroundColor: "rgba(255,255,255,0.7)",
+                                }}
+                              >
+                                <ArrowForwardIos sx={{ fontSize: "14px", cursor: "pointer" }} />
+                              </IconButton>
+                            </Box>
+                          </AccordionDetails>
+                        </Accordion>
+                      )}
+                      {demoRunMethod === WITHOUT_LIQUID_AI && (
+                        <>
+                          <img
+                            src={Service_Provider1}
+                            alt="Service_Provider1"
+                            ref={serviceProviderRef1}
+                            style={{
+                              position: "absolute",
+                              top: "90%",
+                              left: "21.2%",
+                              width: "10%",
+                              zIndex: 2,
+                            }}
+                          />
+                          <img
+                            src={Service_Provider2}
+                            alt="Service_Provider2"
+                            ref={serviceProviderRef2}
+                            style={{
+                              position: "absolute",
+                              top: "90%",
+                              left: "51.2%",
+                              width: "10%",
+                              zIndex: 2,
+                            }}
+                          />
+                          <AnimatePresence initial={false}>
+                            {hackerVisibility ? (
+                              <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                transition={{
+                                  opacity: { duration: 1, ease: "easeInOut" },
+                                }}
+                              >
+                                <img
+                                  src={HackerIcon}
+                                  alt="HackerIcon"
+                                  ref={hackerRef}
+                                  style={{
+                                    position: "absolute",
+                                    top: "85%",
+                                    left: "90.2%",
+                                    width: "10%",
+                                    height: "15%",
+                                    zIndex: 2,
+                                  }}
+                                />
+                              </motion.div>
+                            ) : null}
+                          </AnimatePresence>
+                          <img
+                            src={CloudIcon}
+                            alt="CloudIcon"
+                            style={{
+                              position: "absolute",
+                              top: "87%",
+                              left: "11.2%",
+                              width: "65%",
+                              height: "19%",
+                              zIndex: 0,
+                            }}
+                          />
+                        </>
+                      )}
                       <img
-                        src={CloudIcon}
-                        alt="CloudIcon"
+                        src={houseImage}
+                        alt="House"
+                        className="house-image"
                         style={{
                           position: "absolute",
-                          top: "87%",
-                          left: "11.2%",
-                          width: "65%",
-                          height: "19%",
-                          zIndex: 0,
+                          top: "2%",
+                          left: "5%",
+                          width: "90%",
+                          height: "55%",
                         }}
                       />
-                    </>
-                  )}
-                  <img
-                    src={houseImage}
-                    alt="House"
-                    className="house-image"
-                    style={{
-                      position: "absolute",
-                      top: "2%",
-                      left: "5%",
-                      width: "90%",
-                      height: "55%",
-                    }}
-                  />
-                  <div>
-                    {/*Energy components inside the house*/}
-                    <Freezer ref={freezerRef} />
-                    <WashingMachine ref={washingMachineRef} />
-                    <ElectricCar1 ref={electricCar1Ref} />
-                    <ElectricCar2 ref={electricCar2Ref} />
-                    <Jacuzzi ref={jacuzziRef} />
-                    <EvCharger ref={evChargerRef} />
+
+                      {/* Blackout Overlay */}
+                      {blackoutActive && (
+                        <div
+                          style={{
+                            position: "absolute",
+                            top: "2%",
+                            left: "5%",
+                            width: "90%",
+                            height: "55%",
+                            backgroundColor: "rgba(0, 0, 0, 0.65)",
+                            zIndex: 3,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            animation: "fadeIn 0.5s ease-in",
+                          }}
+                        >
+                          <div style={{
+                            color: "white",
+                            fontSize: "24px",
+                            fontWeight: "bold",
+                            textShadow: "0 0 10px rgba(255,0,0,0.8)",
+                          }}>
+                            ⚠️ POWER OUTAGE
+                          </div>
+                        </div>
+                      )}
+
+                      <div>
+                        {/*Energy components inside the house*/}
+                        <Freezer ref={freezerRef} />
+                        <WashingMachine ref={washingMachineRef} />
+                        <ElectricCar1 ref={electricCar1Ref} isMainViewActive={isMainViewActive} />
+                        <ElectricCar2 ref={electricCar2Ref} isMainViewActive={isMainViewActive} />
+                        <Jacuzzi ref={jacuzziRef} />
+                        <EvCharger ref={evChargerRef} />
+                      </div>
+                    </div>
                   </div>
+                </Box>
+              </Grid>
+            </>
+          ) : (
+            <Grid item xs={12} sm={3} minWidth={"77vh"}>
+              <Box>
+                <div
+                  style={{
+                    position: "relative",
+                    marginTop: "15px",
+                    paddingBottom: "83%",
+                    width: "100%",
+                    height: 0,
+                  }}
+                >
+                  <ArchitectureView socketMsg={latestSocketMsg} isPaused={paused} />
+                  {/* <img
+                    src={ArchitectureImage}
+                    alt="Architecture View"
+                    style={{
+                      width: "100%",
+                      borderRadius: "4px",
+                      boxShadow: "0 2px 4px rgba(0,0,0,0.2)"
+                    }}
+                  /> */}
                 </div>
-              </div>
-            </Box>
-          </Grid>
-          <Grid item xs={2} style={{ position: "relative", marginTop: "15px"}}>
-            <Grid container spacing={1.5} columns={1}>
-              <Grid item xs={1} minWidth="50vh" style={{paddingLeft: "0px", marginBottom: "10px"}}>
+              </Box>
+            </Grid>
+          )}
+          <Grid item xs={2} style={{ position: "relative", marginTop: "15px" }}>
+            <Grid container spacing={1.5} columns={1} style={{ maxHeight: "100vh", overflowY: "auto", paddingRight: "8px" }}>
+              <Grid item xs={1} minWidth="50vh" style={{ paddingLeft: "0px", marginBottom: "10px" }}>
                 <Box
                   style={{
                     padding: "1vh",
@@ -979,14 +1726,15 @@ const Demo = () => {
                   <div style={{ marginBottom: "1%" }}>
                     <DemoControlls
                       continousAnimationRun={continousAnimationRun}
-                      runMoveCodeAnimation={(from, to, icon) =>
-                        moveCodeAnimation(from, to, icon)
-                      }
+                      runMoveCodeAnimation={(...args) => moveCodeAnimation(...args)}
                       setPaused={setPaused}
                       pausedRef={pausedRef}
                       pauseAwareDelay={pauseAwareDelay}
                       referenceLineEnabled={referenceLineEnabled}
                       setReferenceLineEnabled={setReferenceLineEnabled}
+                      handlePopOverClose={handlePopOverClose}
+                      setRescheduleHistory={setRescheduleHistory}
+                      animationSessionRef={animationSessionRef}
                     />
                   </div>
                 </Box>
@@ -1000,13 +1748,14 @@ const Demo = () => {
                 <Grid item xs={1} paddingBottom="5px">
                   <Box>
                     <List
-                      sx={{ width: "100%", 
-                      bgcolor: "background.paper",
-                      border: "1px solid #DCDCDC",
-                      borderRadius: "5px",
-                      boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.2)",
-                      paddingBottom: "0px",
-                      paddingTop: "0px"
+                      sx={{
+                        width: "100%",
+                        bgcolor: "background.paper",
+                        border: "1px solid #DCDCDC",
+                        borderRadius: "5px",
+                        boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.2)",
+                        paddingBottom: "0px",
+                        paddingTop: "0px"
                       }}
                     >
                       <ListItemButton
@@ -1076,8 +1825,8 @@ const Demo = () => {
                       top: 0,
                       left: `calc(${referenceLinePosition}% - 30px)`,
                       height: "100%",
-                      width: "20px", 
-                      backgroundColor: "rgba(255, 205, 205, 0.5)", 
+                      width: "20px",
+                      backgroundColor: "rgba(255, 205, 205, 0.5)",
                       border: "2px solid rgba(192, 64, 64, 0.9)",
                       cursor: "grab",
                       backdropFilter: "brightness(1.1)",
