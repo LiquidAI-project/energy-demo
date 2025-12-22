@@ -34,7 +34,7 @@ This mode highlights:
 - Energy cost optimization through intelligent scheduling
 - Demonstrating the practical benefits using energy as use case
 
-  
+
 <img width="564" alt="Screenshot 2025-06-26 at 7 21 02 AM" src="https://github.com/user-attachments/assets/0072e62c-f3b8-4fce-859b-c65104577de3" />
 
 ---
@@ -77,4 +77,14 @@ npm start
 
 ---
 
-Note - Main branch consist changes with initiations for the integration of Orchestrator and Supervisor. The branch https://github.com/LiquidAI-project/energy-demo/tree/dev-demo-UI-only-branch only contains the simulation with animations. 
+**Note -** Main branch consist changes with initiations for the integration of Orchestrator and Supervisor. The branch https://github.com/LiquidAI-project/energy-demo/tree/dev-demo-UI-only-branch only contains the simulation with animations.
+
+## License and main contributors
+
+The software is released under the [MIT license](./LICENSE) and was produced in the LiquidAI project in a collaboration between Tampere University and the University of Jyväskylä. The initial inspiration was a project from the Autumn 2023 implementation of the Software Engineering Project 1 and 2 courses at Tampere University released under the MIT license: [https://github.com/LiquidAIDemo/LiquidAIDemo](https://github.com/LiquidAIDemo/LiquidAIDemo).
+
+The main contributors are:
+
+- Lakshan Rathnayaka, Tampere University
+- Asma Jamil, Tampere University
+- Ville Heikkilä, Tampere University
