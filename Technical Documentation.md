@@ -5,11 +5,10 @@
 2. [Development Environment Setup](#2-development-environment-setup)
 3. [Project Structure](#3-project-structure)
 4. [Creating WASM Modules](#4-creating-wasm-modules)
-5. [Frontend Architecture](#5-frontend-architecture)
-6. [Key Files and Their Purpose](#6-key-files-and-their-purpose)
-7. [CI/CD Pipeline](#7-cicd-pipeline)
-8. [Troubleshooting](#8-troubleshooting)
-
+5. [Key Files and Their Purpose](#5-key-files-and-their-purpose)
+6. [CI/CD Pipeline](#6-cicd-pipeline)
+7. [API Reference](#7-api-reference)
+8. [Contributing](#8-contributing)
 ---
 
 ## 1. Project Overview
@@ -40,8 +39,113 @@ The system utilizes **WebAssembly (WASM)** modules to control individual devices
 
 ## 2. Development Environment Setup
 
-To be added
+### Prerequisites
 
+| Tool | Version | Purpose |
+|------|---------|---------|
+| **Rust** | Latest stable | Compiling WASM modules |
+| **Node.js** | 18.x LTS or higher (v24.4.1 was used for development)| Frontend |
+| **npm** | 9.x or higher | Package management |
+| **wasmtime** | Latest | Testing WASM modules locally |
+| **Docker** | Latest | Containerization platform for deploying and running orchestrator and supervisors |
+
+### Server Setup
+
+This section describes how to set up the energy demo on a production server.
+
+#### Basic Requirements
+
+- **Docker**: Required for running all backend services
+- **SSH Access**: For GitHub Actions deployment, the server must have SSH access available with a user account that belongs to the `docker` group
+
+#### Container Architecture
+
+The energy demo requires the following Docker containers:
+
+| Container | Description |
+|-----------|-------------|
+| Orchestrator | Central hub managing WASM module deployment and execution |
+| Supervisor 1 | Edge device executing EV charger module |
+| Supervisor 2 | Edge device executing freezer module |
+| Supervisor 3 | Edge device executing washing machine module |
+| MongoDB | Database for storing modules, manifests, and deployment data |
+| mongo-express (optional) | Web-based MongoDB admin interface for easier database inspection |
+
+#### Setup Steps
+
+1. **Clone the wasmiot-test-env repository**
+   ```bash
+   git clone https://github.com/LiquidAI-project/wasmiot-test-env.git
+   cd wasmiot-test-env
+   git checkout 6f75891c122914fd322ae07d6e1c9cf7f55f8622
+   ```
+
+2. **Configure environment variables**
+   - Modify the `.env` file with appropriate values for your server
+
+3. **Create Docker Compose configuration**
+   - Create a `compose-demo.yml` file with the required container definitions
+   - This file defines the orchestrator, supervisors, MongoDB, and optionally mongo-express
+
+4. **Build and start containers**
+   ```bash
+   # Copy environment file for Rust orchestrator
+   cp .env ./orchestrator-rust-port/.env
+   
+   # Build images and start containers
+   docker compose -f compose-demo.yml up --detach
+   ```
+
+#### Network Configuration (Nginx Proxy)
+
+The server uses an Nginx reverse proxy to direct HTTPS traffic to the appropriate container ports:
+
+- Nginx runs as a Docker container
+- Configuration redirects HTTPS addresses to localhost ports
+- Relevant configuration is stored in `energy-demo-nginx-configurations.conf`
+- **SSL Certificates**: Uses Let's Encrypt certificates (require renewal every 90 days)
+
+**Updating Nginx Configuration:**
+1. Update the configuration file
+2. Stop and remove the Nginx container
+3. Restart the Nginx container
+
+#### GitHub Actions Requirements
+
+For CI/CD deployment to work:
+- Repository secrets must be configured correctly
+- The frontend is built and deployed as a Docker container via GitHub Actions
+- SSH credentials must allow the GitHub Action runner to connect and execute Docker commands
+
+#### Running the frontend locally
+
+#### 1. Clone the Repository
+```bash
+git clone https://github.com/LiquidAI-project/energy-demo.git
+cd energy-demo
+```
+
+#### 2. Frontend Setup
+```bash
+cd run-demo/frontend
+npm install
+```
+
+#### 3. Environment Configuration
+Create a `.env` file in `run-demo/frontend/` with the following variables:
+```env
+VITE_ORCHESTRATOR_HOST=https://your-orchestrator-host
+VITE_ORCHESTRATOR_PORT=443
+VITE_ANIMATION_MOVING_TIME=2000
+VITE_DEVICE_CHECK_INTERVAL=5000
+VITE_DEV_VERSION=true
+```
+
+#### 4. Running the Development Server
+```bash
+cd run-demo/frontend
+npm run dev
+```
 
 ---
 
@@ -159,21 +263,25 @@ wasmtime --invoke execute_event target/wasm32-unknown-unknown/release/my_new_mod
 
 ---
 
-## 5. Frontend Architecture
-To be added
-
----
-
-## 6. Key Files and Their Purpose
+## 5. Key Files and Their Purpose
 
 ### Frontend Components
 
 | File | Purpose |
 |------|---------|
+| `Demo.jsx` | Main demo component; orchestrates the entire demo flow |
 | `DemoControlls.jsx` | Main control hub; handles timeline, triggers device events, manages demo flow |
 | `ArchitectureDiagram.jsx` | Visualizes system architecture with animated data flow |
 | `ElectricityPrice.jsx` | Displays electricity price chart and consumption data |
 | `OperatingTimeChart.jsx` | Shows device operating schedules |
+| `DemoClock.jsx` | Displays the current time and date |
+
+### State Management
+
+| File | Purpose |
+|------|---------|
+| `demoControlContext.jsx` | Manages state and data for running the demo timer and play/puase states |
+| `demoVisualizationContext.jsx` | Manages state and data for visuals e.g., devices, prices, consumption, etc. |
 
 ### Data Files
 
@@ -199,12 +307,48 @@ To be added
 
 ---
 
-## 7. CI/CD Pipeline
-To be Added
+## 6. CI/CD Pipeline
 
+### Workflows
+
+#### Production Deployment (`main_demo.yml`)
+- **Trigger**: Push to `main` branch or manual dispatch
+- **Steps**:
+  1. Build Docker image for frontend
+  2. Push to GitHub Container Registry
+  3. SSH to production server
+  4. Pull and deploy new container
+  5. Health check verification
+
+#### Draft Deployment (`draft_demo.yml`)
+- **Trigger**: Push to `draft` branch or manual dispatch
+- Similar to production but deploys to staging environment
+
+### Required Secrets
+```
+SERVER_HOST              # Deployment server hostname
+SERVER_USERNAME          # SSH username
+SERVER_SSH_PORT          # SSH port
+SERVER_SSH_PRIVATE_KEY   # SSH private key
+SERVER_SSH_PASSPHRASE    # SSH key passphrase
+GITHUB_TOKEN             # GitHub token for container registry access
+SERVER_MAIN_CONTAINER_NAME # Container name for main deployment
+SERVER_DRAFT_CONTAINER_NAME # Container name for draft deployment
+VITE_ORCHESTRATOR_HOST   # Orchestrator URL
+VITE_ORCHESTRATOR_PORT   # Orchestrator port
+VITE_PUBLIC_HOST         # Public host
+VITE_PUBLIC_PORT         # Public port
+VITE_ANIMATION_MOVING_TIME # Animation moving time
+VITE_DEVICE_CHECK_INTERVAL # Device check interval
+VITE_ALLOWED_HOSTS # Allowed hosts
+VITE_DEV_VERSION # Development version
+SERVER_MAIN_FRONTEND_PORT # Main frontend port
+SERVER_DRAFT_FRONTEND_PORT # Draft frontend port
+SERVER_FRONTEND_INTERNAL_PORT # Frontend internal port
+```
 ---
 
-## 9. API Reference
+## 7. API Reference
 
 ### Orchestrator Endpoints
 
@@ -230,7 +374,7 @@ await execute(`${deployment_id}`, "ev-charger", {
 
 ---
 
-## 10. Contributing
+## 8. Contributing
 
 1. Create a feature branch from `draft`
 2. Make changes and test locally
