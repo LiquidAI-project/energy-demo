@@ -79,6 +79,11 @@ npm start
 
 **Note -** Main branch consist changes with initiations for the integration of Orchestrator and Supervisor. The branch https://github.com/LiquidAI-project/energy-demo/tree/dev-demo-UI-only-branch only contains the simulation with animations.
 
+## User manual and technical documentation
+
+- [User Manual](./User%20Manual.md)
+- [Technical Documentation](./Technical%20Documentation.md)
+
 ## License and main contributors
 
 The software is released under the [MIT license](./LICENSE) and was produced in the LiquidAI project in a collaboration between Tampere University and the University of Jyväskylä. The initial inspiration was a project from the Autumn 2023 implementation of the Software Engineering Project 1 and 2 courses at Tampere University released under the MIT license: [https://github.com/LiquidAIDemo/LiquidAIDemo](https://github.com/LiquidAIDemo/LiquidAIDemo).
