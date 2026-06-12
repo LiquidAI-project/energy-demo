@@ -9,11 +9,6 @@ services:
       - ${FRONTEND_PORT-5173}:5173
     environment:
       ANIMATION_MOVING_TIME: ${ANIMATION_MOVING_TIME}
-    volumes:
-    # the volumes included here to allow interactive development
-    # for final version, they should be removed
-      - ./frontend:/usr/src/app
-      - /usr/src/app/node_modules
 
 volumes:
   mongo-config:
