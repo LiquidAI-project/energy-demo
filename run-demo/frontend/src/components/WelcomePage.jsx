@@ -1,7 +1,6 @@
 import { Box, Typography, Button } from "@mui/material";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { useNavigate } from "react-router-dom";
-import WaterWave from "react-water-wave";
 import backgroundImage from "../assets/water.jpg";
 
 const theme = createTheme({
@@ -40,25 +39,17 @@ const WelcomePage = () => {
         Energy Demo
       </Typography>
 
-      <WaterWave
-        imageUrl={backgroundImage}
+      <div
         style={{
+          backgroundImage: `url(${backgroundImage})`,
           backgroundSize: "cover",
+          backgroundPosition: "center",
           width: "100%",
           height: "100vh",
+          position: "relative",
           zIndex: 0,
         }}
-        dropRadius={20}
-        resolution={500}
       >
-        {() => (
-          <div
-            style={{
-              width: "100%",
-              height: "100%",
-              position: "relative",
-            }}
-          >
             <Box
               sx={{
                 position: "absolute",
@@ -140,9 +131,7 @@ const WelcomePage = () => {
                 on Freepik
               </Typography>
             </Box>
-          </div>
-        )}
-      </WaterWave>
+      </div>
     </div>
   );
 };

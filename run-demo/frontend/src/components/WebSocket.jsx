@@ -3,19 +3,33 @@ const ORCHESTRATOR_HOST = import.meta.env.VITE_ORCHESTRATOR_HOST;
 // eslint-disable-next-line no-undef
 const ORCHESTRATOR_PORT = import.meta.env.VITE_ORCHESTRATOR_PORT;
 
-const SOCKET_URL= `${ORCHESTRATOR_HOST.split("//")[1]}:${ORCHESTRATOR_PORT}`;
-const socket = new WebSocket(`wss://${SOCKET_URL}/ws/logs`);
+const parsedHost = (ORCHESTRATOR_HOST || "").replace(/^https?:\/\//, "");
+const socketUrl = parsedHost && ORCHESTRATOR_PORT
+  ? `wss://${parsedHost}:${ORCHESTRATOR_PORT}/ws/logs`
+  : null;
 
-socket.onopen = () => {
-  console.log("✅ Connected to WebSocket server");
-};
+const socket = socketUrl
+  ? new WebSocket(socketUrl)
+  : {
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      close: () => {},
+    };
 
-socket.onclose = (event) => {
+if (socketUrl) {
+  socket.onopen = () => {
+    console.log("✅ Connected to WebSocket server");
+  };
+
+  socket.onclose = () => {
     console.log("⚠️ WebSocket connection closed");
-};
+  };
 
-socket.onerror = (err) => {
+  socket.onerror = (err) => {
     console.error("❌ WebSocket error:", err);
-};
+  };
+} else {
+  console.warn("WebSocket disabled: missing VITE_ORCHESTRATOR_HOST or VITE_ORCHESTRATOR_PORT");
+}
 
 export default socket;
