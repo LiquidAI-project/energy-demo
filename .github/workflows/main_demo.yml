@@ -54,6 +54,7 @@ jobs:
             file: ${{ env.IMAGE_CONTEXT }}/${{ env.IMAGE_FILENAME }}
             tags: ${{ env.FULL_IMAGE_NAME }}
             platforms: ${{ env.PLATFORMS }}
+            no-cache: true
             push: ${{ github.event_name != 'pull_request' }}
             labels: ${{ steps.meta.labels }}
 
@@ -85,8 +86,6 @@ jobs:
             docker rm ${{ secrets.SERVER_MAIN_CONTAINER_NAME }} || true
             docker run --detach --name ${{ secrets.SERVER_MAIN_CONTAINER_NAME }} --env VITE_ANIMATION_MOVING_TIME=${{ secrets.ANIMATION_MOVING_TIME }} --env VITE_ALLOWED_HOSTS=${{ secrets.SERVER_ALLOWED_HOSTS }} --env VITE_PUBLIC_HOST=${{ secrets.VITE_PUBLIC_HOST_DRAFT }} --env VITE_PUBLIC_PORT=${{ secrets.VITE_PUBLIC_PORT }} --env VITE_ORCHESTRATOR_HOST=${{ secrets.VITE_ORCHESTRATOR_HOST }} --env VITE_ORCHESTRATOR_PORT=${{ secrets.VITE_ORCHESTRATOR_PORT }} --env VITE_DEVICE_CHECK_INTERVAL=${{ secrets.VITE_DEVICE_CHECK_INTERVAL }} --env VITE_DEV_VERSION=false --publish ${{ secrets.SERVER_MAIN_FRONTEND_PORT }}:${{ secrets.SERVER_FRONTEND_INTERNAL_PORT }} ${{ env.FULL_IMAGE_NAME }}
 
-            sleep 10  # Wait for the container to start
-
             # Verify the container is running
             if docker ps | grep --quiet ${{ secrets.SERVER_MAIN_CONTAINER_NAME }}; then
               echo "Container is running."
@@ -95,10 +94,22 @@ jobs:
               exit 1
             fi
 
-            # Check if the application is responsive (HTTP check)
-            if curl -f http://localhost:${{ secrets.SERVER_MAIN_FRONTEND_PORT }}; then
-              echo "Application is up and running."
-            else
-              echo "Application is not responding."
-              exit 1
-            fi
+            # Wait until the application is responsive (runtime build may take time).
+            for i in $(seq 1 30); do
+              if curl -fsS http://localhost:${{ secrets.SERVER_MAIN_FRONTEND_PORT }} >/dev/null; then
+                echo "Application is up and running."
+                exit 0
+              fi
+
+              if ! docker ps | grep --quiet ${{ secrets.SERVER_MAIN_CONTAINER_NAME }}; then
+                echo "Container stopped unexpectedly."
+                docker logs ${{ secrets.SERVER_MAIN_CONTAINER_NAME }} || true
+                exit 1
+              fi
+
+              sleep 3
+            done
+
+            echo "Application did not become ready in time."
+            docker logs ${{ secrets.SERVER_MAIN_CONTAINER_NAME }} || true
+            exit 1

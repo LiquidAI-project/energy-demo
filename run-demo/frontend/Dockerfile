@@ -9,4 +9,6 @@ RUN npm clean-install
 # copy the rest of the files
 COPY . .
 
-CMD [ "npm", "run", "dev" ]
+# Build at container startup (using runtime env vars) and serve static output.
+# This avoids Vite dev-server optimized deps under /node_modules/.vite/deps.
+CMD [ "sh", "-c", "npm run build && npm run preview -- --host 0.0.0.0 --port 5173" ]
