@@ -15,6 +15,20 @@ const allowedHosts = process.env.VITE_ALLOWED_HOSTS
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
+  optimizeDeps: {
+    noDiscovery: true,
+    exclude: [
+      '@emotion/react',
+      '@emotion/styled',
+      '@mui/icons-material',
+      '@mui/material',
+      '@mui/styled-engine',
+      '@mui/system',
+    ],
+  },
+  legacy: {
+    inconsistentCjsInterop: true,
+  },
   server: {
     allowedHosts: allowedHosts,
     host: '0.0.0.0',
